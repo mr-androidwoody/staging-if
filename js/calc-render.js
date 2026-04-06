@@ -16,6 +16,12 @@
   const adj = (val, row) => _useReal ? val * row.realDeflator : val;
   const fmt = n => D.formatMoney(n);
 
+  function getNames() {
+    const p1 = (document.getElementById('sp-p1name')?.value || '').trim() || 'Person 1';
+    const p2 = (document.getElementById('sp-p2name')?.value || '').trim() || 'Person 2';
+    return { p1, p2 };
+  }
+
   // ─────────────────────────────────────────────
   // PUBLIC: receive new projection results
   // ─────────────────────────────────────────────
@@ -123,8 +129,9 @@
     if (!host) return;
     host.innerHTML = '';
     const datasets = chart.data.datasets || [];
-    const woody = datasets.map((ds, i) => ({ ds, i })).filter(x => x.ds.label.includes('Woody'));
-    const heidi = datasets.map((ds, i) => ({ ds, i })).filter(x => x.ds.label.includes('Heidi'));
+    const { p1, p2 } = getNames();
+    const woody = datasets.map((ds, i) => ({ ds, i })).filter(x => x.ds.label.includes(`– ${p1}`));
+    const heidi = datasets.map((ds, i) => ({ ds, i })).filter(x => x.ds.label.includes(`– ${p2}`));
 
     function makeRow(items) {
       const row = document.createElement('div');
@@ -159,6 +166,7 @@
   function renderCharts() {
     if (!_rows.length) return;
     const labels = _rows.map(r => r.year);
+    const { p1, p2 } = getNames();
 
     const COLOURS = {
       woodySP: '#4472C4', heidiSP: '#70AD47',
@@ -175,21 +183,21 @@
 
     let sets = [];
     if (_viewPerson === 'both' || _viewPerson === 'woody') {
-      sets.push(ds('State Pension – Woody',    r => r.woodySP,          COLOURS.woodySP));
-      sets.push(ds('SIPP – Woody',             r => r.woodyDrawn.SIPP,  COLOURS.woodySIPP));
-      sets.push(ds('ISA – Woody',              r => r.woodyDrawn.ISA,   COLOURS.woodyISA));
-      sets.push(ds('GIA – Woody',              r => r.woodyDrawn.GIA,   COLOURS.woodyGIA));
-      sets.push(ds('Interest draw – Woody',    r => r.woodyIntDraw,     COLOURS.intDraw));
-      sets.push(ds('Cash draw – Woody',        r => r.woodyDrawn.Cash,  COLOURS.woodyCash));
+      sets.push(ds(`State Pension – ${p1}`,    r => r.woodySP,          COLOURS.woodySP));
+      sets.push(ds(`SIPP – ${p1}`,             r => r.woodyDrawn.SIPP,  COLOURS.woodySIPP));
+      sets.push(ds(`ISA – ${p1}`,              r => r.woodyDrawn.ISA,   COLOURS.woodyISA));
+      sets.push(ds(`GIA – ${p1}`,              r => r.woodyDrawn.GIA,   COLOURS.woodyGIA));
+      sets.push(ds(`Interest draw – ${p1}`,    r => r.woodyIntDraw,     COLOURS.intDraw));
+      sets.push(ds(`Cash draw – ${p1}`,        r => r.woodyDrawn.Cash,  COLOURS.woodyCash));
     }
     if (_viewPerson === 'both' || _viewPerson === 'heidi') {
-      sets.push(ds('State Pension – Heidi',    r => r.heidiSP,          COLOURS.heidiSP));
-      sets.push(ds('Salary – Heidi',           r => r.heidiSalInc,      COLOURS.salary));
-      sets.push(ds('SIPP – Heidi',             r => r.heidiDrawn.SIPP,  COLOURS.heidiSIPP));
-      sets.push(ds('ISA – Heidi',              r => r.heidiDrawn.ISA,   COLOURS.heidiISA));
-      sets.push(ds('GIA – Heidi',              r => r.heidiDrawn.GIA,   COLOURS.heidiGIA));
-      sets.push(ds('Interest draw – Heidi',    r => r.heidiIntDraw,     COLOURS.intDraw));
-      sets.push(ds('Cash draw – Heidi',        r => r.heidiDrawn.Cash,  COLOURS.woodyCash));
+      sets.push(ds(`State Pension – ${p2}`,    r => r.heidiSP,          COLOURS.heidiSP));
+      sets.push(ds(`Salary – ${p2}`,           r => r.heidiSalInc,      COLOURS.salary));
+      sets.push(ds(`SIPP – ${p2}`,             r => r.heidiDrawn.SIPP,  COLOURS.heidiSIPP));
+      sets.push(ds(`ISA – ${p2}`,              r => r.heidiDrawn.ISA,   COLOURS.heidiISA));
+      sets.push(ds(`GIA – ${p2}`,              r => r.heidiDrawn.GIA,   COLOURS.heidiGIA));
+      sets.push(ds(`Interest draw – ${p2}`,    r => r.heidiIntDraw,     COLOURS.intDraw));
+      sets.push(ds(`Cash draw – ${p2}`,        r => r.heidiDrawn.Cash,  COLOURS.woodyCash));
     }
 
     const incCtx = document.getElementById('incomeChart')?.getContext('2d');
@@ -258,27 +266,28 @@
       });
     }
 
-    _renderWealthChart(labels);
+    _renderWealthChart(labels, p1, p2);
   }
 
-  function _renderWealthChart(labels) {
+  function _renderWealthChart(labels, p1, p2) {
+    if (!p1 || !p2) { const n = getNames(); p1 = n.p1; p2 = n.p2; }
     function wds(label, fn, color) {
       return { label, data: _rows.map(r => Math.round(adj(fn(r.snap), r) / 1000)), backgroundColor: color, stack: 'wealth' };
     }
     const datasets = [];
     if (_viewPerson === 'both' || _viewPerson === 'woody') {
-      datasets.push(wds('SIPP – Woody',            s => s.woodySIPP,        '#E84D4D'));
-      datasets.push(wds('ISA – Woody',             s => s.woodyISA,         '#4472C4'));
-      datasets.push(wds('GIA – Woody',             s => s.woodyGIA,         '#FFC000'));
-      datasets.push(wds('Interest accts – Woody',  s => s.woodyIntBal || 0, '#9B59B6'));
-      datasets.push(wds('Cash – Woody',            s => s.woodyCash,        '#B0B0B0'));
+      datasets.push(wds(`SIPP – ${p1}`,           s => s.woodySIPP,        '#E84D4D'));
+      datasets.push(wds(`ISA – ${p1}`,            s => s.woodyISA,         '#4472C4'));
+      datasets.push(wds(`GIA – ${p1}`,            s => s.woodyGIA,         '#FFC000'));
+      datasets.push(wds(`Interest accts – ${p1}`, s => s.woodyIntBal || 0, '#9B59B6'));
+      datasets.push(wds(`Cash – ${p1}`,           s => s.woodyCash,        '#B0B0B0'));
     }
     if (_viewPerson === 'both' || _viewPerson === 'heidi') {
-      datasets.push(wds('SIPP – Heidi',            s => s.heidiSIPP,        '#FF8C8C'));
-      datasets.push(wds('ISA – Heidi',             s => s.heidiISA,         '#5B9BD5'));
-      datasets.push(wds('GIA – Heidi',             s => s.heidiGIA,         '#FFD966'));
-      datasets.push(wds('Interest accts – Heidi',  s => s.heidiIntBal || 0, '#C39BD3'));
-      datasets.push(wds('Cash – Heidi',            s => s.heidiCash,        '#D0D0D0'));
+      datasets.push(wds(`SIPP – ${p2}`,           s => s.heidiSIPP,        '#FF8C8C'));
+      datasets.push(wds(`ISA – ${p2}`,            s => s.heidiISA,         '#5B9BD5'));
+      datasets.push(wds(`GIA – ${p2}`,            s => s.heidiGIA,         '#FFD966'));
+      datasets.push(wds(`Interest accts – ${p2}`, s => s.heidiIntBal || 0, '#C39BD3'));
+      datasets.push(wds(`Cash – ${p2}`,           s => s.heidiCash,        '#D0D0D0'));
     }
     const wCtx = document.getElementById('wealthChart')?.getContext('2d');
     if (!wCtx) return;
@@ -309,6 +318,7 @@
     if (!_rows.length) return;
     const f = n => D.formatMoney(n);
     const a = (val, row) => _useReal ? val * row.realDeflator : val;
+    const { p1, p2 } = getNames();
 
     // Tax table
     const taxTbl = document.getElementById('tax-table');
@@ -338,9 +348,9 @@
         <td>${f(grandBni)}</td><td>${f(grand)}</td><td>${f(grand)}</td>
       </tr></tbody>`;
       taxTbl.innerHTML = `<thead><tr>
-        <th>Year</th><th>Woody age</th><th>Heidi age</th>
-        <th>Woody income tax</th><th>Woody CGT</th><th>Woody total</th>
-        <th>Heidi income tax</th><th>Heidi CGT</th><th>Heidi total</th>
+        <th>Year</th><th>${p1} age</th><th>${p2} age</th>
+        <th>${p1} income tax</th><th>${p1} CGT</th><th>${p1} total</th>
+        <th>${p2} income tax</th><th>${p2} CGT</th><th>${p2} total</th>
         <th>B&amp;ISA CGT</th><th>Household tax</th><th>Cumulative tax</th>
       </tr></thead>` + body;
     }
@@ -364,9 +374,9 @@
       });
       body += '</tbody>';
       wTbl.innerHTML = `<thead><tr>
-        <th>Year</th><th>Woody age</th><th>Heidi age</th>
-        <th>Woody Cash</th><th>Woody Interest</th><th>Woody GIA</th><th>Woody SIPP</th><th>Woody ISA</th>
-        <th>Heidi Cash</th><th>Heidi Interest</th><th>Heidi GIA</th><th>Heidi SIPP</th><th>Heidi ISA</th>
+        <th>Year</th><th>${p1} age</th><th>${p2} age</th>
+        <th>${p1} Cash</th><th>${p1} Interest</th><th>${p1} GIA</th><th>${p1} SIPP</th><th>${p1} ISA</th>
+        <th>${p2} Cash</th><th>${p2} Interest</th><th>${p2} GIA</th><th>${p2} SIPP</th><th>${p2} ISA</th>
         <th>Total</th>
       </tr></thead>` + body;
     }
