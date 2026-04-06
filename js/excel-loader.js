@@ -89,7 +89,6 @@
     document.dispatchEvent(new CustomEvent('excel-loaded', {
       detail: { accounts, params }
     }));
-    console.log('[ExcelLoader] params dispatched:', JSON.stringify(params, null, 2));
   }
 
   // ─────────────────────────────────────────────
@@ -136,45 +135,47 @@
 
   // ─────────────────────────────────────────────
   // SHEET 2 — Parameters
-  // Supports two formats:
-  //   New: col A = label, col B = value, col C = notes
-  //   Old: col A = label, col B = key, col C = value
-  // Auto-detected by checking if col B header says "Key"
-  // Labels mapped to element IDs via PARAM_MAP
+  // Reads cells directly by address to avoid SheetJS merged-cell row issues.
+  // Supports both formats:
+  //   Old: col A = label, col B = key(elementId), col C = value
+  //   New: col A = label, col B = value
+  // Auto-detected by col B row-2 header text.
   // ─────────────────────────────────────────────
   function parseParams(wb) {
     const sheet = wb.Sheets['Parameters'];
     if (!sheet) throw new Error('No "Parameters" sheet found.');
 
-    const allRows = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      defval: '',
-      range:  1, // start at row 2 (0-indexed: row index 1) to catch header
-    });
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    const maxRow = range.e.r;
 
-    // Detect format: if row 0 col B contains "Key", it's the old format
-    const headerRow = allRows[0] || [];
-    const isOldFormat = String(headerRow[1] || '').toLowerCase().includes('key');
-    console.log('[ExcelLoader] format detected:', isOldFormat ? 'OLD (3-col)' : 'NEW (2-col)', '| header row:', headerRow.slice(0,3));
-
-    const dataRows = allRows.slice(1); // skip the header row we just read
+    // Read header row (row index 1 = sheet row 2) col B to detect format
+    const headerBCell = sheet[XLSX.utils.encode_cell({ r: 1, c: 1 })];
+    const headerB = headerBCell ? String(headerBCell.v || '') : '';
+    const isOldFormat = headerB.toLowerCase().includes('key');
 
     const params = {};
-    dataRows.forEach((row) => {
+
+    for (let r = 2; r <= maxRow; r++) {
+      const cellA = sheet[XLSX.utils.encode_cell({ r, c: 0 })];
+      const cellB = sheet[XLSX.utils.encode_cell({ r, c: 1 })];
+      const cellC = sheet[XLSX.utils.encode_cell({ r, c: 2 })];
+
+      const valB = cellB ? cellB.v : null;
+      const valC = cellC ? cellC.v : null;
+
       if (isOldFormat) {
-        // Old format: A=label, B=key(elementId), C=value
-        const key = String(row[1] || '').trim();
-        if (!key) return;
-        params[key] = row[2];
+        const key = String(valB || '').trim();
+        if (!key) continue;
+        params[key] = (valC !== null && valC !== undefined) ? valC : '';
       } else {
-        // New format: A=label, B=value
-        const label = String(row[0] || '').trim();
-        if (!label) return;
+        const valA = cellA ? cellA.v : null;
+        const label = String(valA || '').trim();
+        if (!label) continue;
         const elementId = PARAM_MAP[label];
-        if (!elementId) return;
-        params[elementId] = row[1];
+        if (!elementId) continue;
+        params[elementId] = (valB !== null && valB !== undefined) ? valB : '';
       }
-    });
+    }
 
     return params;
   }
