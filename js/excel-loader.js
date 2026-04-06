@@ -73,11 +73,15 @@
     });
 
     const accounts = [];
-    rows.forEach((row, i) => {
-      const name = String(row[0] || '').trim();
-      if (!name) return; // skip blank rows
+    const validWrappers = new Set(['ISA', 'SIPP', 'GIA', 'Cash']);
 
-      const wrapper    = String(row[1] || 'GIA').trim();
+    rows.forEach((row, i) => {
+      const name    = String(row[0] || '').trim();
+      const wrapper = String(row[1] || '').trim();
+      // Skip blank rows and legend/reference rows (no valid wrapper)
+      if (!name) return;
+      if (!validWrappers.has(wrapper)) return;
+
       const owner      = String(row[2] || 'p1').trim();
       const value      = parseNum(row[3]);
       const equities   = parseNum(row[4]);
