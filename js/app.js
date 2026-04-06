@@ -139,8 +139,9 @@
 
     tbody.innerHTML = '';
 
+    const ownerNames = getOwnerNames();
     state.portfolioAccounts.forEach((acc) => {
-      R.renderAccountRow(acc);
+      R.renderAccountRow(acc, ownerNames);
       R.updateRowBadge(acc);
       R.applyWrapperFieldState(acc);
     });
@@ -215,6 +216,16 @@
   }
 
   // ─────────────────────────────
+  // OWNER NAMES
+  // ─────────────────────────────
+  function getOwnerNames() {
+    return [
+      safeValue('sp-p1name').trim() || 'Person 1',
+      safeValue('sp-p2name').trim() || 'Person 2',
+    ];
+  }
+
+  // ─────────────────────────────
   // ACCOUNTS
   // ─────────────────────────────
   function addAccount() {
@@ -229,7 +240,7 @@
       monthlyDraw: null,
     };
     state.portfolioAccounts.push(acc);
-    R.renderAccountRow(acc);
+    R.renderAccountRow(acc, getOwnerNames());
     R.updateRowBadge(acc);
     R.applyWrapperFieldState(acc);
     refreshSetupSummary();
