@@ -16,9 +16,6 @@
     interestAccounts: [],
   };
 
-  // ─────────────────────────────────────────────
-  // PEOPLE / NAMES
-  // ─────────────────────────────────────────────
   function ownerNames() {
     return [
       document.getElementById('sp-p1name').value.trim() || 'Person 1',
@@ -26,9 +23,6 @@
     ];
   }
 
-  // ─────────────────────────────────────────────
-  // INPUT HELPERS
-  // ─────────────────────────────────────────────
   function getInputValue(id) {
     const el = document.getElementById(id);
     return el ? el.value : '';
@@ -42,37 +36,6 @@
     return parseInt(String(D.parseCurrency(getInputValue(id))), 10) || 0;
   }
 
-  // ─────────────────────────────────────────────
-  // GROWTH PRESET
-  // ─────────────────────────────────────────────
-  function applyGrowthPreset(preset) {
-    const growthInput = document.getElementById('growth');
-    const presetSelect = document.getElementById('growthPreset');
-    if (!growthInput || !presetSelect) return;
-
-    if (preset === 'defensive') growthInput.value = '3.0';
-    else if (preset === 'baseline') growthInput.value = '3.5';
-    else if (preset === 'optimistic') growthInput.value = '4.5';
-
-    presetSelect.value = preset;
-  }
-
-  function syncGrowthPresetToValue() {
-    const growthInput = document.getElementById('growth');
-    const presetSelect = document.getElementById('growthPreset');
-    if (!growthInput || !presetSelect) return;
-
-    const value = parseFloat(growthInput.value);
-
-    if (value === 3.0) presetSelect.value = 'defensive';
-    else if (value === 3.5) presetSelect.value = 'baseline';
-    else if (value === 4.5) presetSelect.value = 'optimistic';
-    else presetSelect.value = 'custom';
-  }
-
-  // ─────────────────────────────────────────────
-  // 🔴 CRITICAL FIX: DOM → STATE SYNC
-  // ─────────────────────────────────────────────
   function syncAccountsFromDOM() {
     const rows = document.querySelectorAll('#acct-tbody tr');
 
@@ -106,9 +69,6 @@
     state.portfolioAccounts = updated;
   }
 
-  // ─────────────────────────────────────────────
-  // SETUP STATE
-  // ─────────────────────────────────────────────
   function readSetupInputs() {
     return {
       version: 1,
@@ -126,67 +86,66 @@
     };
   }
 
-  function applySetupInputs(data) {
-    document.getElementById('sp-p1name').value = data.people.p1.name || '';
-    document.getElementById('sp-p1age').value = data.people.p1.age || '';
-    document.getElementById('sp-p2name').value = data.people.p2.name || '';
-    document.getElementById('sp-p2age').value = data.people.p2.age || '';
+  function initialiseCalculatorFromSetup(data) {
+    if (!data || !data.accounts) return;
 
-    state.portfolioAccounts = data.accounts || [];
-    state.nextId =
-      Math.max(1, ...state.portfolioAccounts.map((a) => a.id || 0)) + 1;
+    const totals = {
+      woody: { ISA: 0, SIPP: 0, GIA: 0, Cash: 0 },
+      heidi: { ISA: 0, SIPP: 0, GIA: 0, Cash: 0 },
+    };
 
-    document.getElementById('acct-tbody').innerHTML = '';
+    data.accounts.forEach((acc) => {
+      const ownerKey = acc.owner === 'p1' ? 'woody' : 'heidi';
+      const wrapper = acc.wrapper || 'GIA';
 
-    state.portfolioAccounts.forEach((acc) => {
-      R.renderAccountRow(acc, ownerNames());
-      R.updateRowBadge(acc);
-      R.applyWrapperFieldState(acc);
+      if (!totals[ownerKey][wrapper]) {
+        totals[ownerKey][wrapper] = 0;
+      }
+
+      totals[ownerKey][wrapper] += acc.value || 0;
     });
 
-    refreshSetupSummary();
+    const map = [
+      { id: 'woodyISA', value: totals.woody.ISA },
+      { id: 'woodySIPP', value: totals.woody.SIPP },
+      { id: 'woodyGIA', value: totals.woody.GIA },
+      { id: 'woodyCash', value: totals.woody.Cash },
+      { id: 'heidiISA', value: totals.heidi.ISA },
+      { id: 'heidiSIPP', value: totals.heidi.SIPP },
+      { id: 'heidiGIA', value: totals.heidi.GIA },
+      { id: 'heidiCash', value: totals.heidi.Cash },
+    ];
+
+    map.forEach(({ id, value }) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.value = D.formatCurrency(value || 0);
+      }
+    });
   }
 
-  // ─────────────────────────────────────────────
-  // SAVE / LOAD
-  // ─────────────────────────────────────────────
   function saveSetup() {
-    syncAccountsFromDOM(); // ← FIX
-
+    syncAccountsFromDOM();
     const data = readSetupInputs();
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-
     console.log('Saved setup:', data);
-
-    console.log('SAVE FIRED');
-      
   }
 
   function loadSetup() {
     const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (!raw) {
-      alert('No saved setup found.');
-      return;
-    }
+    if (!raw) return alert('No saved setup found.');
 
     try {
       const data = JSON.parse(raw);
       if (!data || data.version !== 1) throw new Error();
-
       applySetupInputs(data);
     } catch {
       alert('Saved data is corrupted.');
     }
   }
 
-  // ─────────────────────────────────────────────
-  // SETUP SUMMARY
-  // ─────────────────────────────────────────────
   function refreshSetupSummary() {
     R.refreshOwnerOptions(state.portfolioAccounts, ownerNames());
-
     const summary = C.summarisePortfolio(state.portfolioAccounts);
     R.renderSetupSummary(summary);
 
@@ -196,9 +155,6 @@
     });
   }
 
-  // ─────────────────────────────────────────────
-  // ACCOUNT MANAGEMENT
-  // ─────────────────────────────────────────────
   function addAccount(data) {
     const result = C.addAccount(state.portfolioAccounts, state.nextId, data);
     state.portfolioAccounts = result.accounts;
@@ -214,37 +170,34 @@
     state.portfolioAccounts = C.removeAccount(state.portfolioAccounts, id);
     const row = document.getElementById('acct-row-' + id);
     if (row) row.remove();
-
     refreshSetupSummary();
   }
 
-  // ─────────────────────────────────────────────
-  // EVENT HANDLING
-  // ─────────────────────────────────────────────
-document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-action]');
-  if (!el) return;
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
 
-  const action = el.dataset.action;
+    const action = el.dataset.action;
 
-  if (action === 'add-account') addAccount({});
-  if (action === 'remove-account') removeAccount(Number(el.dataset.accountId));
-  if (action === 'save-setup') saveSetup();
-  if (action === 'load-setup') loadSetup();
+    if (action === 'add-account') addAccount({});
+    if (action === 'remove-account') removeAccount(Number(el.dataset.accountId));
+    if (action === 'save-setup') saveSetup();
+    if (action === 'load-setup') loadSetup();
 
-  if (action === 'continue-to-main') {
-    document.getElementById('setup-page').style.display = 'none';
-    document.getElementById('main-app').style.display = '';
-  }
+    if (action === 'continue-to-main') {
+      syncAccountsFromDOM();
+      const setupData = readSetupInputs();
+      initialiseCalculatorFromSetup(setupData);
 
-  if (action === 'back-to-setup') {
-    document.getElementById('setup-page').style.display = '';
-    document.getElementById('main-app').style.display = 'none';
-  }
-});
+      document.getElementById('setup-page').style.display = 'none';
+      document.getElementById('main-app').style.display = '';
+    }
 
-  // ─────────────────────────────────────────────
-  // INIT
-  // ─────────────────────────────────────────────
+    if (action === 'back-to-setup') {
+      document.getElementById('setup-page').style.display = '';
+      document.getElementById('main-app').style.display = 'none';
+    }
+  });
+
   refreshSetupSummary();
 })();
