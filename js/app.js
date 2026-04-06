@@ -34,6 +34,44 @@
     return parseInt(String(D.parseCurrency(getInputValue(id))), 10) || 0;
   }
 
+  function applyGrowthPreset(preset) {
+    const growthInput = document.getElementById('growth');
+    const presetSelect = document.getElementById('growthPreset');
+    if (!growthInput || !presetSelect) return;
+
+    if (preset === 'defensive') {
+      growthInput.value = '3.0';
+    } else if (preset === 'baseline') {
+      growthInput.value = '3.5';
+    } else if (preset === 'optimistic') {
+      growthInput.value = '4.5';
+    }
+
+    presetSelect.value = preset;
+  }
+
+  function handleInputOrChange(target) {
+    if (target.matches('[data-action="setup-summary-input"]')) {
+      refreshSetupSummary();
+      return;
+    }
+    if (target.hasAttribute('data-account-id') && target.hasAttribute('data-field')) {
+      updateAccount(parseInt(target.getAttribute('data-account-id'), 10), target.getAttribute('data-field'), target.value);
+      return;
+    }
+    if (target.id === 'growthPreset') {
+      applyGrowthPreset(target.value);
+      return;
+    }
+    if (target.id === 'growth') {
+      syncGrowthPresetToValue();
+      return;
+    }
+    if (target.id === 'bniEnabled') {
+      document.getElementById('bni-fields').style.display = target.checked ? '' : 'none';
+    }
+  }   
+
   function refreshSetupSummary() {
     R.refreshOwnerOptions(state.portfolioAccounts, ownerNames());
     const summary = C.summarisePortfolio(state.portfolioAccounts);
@@ -298,6 +336,7 @@
     document.addEventListener('click', (e) => handleActionClick(e.target));
     document.addEventListener('input', (e) => handleInputOrChange(e.target));
     document.addEventListener('change', (e) => handleInputOrChange(e.target));
+    syncGrowthPresetToValue();
   }
 
   window.RetireApp = {
