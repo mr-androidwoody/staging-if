@@ -1,5 +1,42 @@
 (function () {
-  const D = window.RetireData;
+
+  // ─────────────────────────────────────────────
+  // LABEL → ELEMENT ID MAP
+  // Parameters sheet col A (human label) → DOM element ID
+  // ─────────────────────────────────────────────
+  const PARAM_MAP = {
+    'Person 1 – birth year':                    'woodyDOB',
+    'Person 2 – birth year':                    'heidiDOB',
+    'Person 1 name':                            'p1name',
+    'Person 2 name':                            'p2name',
+    'Start year':                               'startYear',
+    'End year':                                 'endYear',
+    'Annual household spending (£)':            'spending',
+    'Step-down at age 75 (%)':                  'stepDownPct',
+    'Person 1 – gross annual salary (£)':       'woodySalary',
+    'Person 1 – salary stop age':               'woodySalaryStopAge',
+    'Gross annual salary (£)':                  'heidiSalary',
+    'Stop age':                                 'heidiSalaryStopAge',
+    'Person 1 – start age':                     'woodySPAge',
+    'Person 1 – annual amount (£)':             'woodySP',
+    'Person 2 – start age':                     'heidiSPAge',
+    'Person 2 – annual amount (£)':             'heidiSP',
+    'Portfolio growth (%/yr)':                  'growth',
+    'Inflation (%/yr)':                         'inflation',
+    'Threshold uprating mode':                  'thresholdMode',
+    'Uprate from year':                         'thresholdFromYearVal',
+    'Enable bed-and-ISA':                       'bniEnabled',
+    'Person 1 GIA→ISA per year (£)':            'bniWoodyGIA',
+    'Person 2 GIA→ISA per year (£)':            'bniHeidiGIA',
+  };
+
+  const REQUIRED_LABELS = [
+    'Person 1 – birth year',
+    'Person 2 – birth year',
+    'Start year',
+    'End year',
+    'Annual household spending (£)',
+  ];
 
   // ─────────────────────────────────────────────
   // PUBLIC: trigger file picker
@@ -40,16 +77,15 @@
   // PARSE WORKBOOK
   // ─────────────────────────────────────────────
   function parseWorkbook(wb) {
-    const accounts   = parseAccounts(wb);
-    const params     = parseParams(wb);
-    const errors     = validate(accounts, params);
+    const accounts = parseAccounts(wb);
+    const params   = parseParams(wb);
+    const errors   = validate(accounts, params);
 
     if (errors.length) {
       alert('Excel load issues:\n\n' + errors.join('\n'));
       return;
     }
 
-    // Fire event so app.js can consume
     document.dispatchEvent(new CustomEvent('excel-loaded', {
       detail: { accounts, params }
     }));
@@ -69,26 +105,24 @@
     const rows = XLSX.utils.sheet_to_json(sheet, {
       header: 1,
       defval: '',
-      range:  2,   // skip row 1 (title) and row 2 (headers), 0-indexed so range:2 = start at row 3
+      range:  2,
     });
 
     const accounts = [];
     const validWrappers = new Set(['ISA', 'SIPP', 'GIA', 'Cash']);
 
-    rows.forEach((row, i) => {
+    rows.forEach((row) => {
       const name    = String(row[0] || '').trim();
       const wrapper = String(row[1] || '').trim();
-      // Skip blank rows and legend/reference rows (no valid wrapper)
-      if (!name) return;
-      if (!validWrappers.has(wrapper)) return;
+      if (!name || !validWrappers.has(wrapper)) return;
 
-      const owner      = String(row[2] || 'p1').trim();
-      const value      = parseNum(row[3]);
-      const equities   = parseNum(row[4]);
-      const bonds      = parseNum(row[5]);
-      const cashlike   = parseNum(row[6]);
-      const cash       = parseNum(row[7]);
-      const rate       = row[8] !== '' && row[8] !== null ? parseNum(row[8]) : null;
+      const owner       = String(row[2] || 'p1').trim();
+      const value       = parseNum(row[3]);
+      const equities    = parseNum(row[4]);
+      const bonds       = parseNum(row[5]);
+      const cashlike    = parseNum(row[6]);
+      const cash        = parseNum(row[7]);
+      const rate        = row[8] !== '' && row[8] !== null ? parseNum(row[8]) : null;
       const monthlyDraw = row[9] !== '' && row[9] !== null ? parseNum(row[9]) : null;
 
       accounts.push({ name, wrapper, owner, value,
@@ -101,9 +135,9 @@
 
   // ─────────────────────────────────────────────
   // SHEET 2 — Parameters
-  // Columns: label, key, value, notes
-  // Row 1 = title, Row 2 = headers, Row 3+ = data
-  // Section header rows have no key — skip them
+  // Layout: col A = label, col B = value, col C = notes
+  // Section header rows have no mapping — skipped automatically
+  // Labels mapped to element IDs via PARAM_MAP
   // ─────────────────────────────────────────────
   function parseParams(wb) {
     const sheet = wb.Sheets['Parameters'];
@@ -117,10 +151,11 @@
 
     const params = {};
     rows.forEach((row) => {
-      const key = String(row[1] || '').trim();
-      if (!key) return;           // section header row — no key
-      const val = row[2];
-      params[key] = val;
+      const label = String(row[0] || '').trim();
+      if (!label) return;
+      const elementId = PARAM_MAP[label];
+      if (!elementId) return; // section header or unrecognised — skip
+      params[elementId] = row[1]; // value is col B
     });
 
     return params;
@@ -145,10 +180,10 @@
         errors.push(`Accounts row ${r} (${a.name}): Allocation totals ${allocTotal.toFixed(1)}%, must be 100%`);
     });
 
-    const requiredParams = ['woodyDOB', 'heidiDOB', 'startYear', 'endYear', 'spending'];
-    requiredParams.forEach(k => {
-      if (params[k] === undefined || params[k] === '')
-        errors.push(`Parameters: Missing required key "${k}"`);
+    const requiredIds = REQUIRED_LABELS.map(l => PARAM_MAP[l]);
+    requiredIds.forEach(id => {
+      if (params[id] === undefined || params[id] === '')
+        errors.push(`Parameters: Missing required field "${id}"`);
     });
 
     return errors;

@@ -98,7 +98,7 @@
       const tax = _viewPerson === 'woody' ? r.woodyIncomeTax + r.woodyCGT + r.woodyNI
                 : _viewPerson === 'heidi' ? r.heidiIncomeTax + r.heidiCGT + r.heidiNI
                 : r.woodyIncomeTax + r.woodyCGT + r.woodyNI + r.heidiIncomeTax + r.heidiCGT + r.heidiNI;
-      const woodyGross = r.woodySP + r.woodyDrawn.SIPP + r.woodyDrawn.ISA + r.woodyDrawn.GIA + r.woodyIntDraw + r.woodyDrawn.Cash;
+      const woodyGross = r.woodySP + (r.woodySalInc || 0) + r.woodyDrawn.SIPP + r.woodyDrawn.ISA + r.woodyDrawn.GIA + r.woodyIntDraw + r.woodyDrawn.Cash;
       const heidiGross = r.heidiSP + r.heidiSalInc + r.heidiDrawn.SIPP + r.heidiDrawn.ISA + r.heidiDrawn.GIA + r.heidiIntDraw + r.heidiDrawn.Cash;
       const gross = _viewPerson === 'woody' ? woodyGross : _viewPerson === 'heidi' ? heidiGross : woodyGross + heidiGross;
       return s + (gross > 0 ? tax / gross : 0);
@@ -184,6 +184,7 @@
     let sets = [];
     if (_viewPerson === 'both' || _viewPerson === 'woody') {
       sets.push(ds(`State Pension – ${p1}`,    r => r.woodySP,          COLOURS.woodySP));
+      sets.push(ds(`Salary – ${p1}`,           r => r.woodySalInc || 0, COLOURS.salary));
       sets.push(ds(`SIPP – ${p1}`,             r => r.woodyDrawn.SIPP,  COLOURS.woodySIPP));
       sets.push(ds(`ISA – ${p1}`,              r => r.woodyDrawn.ISA,   COLOURS.woodyISA));
       sets.push(ds(`GIA – ${p1}`,              r => r.woodyDrawn.GIA,   COLOURS.woodyGIA));
@@ -233,7 +234,7 @@
       const tax = _viewPerson === 'woody' ? r.woodyIncomeTax + r.woodyCGT
                 : _viewPerson === 'heidi' ? r.heidiIncomeTax + r.heidiCGT
                 : r.woodyIncomeTax + r.woodyCGT + r.heidiIncomeTax + r.heidiCGT;
-      const woodyGross = r.woodySP + r.woodyDrawn.SIPP + r.woodyDrawn.ISA + r.woodyDrawn.GIA + r.woodyIntDraw + r.woodyDrawn.Cash;
+      const woodyGross = r.woodySP + (r.woodySalInc || 0) + r.woodyDrawn.SIPP + r.woodyDrawn.ISA + r.woodyDrawn.GIA + r.woodyIntDraw + r.woodyDrawn.Cash;
       const heidiGross = r.heidiSP + r.heidiSalInc + r.heidiDrawn.SIPP + r.heidiDrawn.ISA + r.heidiDrawn.GIA + r.heidiIntDraw + r.heidiDrawn.Cash;
       const gross = _viewPerson === 'woody' ? woodyGross : _viewPerson === 'heidi' ? heidiGross : woodyGross + heidiGross;
       return gross > 0 ? parseFloat((tax / gross * 100).toFixed(1)) : 0;

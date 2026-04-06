@@ -31,6 +31,8 @@
     const stepDownPct     = gvi('stepDownPct');
     const heidiSalary     = gv('heidiSalary');
     const heidiSalaryStop = gvi('heidiSalaryStopAge');
+    const woodySalary     = gv('woodySalary');
+    const woodySalaryStop = gvi('woodySalaryStopAge');
     const woodySPAge      = gvi('woodySPAge');
     const woodySPAmt      = gv('woodySP');
     const heidiSPAge      = gvi('heidiSPAge');
@@ -81,6 +83,7 @@
       const woodySP     = woodyAge >= woodySPAge ? woodySPAmt * cumInfl : 0;
       const heidiSP     = heidiAge >= heidiSPAge ? heidiSPAmt * cumInfl : 0;
       const heidiSalInc = (heidiSalaryStop && heidiAge < heidiSalaryStop) ? heidiSalary * cumInfl : 0;
+      const woodySalInc = (woodySalaryStop && woodyAge < woodySalaryStop) ? woodySalary * cumInfl : 0;
       const target      = (spending * cumInfl) * (stepDownPct > 0 && woodyAge >= 75 ? (1 - stepDownPct / 100) : 1);
 
       // Tax threshold uprating
@@ -159,7 +162,7 @@
       });
 
       // Priority 2: cash
-      const guaranteed = woodySP + heidiSP + heidiSalInc + intDrawTotal;
+      const guaranteed = woodySP + heidiSP + heidiSalInc + woodySalInc + intDrawTotal;
       let shortfall    = Math.max(0, target - guaranteed + bniCGTUnpaid);
       let woodyCashDrawn = 0, heidiCashDrawn = 0;
       if (shortfall > 0) {
@@ -203,13 +206,13 @@
         heidiGIACost = Math.max(0, heidiGIACost * (1 - Math.min(1, heidiDrawn.GIA / heidiGIABalBefore)));
 
       // Tax
-      const woodyNonSavings = woodySP + woodyDrawn.sippTaxable;
+      const woodyNonSavings = woodySP + woodySalInc + woodyDrawn.sippTaxable;
       const heidiNonSavings = heidiSP + heidiSalInc + heidiDrawn.sippTaxable;
       const woodyIncome     = C.calcIncomeTaxDetailed(woodyNonSavings, woodyIntTaxable, 0, effThresholds);
       const heidiIncome     = C.calcIncomeTaxDetailed(heidiNonSavings, heidiIntTaxable, 0, effThresholds);
       const woodyCGT        = C.calcCGT(woodyIncome.taxableIncomeAfterPA, Math.max(0, woodyGIARealised - effCGTExempt), effThresholds);
       const heidiCGT        = C.calcCGT(heidiIncome.taxableIncomeAfterPA, Math.max(0, heidiGIARealised - effCGTExempt), effThresholds);
-      const woodyNI         = C.calcEmployeeNI(0, effThresholds, woodyAge >= woodySPAge);
+      const woodyNI         = C.calcEmployeeNI(woodySalInc, effThresholds, woodyAge >= woodySPAge);
       const heidiNI         = C.calcEmployeeNI(heidiSalInc, effThresholds, heidiAge >= heidiSPAge);
 
       // Depletion tracking
@@ -229,7 +232,7 @@
 
       rows.push({
         year, woodyAge, heidiAge,
-        woodySP, heidiSP, heidiSalInc,
+        woodySP, heidiSP, heidiSalInc, woodySalInc,
         intDrawTotal, woodyIntDraw, heidiIntDraw,
         woodyIntTaxable, heidiIntTaxable,
         woodyDrawn, heidiDrawn,

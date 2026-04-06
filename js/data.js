@@ -12,6 +12,8 @@
     stepDownPct: 0,
     heidiSalary: 15000,
     heidiSalaryStopAge: 63,
+    woodySalary: 0,
+    woodySalaryStopAge: 0,
     woodySPAge: 67,
     woodySP: 12000,
     heidiSPAge: 67,
@@ -69,6 +71,7 @@
   const MONEY_FIELDS = new Set([
     'spending',
     'heidiSalary',
+    'woodySalary',
     'woodySP',
     'heidiSP',
     'woodyCash',
