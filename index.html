@@ -47,11 +47,11 @@
       <!-- Person 1 -->
       <div class="setup-panel">
         <div class="setup-panel-title">Person 1</div>
-        <div class="setup-panel-sub">Name, birth year, and projection range.</div>
+        <div class="setup-panel-sub">Name, birth year, salary, state pension, and projection range.</div>
 
         <div class="people-grid">
           <div>
-            <label>Person 1 name</label>
+            <label>Name</label>
             <input data-action="setup-summary-input" id="sp-p1name" type="text" placeholder="Person 1"/>
           </div>
 
@@ -69,6 +69,26 @@
             <label>Projection end year</label>
             <input data-action="setup-summary-input" id="sp-endYear" type="number" placeholder="e.g. 2060"/>
           </div>
+
+          <div>
+            <label>Gross salary (£/yr)</label>
+            <input type="text" id="woodySalary" class="currency-input" placeholder="e.g. 0"/>
+          </div>
+
+          <div>
+            <label>Salary stop age</label>
+            <input type="number" id="woodySalaryStopAge" placeholder="e.g. 60"/>
+          </div>
+
+          <div>
+            <label>State pension age</label>
+            <input type="number" id="woodySPAge" placeholder="e.g. 67"/>
+          </div>
+
+          <div>
+            <label>State pension (£/yr)</label>
+            <input type="text" id="woodySP" class="currency-input" placeholder="e.g. 12,000"/>
+          </div>
         </div>
       </div>
 
@@ -81,17 +101,37 @@
             Include Person 2
           </label>
         </div>
-        <div class="setup-panel-sub">Name and birth year.</div>
+        <div class="setup-panel-sub">Name, birth year, salary, and state pension.</div>
 
         <div class="people-grid" id="p2-setup-fields">
           <div>
-            <label>Person 2 name</label>
+            <label>Name</label>
             <input data-action="setup-summary-input" id="sp-p2name" type="text" placeholder="Person 2"/>
           </div>
 
           <div>
             <label>Birth year</label>
             <input data-action="setup-summary-input" id="sp-p2dob" type="number" placeholder="e.g. 1967"/>
+          </div>
+
+          <div>
+            <label>Gross salary (£/yr)</label>
+            <input type="text" id="heidiSalary" class="currency-input" placeholder="e.g. 0"/>
+          </div>
+
+          <div>
+            <label>Salary stop age</label>
+            <input type="number" id="heidiSalaryStopAge" placeholder="e.g. 63"/>
+          </div>
+
+          <div>
+            <label>State pension age</label>
+            <input type="number" id="heidiSPAge" placeholder="e.g. 67"/>
+          </div>
+
+          <div>
+            <label>State pension (£/yr)</label>
+            <input type="text" id="heidiSP" class="currency-input" placeholder="e.g. 12,547"/>
           </div>
         </div>
       </div>
@@ -200,7 +240,7 @@
             <div class="field"><label>Projection start year</label><input type="number" id="startYear" class="from-setup" readonly></div>
             <div class="field"><label>Projection end year</label><input type="number" id="endYear" class="from-setup" readonly></div>
           </div>
-          <div class="hint">Set on the Setup tab.</div>
+          <div class="hint">Birth years, salary, and state pension are set on the Setup tab.</div>
         </div>
       </div>
 
@@ -229,43 +269,6 @@
         </div>
       </div>
 
-      <div class="section" data-collapsible>
-        <div class="section-title" data-action="toggle-section"><span data-p1="salary (employment income)">Woody salary (employment income)</span><span class="section-chevron">▸</span></div>
-        <div class="section-body collapsed">
-          <div class="two-col">
-            <div class="field"><label>Gross annual (£)</label><input type="text" id="woodySalary" class="currency-input" placeholder="e.g. 0"></div>
-            <div class="field"><label>Stop age</label><input type="number" id="woodySalaryStopAge" placeholder="e.g. 60"></div>
-          </div>
-          <div class="hint">Employment income taxed as non-savings. Employee NI included until State Pension age.</div>
-        </div>
-      </div>
-
-      <div class="section" data-collapsible>
-        <div class="section-title" data-action="toggle-section"><span data-p2="salary (employment income)">Heidi salary (employment income)</span><span class="section-chevron">▸</span></div>
-        <div class="section-body collapsed">
-          <div class="two-col">
-            <div class="field p2-field"><label>Gross annual (£)</label><input type="text" id="heidiSalary" class="currency-input" placeholder="e.g. 15,000"></div>
-            <div class="field p2-field"><label>Stop age</label><input type="number" id="heidiSalaryStopAge" placeholder="e.g. 63"></div>
-          </div>
-          <div class="hint">Employment income taxed as non-savings. Employee NI included until State Pension age.</div>
-        </div>
-      </div>
-
-      <div class="section" data-collapsible>
-        <div class="section-title" data-action="toggle-section">State pension<span class="section-chevron">▸</span></div>
-        <div class="section-body collapsed">
-          <div class="subsection" data-p1>Woody</div>
-          <div class="two-col">
-            <div class="field"><label>Start age</label><input type="number" id="woodySPAge" placeholder="e.g. 67"></div>
-            <div class="field"><label>Annual amount (£)</label><input type="text" id="woodySP" class="currency-input" placeholder="e.g. 12,000"></div>
-          </div>
-          <div class="subsection p2-field" data-p2>Heidi</div>
-          <div class="two-col">
-            <div class="field p2-field"><label>Start age</label><input type="number" id="heidiSPAge" placeholder="e.g. 67"></div>
-            <div class="field p2-field"><label>Annual amount (£)</label><input type="text" id="heidiSP" class="currency-input" placeholder="e.g. 12,547"></div>
-          </div>
-        </div>
-      </div>
 
       <div class="section" data-collapsible>
         <div class="section-title" data-action="toggle-section">Cash holdings<span class="section-chevron">▸</span></div>
