@@ -57,8 +57,8 @@
 
       const p1SP     = p1Age >= p1SPAge ? p1SPAmt * cumInfl : 0;
       const p2SP     = p2Age >= p2SPAge ? p2SPAmt * cumInfl : 0;
-      const p2SalInc = (p2SalaryStop && p2Age < p2SalaryStop) ? p2Salary * cumInfl : 0;
-      const p1SalInc = (p1SalaryStop && p1Age < p1SalaryStop) ? p1Salary * cumInfl : 0;
+      const p2SalInc = (p2SalaryStop && p2Age <= p2SalaryStop) ? p2Salary * cumInfl : 0;
+      const p1SalInc = (p1SalaryStop && p1Age <= p1SalaryStop) ? p1Salary * cumInfl : 0;
       const target   = (spending * cumInfl) * (stepDownPct > 0 && p1Age >= 75 ? (1 - stepDownPct / 100) : 1);
 
       // Tax threshold uprating
