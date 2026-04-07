@@ -2,9 +2,6 @@
   const D = window.RetireData;
   const C = window.RetireCalc;
 
-  // ─────────────────────────────────────────────
-  // DOM HELPERS (read sidebar inputs)
-  // ─────────────────────────────────────────────
   function gv(id)  { return D.parseCurrency(document.getElementById(id)?.value || ''); }
   function gvi(id) { return parseInt(String(D.parseCurrency(document.getElementById(id)?.value || '')), 10) || 0; }
   function gvs(id) { return document.getElementById(id)?.value || ''; }
@@ -15,9 +12,6 @@
     return o;
   }
 
-  // ─────────────────────────────────────────────
-  // MAIN PROJECTION
-  // ─────────────────────────────────────────────
   function runProjection(interestAccounts) {
     const startYear = gvi('startYear');
     const endYear   = gvi('endYear');
@@ -25,48 +19,49 @@
       alert('Please enter valid start and end years.'); return null;
     }
 
-    const woodyDOB        = gvi('woodyDOB');
-    const heidiDOB        = gvi('heidiDOB');
+    const p1DOB           = gvi('woodyDOB');
+    const p2DOB           = gvi('heidiDOB');
     const spending        = gv('spending');
     const stepDownPct     = gvi('stepDownPct');
-    const heidiSalary     = gv('heidiSalary');
-    const heidiSalaryStop = gvi('heidiSalaryStopAge');
-    const woodySalary     = gv('woodySalary');
-    const woodySalaryStop = gvi('woodySalaryStopAge');
-    const woodySPAge      = gvi('woodySPAge');
-    const woodySPAmt      = gv('woodySP');
-    const heidiSPAge      = gvi('heidiSPAge');
-    const heidiSPAmt      = gv('heidiSP');
+    const p2Salary        = gv('heidiSalary');
+    const p2SalaryStop    = gvi('heidiSalaryStopAge');
+    const p1Salary        = gv('woodySalary');
+    const p1SalaryStop    = gvi('woodySalaryStopAge');
+    const p1SPAge         = gvi('woodySPAge');
+    const p1SPAmt         = gv('woodySP');
+    const p2SPAge         = gvi('heidiSPAge');
+    const p2SPAmt         = gv('heidiSP');
     const growth          = gv('growth') / 100;
     const inflation       = gv('inflation') / 100;
     const thresholdMode   = document.querySelector('input[name="thresholdMode"]:checked')?.value || 'frozen';
     const thresholdFromYear = parseInt(document.getElementById('thresholdFromYearVal')?.value) || 2028;
     const bniEnabled      = document.getElementById('bniEnabled')?.checked || false;
-    const bniWoodyGIA     = bniEnabled ? gv('bniWoodyGIA') : 0;
-    const bniHeidiGIA     = bniEnabled ? gv('bniHeidiGIA') : 0;
+    const bniP1GIA        = bniEnabled ? gv('bniWoodyGIA') : 0;
+    const bniP2GIA        = bniEnabled ? gv('bniHeidiGIA') : 0;
     const ISA_ALLOWANCE   = D.ISA_ALLOWANCE;
+    const dividendYieldRaw = parseFloat(document.getElementById('dividendYield')?.value) || 1.5;
+    const dividendYield   = dividendYieldRaw / 100;
+    const withdrawalMode  = document.querySelector('input[name="withdrawalMode"]:checked')?.value || '50/50';
 
-    // Interest-bearing accounts — deep copy so we don't mutate state
     const intAccts = (interestAccounts || []).map(a => ({ ...a }));
 
-    const woodyBal = { Cash: gv('woodyCash'), GIA: gv('woodyGIA'), SIPP: gv('woodySIPP'), ISA: gv('woodyISA') };
-    const heidiBal = { Cash: gv('heidiCash'), GIA: gv('heidiGIA'), SIPP: gv('heidiSIPP'), ISA: gv('heidiISA') };
+    const p1Bal = { Cash: gv('woodyCash'), GIA: gv('woodyGIA'), SIPP: gv('woodySIPP'), ISA: gv('woodyISA') };
+    const p2Bal = { Cash: gv('heidiCash'), GIA: gv('heidiGIA'), SIPP: gv('heidiSIPP'), ISA: gv('heidiISA') };
 
-    const woodyOrder = getOrder('woody', 4);
-    const heidiOrder = getOrder('heidi', 4);
+    const p1Order = getOrder('woody', 4);
+    const p2Order = getOrder('heidi', 4);
 
-    // p1name/p2name used for depletion keys and interest account ownership
     const p1name = document.getElementById('sp-p1name')?.value?.trim() || 'Person 1';
     const p2name = document.getElementById('sp-p2name')?.value?.trim() || 'Person 2';
 
-    let woodyGIACost = woodyBal.GIA;
-    let heidiGIACost = heidiBal.GIA;
+    let p1GIACost = p1Bal.GIA;
+    let p2GIACost = p2Bal.GIA;
 
     const startBal = {
-      [`${p1name} Cash`]: woodyBal.Cash, [`${p1name} GIA`]: woodyBal.GIA,
-      [`${p1name} SIPP`]: woodyBal.SIPP, [`${p1name} ISA`]: woodyBal.ISA,
-      [`${p2name} Cash`]: heidiBal.Cash, [`${p2name} GIA`]: heidiBal.GIA,
-      [`${p2name} SIPP`]: heidiBal.SIPP, [`${p2name} ISA`]: heidiBal.ISA,
+      [`${p1name} Cash`]: p1Bal.Cash, [`${p1name} GIA`]: p1Bal.GIA,
+      [`${p1name} SIPP`]: p1Bal.SIPP, [`${p1name} ISA`]: p1Bal.ISA,
+      [`${p2name} Cash`]: p2Bal.Cash, [`${p2name} GIA`]: p2Bal.GIA,
+      [`${p2name} SIPP`]: p2Bal.SIPP, [`${p2name} ISA`]: p2Bal.ISA,
     };
     intAccts.forEach(a => { startBal[a.name + ' (' + a.owner + ')'] = a.balance || a.value || 0; });
 
@@ -75,16 +70,16 @@
     const rows = [];
 
     for (let year = startYear; year <= endYear; year++) {
-      const woodyAge = year - woodyDOB;
-      const heidiAge = year - heidiDOB;
+      const p1Age = year - p1DOB;
+      const p2Age = year - p2DOB;
       cumInfl *= (1 + inflation);
       const realDeflator = 1 / cumInfl;
 
-      const woodySP     = woodyAge >= woodySPAge ? woodySPAmt * cumInfl : 0;
-      const heidiSP     = heidiAge >= heidiSPAge ? heidiSPAmt * cumInfl : 0;
-      const heidiSalInc = (heidiSalaryStop && heidiAge < heidiSalaryStop) ? heidiSalary * cumInfl : 0;
-      const woodySalInc = (woodySalaryStop && woodyAge < woodySalaryStop) ? woodySalary * cumInfl : 0;
-      const target      = (spending * cumInfl) * (stepDownPct > 0 && woodyAge >= 75 ? (1 - stepDownPct / 100) : 1);
+      const p1SP     = p1Age >= p1SPAge ? p1SPAmt * cumInfl : 0;
+      const p2SP     = p2Age >= p2SPAge ? p2SPAmt * cumInfl : 0;
+      const p2SalInc = (p2SalaryStop && p2Age < p2SalaryStop) ? p2Salary * cumInfl : 0;
+      const p1SalInc = (p1SalaryStop && p1Age < p1SalaryStop) ? p1Salary * cumInfl : 0;
+      const target   = (spending * cumInfl) * (stepDownPct > 0 && p1Age >= 75 ? (1 - stepDownPct / 100) : 1);
 
       // Tax threshold uprating
       let uprateFactor = 1;
@@ -93,51 +88,47 @@
       } else if (thresholdMode === 'fromYear' && year >= thresholdFromYear) {
         uprateFactor = cumInfl / Math.pow(1 + inflation, thresholdFromYear - startYear);
       }
-      const baseRules      = C.getTaxRulesForYear(year);
-      const effThresholds  = C.upratedTaxRules(baseRules, uprateFactor);
-      const effCGTExempt   = effThresholds.cgtExempt;
+      const baseRules     = C.getTaxRulesForYear(year);
+      const effThresholds = C.upratedTaxRules(baseRules, uprateFactor);
+      const effCGTExempt  = effThresholds.cgtExempt;
 
-      // Bed-and-ISA
-      let bniCGTBill = 0, bniCGTUnpaid = 0;
+      // FIX 2: GIA dividends — opening balance × yield, treated as cashflow (not reinvested)
+      const p1GIAOpen = p1Bal.GIA || 0;
+      const p2GIAOpen = p2Bal.GIA || 0;
+      const p1Divs    = p1GIAOpen * dividendYield;
+      const p2Divs    = p2GIAOpen * dividendYield;
+
+      // FIX 1: annual CGT gain accumulators — reset each year, exemption applied once at year-end
+      let p1AnnualGains = 0;
+      let p2AnnualGains = 0;
+
+      // Bed-and-ISA: accumulate gains only, no exemption applied here
       if (bniEnabled) {
-        let woodyBniCGT = 0, heidiBniCGT = 0;
-        if (bniWoodyGIA > 0 && woodyBal.GIA > 0) {
-          const transfer    = Math.min(bniWoodyGIA, woodyBal.GIA, ISA_ALLOWANCE);
-          const giaGain     = Math.max(0, woodyBal.GIA - woodyGIACost);
-          const taxableGain = Math.max(0, transfer * (woodyBal.GIA > 0 ? giaGain / woodyBal.GIA : 0) - effCGTExempt);
-          woodyBniCGT       = taxableGain > 0 ? C.calcCGT(0, taxableGain, effThresholds) : 0;
-          bniCGTBill       += woodyBniCGT;
-          const costFrac    = woodyBal.GIA > 0 ? transfer / woodyBal.GIA : 1;
-          woodyBal.GIA     -= transfer;
-          woodyBal.ISA     += transfer;
-          woodyGIACost      = Math.max(0, woodyGIACost * (1 - costFrac));
+        if (bniP1GIA > 0 && p1Bal.GIA > 0) {
+          const transfer  = Math.min(bniP1GIA, p1Bal.GIA, ISA_ALLOWANCE);
+          const giaGain   = Math.max(0, p1Bal.GIA - p1GIACost);
+          const gainFrac  = p1Bal.GIA > 0 ? giaGain / p1Bal.GIA : 0;
+          p1AnnualGains  += transfer * gainFrac;
+          const costFrac  = p1Bal.GIA > 0 ? transfer / p1Bal.GIA : 1;
+          p1Bal.GIA      -= transfer;
+          p1Bal.ISA      += transfer;
+          p1GIACost       = Math.max(0, p1GIACost * (1 - costFrac));
         }
-        if (bniHeidiGIA > 0 && heidiBal.GIA > 0) {
-          const transfer    = Math.min(bniHeidiGIA, heidiBal.GIA, ISA_ALLOWANCE);
-          const giaGain     = Math.max(0, heidiBal.GIA - heidiGIACost);
-          const taxableGain = Math.max(0, transfer * (heidiBal.GIA > 0 ? giaGain / heidiBal.GIA : 0) - effCGTExempt);
-          heidiBniCGT       = taxableGain > 0 ? C.calcCGT(0, taxableGain, effThresholds) : 0;
-          bniCGTBill       += heidiBniCGT;
-          const costFrac    = heidiBal.GIA > 0 ? transfer / heidiBal.GIA : 1;
-          heidiBal.GIA     -= transfer;
-          heidiBal.ISA     += transfer;
-          heidiGIACost      = Math.max(0, heidiGIACost * (1 - costFrac));
-        }
-        if (woodyBniCGT > 0) {
-          const fromCash = Math.min(woodyBniCGT, woodyBal.Cash || 0);
-          woodyBal.Cash -= fromCash;
-          bniCGTUnpaid  += woodyBniCGT - fromCash;
-        }
-        if (heidiBniCGT > 0) {
-          const fromCash = Math.min(heidiBniCGT, heidiBal.Cash || 0);
-          heidiBal.Cash -= fromCash;
-          bniCGTUnpaid  += heidiBniCGT - fromCash;
+        if (bniP2GIA > 0 && p2Bal.GIA > 0) {
+          const transfer  = Math.min(bniP2GIA, p2Bal.GIA, ISA_ALLOWANCE);
+          const giaGain   = Math.max(0, p2Bal.GIA - p2GIACost);
+          const gainFrac  = p2Bal.GIA > 0 ? giaGain / p2Bal.GIA : 0;
+          p2AnnualGains  += transfer * gainFrac;
+          const costFrac  = p2Bal.GIA > 0 ? transfer / p2Bal.GIA : 1;
+          p2Bal.GIA      -= transfer;
+          p2Bal.ISA      += transfer;
+          p2GIACost       = Math.max(0, p2GIACost * (1 - costFrac));
         }
       }
 
       // Priority 1: interest-bearing accounts
-      let intDrawTotal = 0, woodyIntDraw = 0, heidiIntDraw = 0;
-      let woodyIntTaxable = 0, heidiIntTaxable = 0;
+      let intDrawTotal = 0, p1IntDraw = 0, p2IntDraw = 0;
+      let p1IntTaxable = 0, p2IntTaxable = 0;
       intAccts.forEach(a => {
         if ((a.balance || 0) <= 0) return;
         const effectiveRate  = C.interestEffective(a.rate);
@@ -146,7 +137,7 @@
         const isP1           = a.owner === p1name;
         if (annualTarget <= 0) {
           a.balance += interestEarned;
-          if (a.wrapper === 'GIA') { if (isP1) woodyIntTaxable += interestEarned; else heidiIntTaxable += interestEarned; }
+          if (a.wrapper === 'GIA') { if (isP1) p1IntTaxable += interestEarned; else p2IntTaxable += interestEarned; }
           return;
         }
         const drawActual    = Math.min(annualTarget, a.balance + interestEarned);
@@ -154,102 +145,187 @@
         a.balance          -= Math.max(0, drawActual - interestDrawn);
         a.balance          += interestEarned - interestDrawn;
         intDrawTotal += drawActual;
-        if (isP1) woodyIntDraw += drawActual; else heidiIntDraw += drawActual;
-        if (a.wrapper === 'GIA') { if (isP1) woodyIntTaxable += interestEarned; else heidiIntTaxable += interestEarned; }
+        if (isP1) p1IntDraw += drawActual; else p2IntDraw += drawActual;
+        if (a.wrapper === 'GIA') { if (isP1) p1IntTaxable += interestEarned; else p2IntTaxable += interestEarned; }
         const key = a.name + ' (' + a.owner + ')';
         if (!depletions[key] && (startBal[key] || 0) > 0 && a.balance <= 0)
-          depletions[key] = { year, age: year - (isP1 ? woodyDOB : heidiDOB) };
+          depletions[key] = { year, age: year - (isP1 ? p1DOB : p2DOB) };
       });
 
-      // Priority 2: cash
-      const guaranteed = woodySP + heidiSP + heidiSalInc + woodySalInc + intDrawTotal;
-      let shortfall    = Math.max(0, target - guaranteed + bniCGTUnpaid);
-      let woodyCashDrawn = 0, heidiCashDrawn = 0;
+      // Priority 2: cash (dividends now count as guaranteed income)
+      const guaranteed = p1SP + p2SP + p2SalInc + p1SalInc + intDrawTotal + p1Divs + p2Divs;
+      let shortfall    = Math.max(0, target - guaranteed);
+      let p1CashDrawn = 0, p2CashDrawn = 0;
       if (shortfall > 0) {
-        const totalCash = (woodyBal.Cash || 0) + (heidiBal.Cash || 0);
+        const totalCash = (p1Bal.Cash || 0) + (p2Bal.Cash || 0);
         const cashDrawn = Math.min(shortfall, totalCash);
-        const fromWoody = Math.min(cashDrawn, woodyBal.Cash || 0);
-        const fromHeidi = Math.max(0, cashDrawn - fromWoody);
-        woodyBal.Cash  -= fromWoody;
-        heidiBal.Cash   = Math.max(0, (heidiBal.Cash || 0) - fromHeidi);
-        woodyCashDrawn  = fromWoody;
-        heidiCashDrawn  = fromHeidi;
+        const fromP1    = Math.min(cashDrawn, p1Bal.Cash || 0);
+        const fromP2    = Math.max(0, cashDrawn - fromP1);
+        p1Bal.Cash     -= fromP1;
+        p2Bal.Cash      = Math.max(0, (p2Bal.Cash || 0) - fromP2);
+        p1CashDrawn     = fromP1;
+        p2CashDrawn     = fromP2;
         shortfall      -= cashDrawn;
       }
 
-      // Priority 3: wrapper order (50/50 split)
-      const woodyWrapperOrder = woodyOrder.filter(w => w !== 'Cash');
-      const heidiWrapperOrder = heidiOrder.filter(w => w !== 'Cash');
-      const woodyHalf  = shortfall / 2;
-      const woodyDrawn = C.withdraw(woodyBal, woodyWrapperOrder, woodyHalf);
-      const woodyUnmet = Math.max(0, woodyHalf - woodyDrawn.GIA - woodyDrawn.SIPP - woodyDrawn.ISA);
-      const heidiDrawn = C.withdraw(heidiBal, heidiWrapperOrder, shortfall / 2 + woodyUnmet);
-      const heidiUnmet = Math.max(0, (shortfall / 2 + woodyUnmet) - heidiDrawn.GIA - heidiDrawn.SIPP - heidiDrawn.ISA);
-      if (heidiUnmet > 0) C.withdraw(woodyBal, woodyWrapperOrder, heidiUnmet);
-      woodyDrawn.Cash += woodyCashDrawn;
-      heidiDrawn.Cash += heidiCashDrawn;
+      // Priority 3: wrapper draws
+      const p1WrapperOrder = p1Order.filter(w => w !== 'Cash');
+      const p2WrapperOrder = p2Order.filter(w => w !== 'Cash');
+      let p1Drawn, p2Drawn;
 
-      // Growth & CGT
-      const woodyGIABalBefore = woodyBal.GIA || 0;
-      const heidiGIABalBefore = heidiBal.GIA || 0;
-      C.growBalances(woodyBal, growth);
-      C.growBalances(heidiBal, growth);
-      woodyGIACost += woodyGIABalBefore * growth;
-      heidiGIACost += heidiGIABalBefore * growth;
-      const woodyGIAGainFrac = woodyBal.GIA > 0 ? Math.max(0, woodyBal.GIA - woodyGIACost) / woodyBal.GIA : 0;
-      const heidiGIAGainFrac = heidiBal.GIA > 0 ? Math.max(0, heidiBal.GIA - heidiGIACost) / heidiBal.GIA : 0;
-      const woodyGIARealised = woodyDrawn.GIA * woodyGIAGainFrac;
-      const heidiGIARealised = heidiDrawn.GIA * heidiGIAGainFrac;
-      if (woodyGIABalBefore > 0 && woodyDrawn.GIA > 0)
-        woodyGIACost = Math.max(0, woodyGIACost * (1 - Math.min(1, woodyDrawn.GIA / woodyGIABalBefore)));
-      if (heidiGIABalBefore > 0 && heidiDrawn.GIA > 0)
-        heidiGIACost = Math.max(0, heidiGIACost * (1 - Math.min(1, heidiDrawn.GIA / heidiGIABalBefore)));
+      if (withdrawalMode === '50/50') {
+        // Purely mechanical equal split — no tax logic applied
+        const p1Half  = shortfall / 2;
+        p1Drawn       = C.withdraw(p1Bal, p1WrapperOrder, p1Half);
+        const p1Unmet = Math.max(0, p1Half - p1Drawn.GIA - p1Drawn.SIPP - p1Drawn.ISA);
+        p2Drawn       = C.withdraw(p2Bal, p2WrapperOrder, shortfall / 2 + p1Unmet);
+        const p2Unmet = Math.max(0, (shortfall / 2 + p1Unmet) - p2Drawn.GIA - p2Drawn.SIPP - p2Drawn.ISA);
+        if (p2Unmet > 0) C.withdraw(p1Bal, p1WrapperOrder, p2Unmet);
 
-      // Tax
-      const woodyNonSavings = woodySP + woodySalInc + woodyDrawn.sippTaxable;
-      const heidiNonSavings = heidiSP + heidiSalInc + heidiDrawn.sippTaxable;
-      const woodyIncome     = C.calcIncomeTaxDetailed(woodyNonSavings, woodyIntTaxable, 0, effThresholds);
-      const heidiIncome     = C.calcIncomeTaxDetailed(heidiNonSavings, heidiIntTaxable, 0, effThresholds);
-      const woodyCGT        = C.calcCGT(woodyIncome.taxableIncomeAfterPA, Math.max(0, woodyGIARealised - effCGTExempt), effThresholds);
-      const heidiCGT        = C.calcCGT(heidiIncome.taxableIncomeAfterPA, Math.max(0, heidiGIARealised - effCGTExempt), effThresholds);
-      const woodyNI         = C.calcEmployeeNI(woodySalInc, effThresholds, woodyAge >= woodySPAge);
-      const heidiNI         = C.calcEmployeeNI(heidiSalInc, effThresholds, heidiAge >= heidiSPAge);
+      } else {
+        // FIX 3: tax-aware mode — SIPP to fill PA, then proportional split by remaining headroom
+
+        // Step 1: PA headroom — deduct all known income that consumes PA
+        // Interest and dividends are included so we don't overfill SIPP into PSA/dividend band
+        const p1GuaranteedNS = p1SP + p1SalInc + p1IntTaxable + p1Divs;
+        const p2GuaranteedNS = p2SP + p2SalInc + p2IntTaxable + p2Divs;
+        const p1PAHeadroom   = Math.max(0, effThresholds.PA - p1GuaranteedNS);
+        const p2PAHeadroom   = Math.max(0, effThresholds.PA - p2GuaranteedNS);
+
+        // Step 2: draw SIPP to fill PA (gross = headroom / 0.75 because 75% of SIPP is taxable)
+        const p1SippTarget = p1PAHeadroom > 0 ? Math.min(p1PAHeadroom / 0.75, p1Bal.SIPP || 0) : 0;
+        const p2SippTarget = p2PAHeadroom > 0 ? Math.min(p2PAHeadroom / 0.75, p2Bal.SIPP || 0) : 0;
+        p1Drawn = C.withdraw(p1Bal, ['SIPP'], p1SippTarget);
+        p2Drawn = C.withdraw(p2Bal, ['SIPP'], p2SippTarget);
+
+        // Step 3: remaining shortfall split proportionally by remaining PA headroom
+        const p1SippTaxable = p1Drawn.sippTaxable;
+        const p2SippTaxable = p2Drawn.sippTaxable;
+        const p1RemHeadroom = Math.max(0, p1PAHeadroom - p1SippTaxable);
+        const p2RemHeadroom = Math.max(0, p2PAHeadroom - p2SippTaxable);
+        const sippDrawTotal = p1Drawn.SIPP + p2Drawn.SIPP;
+        const remShortfall  = Math.max(0, shortfall - sippDrawTotal);
+
+        const totalHeadroom = p1RemHeadroom + p2RemHeadroom;
+        const p1Weight      = totalHeadroom > 0 ? p1RemHeadroom / totalHeadroom : 0.5;
+        const p2Weight      = 1 - p1Weight;
+
+        const p1NonSippOrder = p1WrapperOrder.filter(w => w !== 'SIPP');
+        const p2NonSippOrder = p2WrapperOrder.filter(w => w !== 'SIPP');
+        const p1RemDrawn = C.withdraw(p1Bal, p1NonSippOrder, remShortfall * p1Weight);
+        const p2RemDrawn = C.withdraw(p2Bal, p2NonSippOrder, remShortfall * p2Weight);
+
+        // Merge draws
+        p1Drawn.GIA += p1RemDrawn.GIA;
+        p1Drawn.ISA += p1RemDrawn.ISA;
+        p2Drawn.GIA += p2RemDrawn.GIA;
+        p2Drawn.ISA += p2RemDrawn.ISA;
+
+        // Fallback: unmet demand goes to the other person
+        const p1Unmet = Math.max(0, remShortfall * p1Weight - p1RemDrawn.GIA - p1RemDrawn.ISA - p1RemDrawn.SIPP);
+        const p2Unmet = Math.max(0, remShortfall * p2Weight - p2RemDrawn.GIA - p2RemDrawn.ISA - p2RemDrawn.SIPP);
+        if (p1Unmet > 0) {
+          const extra = C.withdraw(p2Bal, p2NonSippOrder, p1Unmet);
+          p2Drawn.GIA += extra.GIA; p2Drawn.ISA += extra.ISA;
+        }
+        if (p2Unmet > 0) {
+          const extra = C.withdraw(p1Bal, p1NonSippOrder, p2Unmet);
+          p1Drawn.GIA += extra.GIA; p1Drawn.ISA += extra.ISA;
+        }
+      }
+
+      p1Drawn.Cash += p1CashDrawn;
+      p2Drawn.Cash += p2CashDrawn;
+
+      // Growth & cost basis
+      const p1GIABalBefore = p1Bal.GIA || 0;
+      const p2GIABalBefore = p2Bal.GIA || 0;
+      C.growBalances(p1Bal, growth);
+      C.growBalances(p2Bal, growth);
+      p1GIACost += p1GIABalBefore * growth;
+      p2GIACost += p2GIABalBefore * growth;
+
+      // FIX 1: accumulate withdrawal GIA gains (no exemption yet)
+      const p1GIAGainFrac = p1Bal.GIA > 0 ? Math.max(0, p1Bal.GIA - p1GIACost) / p1Bal.GIA : 0;
+      const p2GIAGainFrac = p2Bal.GIA > 0 ? Math.max(0, p2Bal.GIA - p2GIACost) / p2Bal.GIA : 0;
+      p1AnnualGains += p1Drawn.GIA * p1GIAGainFrac;
+      p2AnnualGains += p2Drawn.GIA * p2GIAGainFrac;
+
+      if (p1GIABalBefore > 0 && p1Drawn.GIA > 0)
+        p1GIACost = Math.max(0, p1GIACost * (1 - Math.min(1, p1Drawn.GIA / p1GIABalBefore)));
+      if (p2GIABalBefore > 0 && p2Drawn.GIA > 0)
+        p2GIACost = Math.max(0, p2GIACost * (1 - Math.min(1, p2Drawn.GIA / p2GIABalBefore)));
+
+      // Income tax first (required for CGT band stacking)
+      const p1NonSavings = p1SP + p1SalInc + p1Drawn.sippTaxable;
+      const p2NonSavings = p2SP + p2SalInc + p2Drawn.sippTaxable;
+      const p1Income     = C.calcIncomeTaxDetailed(p1NonSavings, p1IntTaxable, p1Divs, effThresholds);
+      const p2Income     = C.calcIncomeTaxDetailed(p2NonSavings, p2IntTaxable, p2Divs, effThresholds);
+
+      // FIX 1: single CGT per person — one exemption applied to full annual gains
+      const p1TaxableGain = Math.max(0, p1AnnualGains - effCGTExempt);
+      const p2TaxableGain = Math.max(0, p2AnnualGains - effCGTExempt);
+      const p1CGT         = C.calcCGT(p1Income.taxableIncomeAfterPA, p1TaxableGain, effThresholds);
+      const p2CGT         = C.calcCGT(p2Income.taxableIncomeAfterPA, p2TaxableGain, effThresholds);
+
+      // Pay CGT from cash where possible
+      if (p1CGT > 0) { const f = Math.min(p1CGT, p1Bal.Cash || 0); p1Bal.Cash -= f; }
+      if (p2CGT > 0) { const f = Math.min(p2CGT, p2Bal.Cash || 0); p2Bal.Cash -= f; }
+
+      const p1NI = C.calcEmployeeNI(p1SalInc, effThresholds, p1Age >= p1SPAge);
+      const p2NI = C.calcEmployeeNI(p2SalInc, effThresholds, p2Age >= p2SPAge);
 
       // Depletion tracking
       const checkMap = {
-        [`${p1name} Cash`]: woodyBal.Cash, [`${p1name} GIA`]: woodyBal.GIA,
-        [`${p1name} SIPP`]: woodyBal.SIPP, [`${p1name} ISA`]: woodyBal.ISA,
-        [`${p2name} Cash`]: heidiBal.Cash, [`${p2name} GIA`]: heidiBal.GIA,
-        [`${p2name} SIPP`]: heidiBal.SIPP, [`${p2name} ISA`]: heidiBal.ISA,
+        [`${p1name} Cash`]: p1Bal.Cash, [`${p1name} GIA`]: p1Bal.GIA,
+        [`${p1name} SIPP`]: p1Bal.SIPP, [`${p1name} ISA`]: p1Bal.ISA,
+        [`${p2name} Cash`]: p2Bal.Cash, [`${p2name} GIA`]: p2Bal.GIA,
+        [`${p2name} SIPP`]: p2Bal.SIPP, [`${p2name} ISA`]: p2Bal.ISA,
       };
       Object.entries(checkMap).forEach(([key, bal]) => {
         if (!depletions[key] && (startBal[key] || 0) > 0 && bal <= 0)
-          depletions[key] = { year, age: year - (key.startsWith(p1name) ? woodyDOB : heidiDOB) };
+          depletions[key] = { year, age: year - (key.startsWith(p1name) ? p1DOB : p2DOB) };
       });
 
-      const intBalWoody = intAccts.filter(a => a.owner === p1name).reduce((s, a) => s + (a.balance || 0), 0);
-      const intBalHeidi = intAccts.filter(a => a.owner !== p1name).reduce((s, a) => s + (a.balance || 0), 0);
+      const intBalP1 = intAccts.filter(a => a.owner === p1name).reduce((s, a) => s + (a.balance || 0), 0);
+      const intBalP2 = intAccts.filter(a => a.owner !== p1name).reduce((s, a) => s + (a.balance || 0), 0);
 
       rows.push({
-        year, woodyAge, heidiAge,
-        woodySP, heidiSP, heidiSalInc, woodySalInc,
-        intDrawTotal, woodyIntDraw, heidiIntDraw,
-        woodyIntTaxable, heidiIntTaxable,
-        woodyDrawn, heidiDrawn,
-        woodyIncomeTax: woodyIncome.tax, heidiIncomeTax: heidiIncome.tax,
-        woodyCGT, heidiCGT, woodyNI, heidiNI,
-        woodyTax: woodyIncome.tax + woodyCGT + woodyNI,
-        heidiTax: heidiIncome.tax + heidiCGT + heidiNI,
-        woodyTaxInc: woodyNonSavings + woodyIntTaxable,
-        heidiTaxInc: heidiNonSavings + heidiIntTaxable,
-        bniCGTBill: bniCGTBill || 0,
-        totalPortfolio: C.totalBal(woodyBal) + C.totalBal(heidiBal) + intBalWoody + intBalHeidi,
+        year, p1Age, p2Age,
+        // Legacy aliases — keep calc-render.js working without changes
+        woodyAge: p1Age, heidiAge: p2Age,
+        p1SP, p2SP, p1SalInc, p2SalInc,
+        woodySP: p1SP, heidiSP: p2SP, woodySalInc: p1SalInc, heidiSalInc: p2SalInc,
+        intDrawTotal, p1IntDraw, p2IntDraw,
+        woodyIntDraw: p1IntDraw, heidiIntDraw: p2IntDraw,
+        p1IntTaxable, p2IntTaxable,
+        woodyIntTaxable: p1IntTaxable, heidiIntTaxable: p2IntTaxable,
+        p1Divs, p2Divs,
+        p1Drawn, p2Drawn,
+        woodyDrawn: p1Drawn, heidiDrawn: p2Drawn,
+        p1IncomeTax: p1Income.tax, p2IncomeTax: p2Income.tax,
+        woodyIncomeTax: p1Income.tax, heidiIncomeTax: p2Income.tax,
+        p1CGT, p2CGT,
+        woodyCGT: p1CGT, heidiCGT: p2CGT,
+        p1NI, p2NI,
+        woodyNI: p1NI, heidiNI: p2NI,
+        p1Tax: p1Income.tax + p1CGT + p1NI,
+        p2Tax: p2Income.tax + p2CGT + p2NI,
+        woodyTax: p1Income.tax + p1CGT + p1NI,
+        heidiTax: p2Income.tax + p2CGT + p2NI,
+        p1TaxInc: p1NonSavings + p1IntTaxable + p1Divs,
+        p2TaxInc: p2NonSavings + p2IntTaxable + p2Divs,
+        woodyTaxInc: p1NonSavings + p1IntTaxable + p1Divs,
+        heidiTaxInc: p2NonSavings + p2IntTaxable + p2Divs,
+        p1AnnualGains, p2AnnualGains,
+        bniCGTBill: p1CGT + p2CGT,
+        totalPortfolio: C.totalBal(p1Bal) + C.totalBal(p2Bal) + intBalP1 + intBalP2,
         realDeflator, cumInfl,
         snap: {
-          woodyCash: woodyBal.Cash, woodyIntBal: intBalWoody,
-          woodyGIA:  woodyBal.GIA,  woodySIPP:   woodyBal.SIPP, woodyISA: woodyBal.ISA,
-          heidiCash: heidiBal.Cash, heidiIntBal: intBalHeidi,
-          heidiGIA:  heidiBal.GIA,  heidiSIPP:   heidiBal.SIPP, heidiISA: heidiBal.ISA,
+          woodyCash: p1Bal.Cash, woodyIntBal: intBalP1,
+          woodyGIA:  p1Bal.GIA,  woodySIPP:   p1Bal.SIPP, woodyISA: p1Bal.ISA,
+          heidiCash: p2Bal.Cash, heidiIntBal: intBalP2,
+          heidiGIA:  p2Bal.GIA,  heidiSIPP:   p2Bal.SIPP, heidiISA: p2Bal.ISA,
         },
       });
     }

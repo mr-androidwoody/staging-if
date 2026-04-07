@@ -23,6 +23,7 @@
     thresholdFromYearVal: 2028,
     bniWoodyGIA: 20000,
     bniHeidiGIA: 5000,
+    dividendYield: 1.5,
   };
 
   const TAX_RULES = {
