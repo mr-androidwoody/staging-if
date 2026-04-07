@@ -401,8 +401,8 @@
         SIPP: gv('heidiSIPP'),
         ISA:  gv('heidiISA'),
       },
-      p1Order: getOrder('woody', 4),
-      p2Order: getOrder('heidi', 4),
+      p1Order: getOrder('woody', 3),
+      p2Order: getOrder('heidi', 3),
     };
   }
 
