@@ -301,29 +301,32 @@
       </div>
 
       <div class="section" data-collapsible>
-        <div class="section-title" data-action="toggle-section">Withdrawal mode &amp; order<span class="section-chevron">▸</span></div>
+        <div class="section-title" data-action="toggle-section">Withdrawal order (1st → last)<span class="section-chevron">▸</span></div>
         <div class="section-body collapsed">
-          <div class="subsection" style="margin-bottom:4px">Withdrawal split mode</div>
-          <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:0.85rem">
-            <input type="radio" name="withdrawalMode" value="50/50"> 50/50 mechanical split (wrapper order only)
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem">
-            <input type="radio" name="withdrawalMode" value="tax-aware" checked> Tax-aware (SIPP fills PA, then proportional by headroom)
-          </label>
-          <div class="subsection" style="margin-top:0.75rem;margin-bottom:4px">Wrapper order (1st → last) — applies after Cash</div>
-          <div class="subsection" data-p1 style="margin-bottom:2px">Woody</div>
+          <div class="subsection" data-p1>Woody</div>
           <div class="order-row">
-            <select id="woodyOrder1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
-            <select id="woodyOrder2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option></select>
-            <select id="woodyOrder3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option></select>
+            <select id="woodyOrder1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option><option value="Cash">Cash</option></select>
+            <select id="woodyOrder2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option><option value="Cash">Cash</option></select>
+            <select id="woodyOrder3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="Cash">Cash</option></select>
+            <select id="woodyOrder4"><option value="Cash">Cash</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
           </div>
-          <div class="subsection" data-p2 style="margin-top:0.5rem;margin-bottom:2px">Heidi</div>
+          <div class="subsection" data-p2 style="margin-top:0.5rem">Heidi</div>
           <div class="order-row">
-            <select id="heidiOrder1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
-            <select id="heidiOrder2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option></select>
-            <select id="heidiOrder3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option></select>
+            <select id="heidiOrder1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option><option value="Cash">Cash</option></select>
+            <select id="heidiOrder2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option><option value="Cash">Cash</option></select>
+            <select id="heidiOrder3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="Cash">Cash</option></select>
+            <select id="heidiOrder4"><option value="Cash">Cash</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
           </div>
-          <div class="hint" style="margin-top:6px">Interest-bearing accounts drawn first, then Cash (automatic), then wrapper order above.</div>
+          <div class="hint" style="margin-top:6px">Interest-bearing accounts drawn first, then Cash, then this order.</div>
+          <div style="margin-top:10px">
+            <div class="subsection" style="margin-bottom:4px">Withdrawal split mode</div>
+            <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:0.85rem">
+              <input type="radio" name="withdrawalMode" value="50/50"> 50/50 mechanical split (wrapper order only)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem">
+              <input type="radio" name="withdrawalMode" value="tax-aware" checked> Tax-aware (SIPP fills PA, then proportional by headroom)
+            </label>
+          </div>
         </div>
       </div>
 
@@ -334,6 +337,25 @@
             <div class="field"><label>Portfolio growth (%/yr)</label><input type="number" id="growth" step="0.1" placeholder="e.g. 4"></div>
             <div class="field"><label>Inflation (%/yr)</label><input type="number" id="inflation" step="0.1" placeholder="e.g. 2.5"></div>
           </div>
+          <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+            <span style="font-size:11px;color:#666;margin-right:2px">Growth preset:</span>
+            <button type="button" class="preload-btn" id="preset-cautious" onclick="
+              document.getElementById('growth').value='3';
+              ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
+              this.style.fontWeight='bold';
+            ">Cautious 3%</button>
+            <button type="button" class="preload-btn" id="preset-baseline" onclick="
+              document.getElementById('growth').value='4';
+              ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
+              this.style.fontWeight='bold';
+            ">Baseline 4%</button>
+            <button type="button" class="preload-btn" id="preset-balanced" onclick="
+              document.getElementById('growth').value='5';
+              ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
+              this.style.fontWeight='bold';
+            ">Balanced 5%</button>
+          </div>
+          <div class="hint" style="margin-top:4px">Growth is nominal. Real return ≈ growth − inflation (e.g. 4% − 2.5% = ~1.5% real).</div>
           <div class="field" style="margin-top:0.6rem">
             <label>Tax threshold uprating</label>
             <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px">
