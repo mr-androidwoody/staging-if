@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tax Planner</title>
+  <style>
+    :root{
+      --bg:#dfe4ea;
+      --panel:#f5f7fb;
+      --panel-2:#f7f9fc;
+      --border:#c5cfdd;
+      --border-strong:#b9c4d5;
+      --text:#1f2937;
+      --muted:#6b7a90;
+      --muted-2:#7b8797;
+      --blue:#3b82f6;
+      --blue-2:#2563eb;
+      --green:#10b981;
+      --green-2:#059669;
+      --teal:#14a38b;
+      --orange:#f59e0b;
+      --shadow:0 2px 6px rgba(31,41,55,.10);
+      --radius:12px;
+      --radius-sm:8px;
+      --input-bg:#ffffff;
+      --input-border:#93a4bb;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    html,body{
+      margin:0;
+      background:var(--bg);
+      font-family:Arial, Helvetica, sans-serif;
+      color:var(--text);
+    }
+
+    .app{
+      width:1604px;
+      min-height:803px;
+      margin:0 auto;
+      background:var(--bg);
+      overflow:hidden;
+    }
+
+    .topbar{
+      padding:12px 8px 10px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(to bottom, #e7ebf1 0%, #dde3ea 100%);
+    }
+
+    .title{
+      font-size:33px;
+      line-height:1.1;
+      font-weight:700;
+      margin:0 0 10px;
+      letter-spacing:-0.2px;
+    }
+
+    .subtitle{
+      font-size:13px;
+      line-height:1.4;
+      color:#526173;
+      margin:0;
+      max-width:1500px;
+    }
+
+    .tabs{
+      display:flex;
+      gap:0;
+      padding:0 8px;
+      border-top:1px solid rgba(255,255,255,.25);
+      border-bottom:1px solid var(--border);
+      background:#dde3ea;
+    }
+
+    .tab{
+      position:relative;
+      padding:13px 18px 12px;
+      font-size:14px;
+      color:#55657b;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      border-bottom:2px solid transparent;
+    }
+
+    .tab.active{
+      color:var(--blue);
+      border-bottom-color:var(--blue);
+      background:rgba(255,255,255,.10);
+    }
+
+    .content{
+      padding:26px 8px 10px;
+    }
+
+    .card{
+      background:rgba(247,249,252,.68);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+
+    .hero{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:20px 18px 18px;
+      margin-bottom:18px;
+    }
+
+    .hero h2{
+      margin:0 0 8px;
+      font-size:20px;
+      font-weight:700;
+      letter-spacing:.1px;
+    }
+
+    .hero p{
+      margin:0;
+      font-size:14px;
+      color:#5f6f85;
+    }
+
+    .hero-actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding-top:2px;
+    }
+
+    .btn{
+      height:34px;
+      padding:0 16px;
+      border:none;
+      border-radius:7px;
+      color:#fff;
+      font-size:12px;
+      letter-spacing:.2px;
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      box-shadow:0 4px 10px rgba(37,99,235,.18);
+      cursor:default;
+      white-space:nowrap;
+    }
+
+    .btn svg{
+      width:12px;
+      height:12px;
+      stroke:currentColor;
+      fill:none;
+      stroke-width:2;
+    }
+
+    .btn-blue{ background:#4b83f1; }
+    .btn-green{ background:#0d9c6d; box-shadow:0 4px 10px rgba(13,156,109,.18); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 385px 385px;
+      gap:14px;
+      margin-bottom:18px;
+    }
+
+    .panel{
+      padding:14px 15px 15px;
+      min-height:276px;
+    }
+
+    .panel h3{
+      margin:0 0 14px;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px 10px;
+    }
+
+    .field.full{
+      grid-column:1 / -1;
+    }
+
+    .label{
+      display:block;
+      font-size:10px;
+      letter-spacing:.9px;
+      color:#74849a;
+      text-transform:uppercase;
+      margin:0 0 6px;
+      font-weight:700;
+    }
+
+    .input{
+      width:100%;
+      height:30px;
+      border:1px solid var(--input-border);
+      border-radius:6px;
+      background:var(--input-bg);
+      padding:0 10px;
+      font-size:13px;
+      color:#334155;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.65);
+    }
+
+    .allocation{
+      min-height:276px;
+      padding:14px 16px 18px;
+    }
+
+    .alloc-row{
+      margin-bottom:14px;
+    }
+
+    .alloc-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:5px;
+      font-size:12px;
+      text-transform:uppercase;
+      color:#73839a;
+    }
+
+    .alloc-head strong{
+      color:#1f2937;
+      font-size:14px;
+      text-transform:none;
+      letter-spacing:0;
+    }
+
+    .bar{
+      width:100%;
+      height:7px;
+      border-radius:999px;
+      background:#d7dee9;
+      overflow:hidden;
+    }
+
+    .fill{
+      height:100%;
+      border-radius:999px;
+    }
+
+    .fill.eq{ background:#2563eb; width:43%; }
+    .fill.bd{ background:#10b981; width:21%; }
+    .fill.cashlike{ background:#f59e0b; width:36%; }
+    .fill.cash{ background:#d7dee9; width:0%; }
+
+    .total-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:26px;
+      font-size:11px;
+      color:#74849a;
+      text-transform:uppercase;
+    }
+
+    .balanced{
+      color:#0c8a5c;
+      font-size:14px;
+      font-weight:700;
+      text-transform:none;
+    }
+
+    .wrappers{
+      padding:14px 16px 18px;
+    }
+
+    .wrapper-list{
+      margin-top:2px;
+    }
+
+    .wrapper-item{
+      display:grid;
+      grid-template-columns:1fr auto;
+      align-items:center;
+      min-height:37px;
+      border-bottom:1px solid #d6dde8;
+      font-size:14px;
+      color:#55657b;
+    }
+
+    .wrapper-item strong{
+      color:#1f2937;
+      font-weight:700;
+    }
+
+    .wrapper-total{
+      margin-top:18px;
+      padding-top:14px;
+      border-top:1px solid #d6dde8;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .wrapper-total .meta-label{
+      display:block;
+      font-size:11px;
+      letter-spacing:.9px;
+      color:#74849a;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+
+    .wrapper-total .meta-value{
+      font-size:18px;
+      font-weight:800;
+      color:#111827;
+      line-height:1;
+    }
+
+    .range-card{
+      display:flex;
+      gap:14px;
+      padding:14px 16px;
+      min-height:82px;
+      margin-bottom:20px;
+      align-items:flex-start;
+    }
+
+    .range-field{
+      width:161px;
+    }
+
+    .accounts{
+      padding:18px 18px 12px;
+    }
+
+    .accounts-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom:18px;
+    }
+
+    .accounts h3{
+      margin:0 0 6px;
+      font-size:15px;
+      font-weight:700;
+      text-transform:none;
+      letter-spacing:0;
+    }
+
+    .accounts p{
+      margin:0;
+      font-size:13px;
+      color:#5c6c82;
+    }
+
+    .btn-add{
+      height:32px;
+      padding:0 18px;
+      border:none;
+      border-radius:7px;
+      background:#089c6d;
+      color:#fff;
+      font-size:13px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:0 4px 10px rgba(8,156,109,.18);
+      cursor:default;
+    }
+
+    .btn-add svg{
+      width:12px;
+      height:12px;
+      stroke:currentColor;
+      fill:none;
+      stroke-width:2;
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+    }
+
+    thead th{
+      text-align:left;
+      font-size:10px;
+      letter-spacing:.95px;
+      color:#4f6178;
+      text-transform:uppercase;
+      padding:10px 12px 10px;
+      border-bottom:1px solid var(--border);
+      font-weight:800;
+    }
+
+    tbody td{
+      padding:10px 12px 14px;
+      vertical-align:middle;
+      font-size:13px;
+      color:#334155;
+    }
+
+    .table-input,
+    .table-select{
+      width:100%;
+      height:26px;
+      border:1px solid #bcc7d7;
+      border-radius:5px;
+      background:#fff;
+      padding:0 9px;
+      font-size:12px;
+      color:#334155;
+    }
+
+    .table-select{
+      appearance:auto;
+      padding-right:22px;
+    }
+
+    .num{
+      text-align:right;
+    }
+
+    .center{
+      text-align:center;
+    }
+
+    .dash{
+      color:#6c7b90;
+      font-weight:600;
+    }
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      height:22px;
+      padding:0 10px;
+      border-radius:5px;
+      background:#e5f7ef;
+      border:1px solid #8fd4b8;
+      color:#14895e;
+      font-size:11px;
+      margin-right:8px;
+      vertical-align:middle;
+    }
+
+    .remove{
+      font-size:11px;
+      color:#6d7c90;
+      vertical-align:middle;
+    }
+
+    .col-account{ width:18%; }
+    .col-wrapper{ width:8%; }
+    .col-owner{ width:9%; }
+    .col-value{ width:14%; }
+    .col-small{ width:7%; }
+    .col-bath{ width:10%; }
+    .col-actions{ width:9%; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <h1 class="title">Tax Planner</h1>
+      <p class="subtitle">
+        This tool optimises the sequencing of pension and ISA withdrawals to minimise tax liabilities. It automates drawdown logic across your portfolio to ensure your retirement income remains as efficient as possible.
+      </p>
+    </div>
+
+    <nav class="tabs">
+      <a class="tab active" href="#">Setup</a>
+      <a class="tab" href="#">Assumptions</a>
+      <a class="tab" href="#">Results</a>
+    </nav>
+
+    <main class="content">
+      <section class="hero card">
+        <div>
+          <h2>Portfolio setup</h2>
+          <p>Configure people, accounts, and asset allocations for your retirement plan</p>
+        </div>
+
+        <div class="hero-actions">
+          <button class="btn btn-blue">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12"></path><path d="M8 9l4-4 4 4"></path><path d="M4 15v4h16v-4"></path></svg>
+            Load Excel
+          </button>
+          <button class="btn btn-green">
+            <svg viewBox="0 0 24 24"><path d="M5 21h14"></path><path d="M7 21V5h8l2 2v14"></path><path d="M9 9h6"></path><path d="M9 13h6"></path></svg>
+            Save
+          </button>
+          <button class="btn btn-blue">
+            <svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h7l2 2h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z"></path></svg>
+            Load
+          </button>
+          <button class="btn btn-blue">
+            Continue →
+          </button>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel card">
+          <h3>Person 1</h3>
+          <div class="form-grid">
+            <div class="field full">
+              <label class="label">Name</label>
+              <input class="input" value="Danny" />
+            </div>
+
+            <div class="field">
+              <label class="label">Birth Year</label>
+              <input class="input" value="1968" />
+            </div>
+
+            <div class="field">
+              <label class="label">State Pension Age</label>
+              <input class="input" value="67" />
+            </div>
+
+            <div class="field">
+              <label class="label">State Pension £</label>
+              <input class="input" value="12,000" />
+            </div>
+
+            <div class="field">
+              <label class="label">Salary</label>
+              <input class="input" value="0" />
+            </div>
+
+            <div class="field full">
+              <label class="label">Issue Age</label>
+              <input class="input" value="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel card">
+          <h3>Person 2</h3>
+          <div class="form-grid">
+            <div class="field full">
+              <label class="label">Name</label>
+              <input class="input" value="Sally" />
+            </div>
+
+            <div class="field">
+              <label class="label">Birth Year</label>
+              <input class="input" value="1967" />
+            </div>
+
+            <div class="field">
+              <label class="label">State Pension Age</label>
+              <input class="input" value="67" />
+            </div>
+
+            <div class="field">
+              <label class="label">State Pension £</label>
+              <input class="input" value="12,457" />
+            </div>
+
+            <div class="field">
+              <label class="label">Salary</label>
+              <input class="input" value="15,000" />
+            </div>
+
+            <div class="field full">
+              <label class="label">Issue Age</label>
+              <input class="input" value="93" />
+            </div>
+          </div>
+        </div>
+
+        <div class="allocation card">
+          <h3>Allocation</h3>
+
+          <div class="alloc-row">
+            <div class="alloc-head">
+              <span>Equities</span>
+              <strong>43%</strong>
+            </div>
+            <div class="bar"><div class="fill eq"></div></div>
+          </div>
+
+          <div class="alloc-row">
+            <div class="alloc-head">
+              <span>Bonds</span>
+              <strong>21%</strong>
+            </div>
+            <div class="bar"><div class="fill bd"></div></div>
+          </div>
+
+          <div class="alloc-row">
+            <div class="alloc-head">
+              <span>Cashlike</span>
+              <strong>36%</strong>
+            </div>
+            <div class="bar"><div class="fill cashlike"></div></div>
+          </div>
+
+          <div class="alloc-row">
+            <div class="alloc-head">
+              <span>Cash</span>
+              <strong>0%</strong>
+            </div>
+            <div class="bar"><div class="fill cash"></div></div>
+          </div>
+
+          <div class="total-row">
+            <span>Total</span>
+            <span class="balanced">100% Balanced</span>
+          </div>
+        </div>
+
+        <div class="wrappers card">
+          <h3>Wrappers</h3>
+          <div class="wrapper-list">
+            <div class="wrapper-item"><span>ISA</span><strong>£40,000</strong></div>
+            <div class="wrapper-item"><span>SIPP</span><strong>£680,000</strong></div>
+            <div class="wrapper-item"><span>GIA</span><strong>£330,000</strong></div>
+            <div class="wrapper-item"><span>Cash</span><strong>£10,000</strong></div>
+          </div>
+
+          <div class="wrapper-total">
+            <div>
+              <span class="meta-label">Total Portfolio Value</span>
+              <div class="meta-value">£500,000</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="range-card card">
+        <div class="range-field">
+          <label class="label">Start Year</label>
+          <input class="input" value="2026" />
+        </div>
+        <div class="range-field">
+          <label class="label">End Year</label>
+          <input class="input" value="2060" />
+        </div>
+      </section>
+
+      <section class="accounts card">
+        <div class="accounts-top">
+          <div>
+            <h3>Accounts</h3>
+            <p>Add and configure up to 10 investment accounts</p>
+          </div>
+
+          <button class="btn-add">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            Add account
+          </button>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th class="col-account">Account</th>
+              <th class="col-wrapper">Wrapper</th>
+              <th class="col-owner">Owner</th>
+              <th class="col-value num">Value</th>
+              <th class="col-small center">EQ%</th>
+              <th class="col-small center">BD %</th>
+              <th class="col-small center">Cashlike%</th>
+              <th class="col-small center">Cash%</th>
+              <th class="col-bath center">Bath/Draw</th>
+              <th class="col-actions center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input class="table-input" value="SIPP" /></td>
+              <td>
+                <select class="table-select">
+                  <option selected>SIPP</option>
+                </select>
+              </td>
+              <td>
+                <select class="table-select">
+                  <option selected>Danny</option>
+                </select>
+              </td>
+              <td><input class="table-input num" value="500,000" /></td>
+              <td><input class="table-input center" value="65" /></td>
+              <td><input class="table-input center" value="35" /></td>
+              <td><input class="table-input center" value="0" /></td>
+              <td><input class="table-input center" value="0" /></td>
+              <td class="center"><span class="dash">—</span></td>
+              <td class="center">
+                <span class="status">Ready</span><span class="remove">Remove</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
