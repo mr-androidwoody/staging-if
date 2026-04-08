@@ -126,7 +126,7 @@
     // ─────────────────────────────────────────────
     // INCOME LEGEND
     // ─────────────────────────────────────────────
-    function renderIncomeLegend(chart) {
+    function renderIncomeLegend(chart, recomputeShortfall) {
       const host = document.getElementById('incomeLegend');
       if (!host) return;
       host.innerHTML = '';
@@ -136,6 +136,7 @@
 
       chart.data.datasets.forEach((ds, i) => {
         if (ds.stack !== 'income') return;
+        if (ds.label === 'Spending shortfall') return;
 
         const item = document.createElement('div');
         item.className = 'split-legend-item';
@@ -153,14 +154,28 @@
 
         item.addEventListener('click', () => {
           chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
+          recomputeShortfall(chart);
           chart.update();
-          renderIncomeLegend(chart);
+          renderIncomeLegend(chart, recomputeShortfall);
         });
 
         row.appendChild(item);
       });
 
       host.appendChild(row);
+
+      // Shortfall indicator — always visible, not toggleable
+      const sfItem = document.createElement('div');
+      sfItem.className = 'split-legend-item';
+      sfItem.style.marginTop = '4px';
+      const sfSwatch = document.createElement('span');
+      sfSwatch.className = 'split-legend-swatch';
+      sfSwatch.style.background = '#DC2626';
+      const sfLabel = document.createElement('span');
+      sfLabel.textContent = 'Spending shortfall';
+      sfItem.appendChild(sfSwatch);
+      sfItem.appendChild(sfLabel);
+      host.appendChild(sfItem);
     }
 
   // ─────────────────────────────────────────────
@@ -194,7 +209,7 @@
     function ds(label, fn, color) {
       return {
         label,
-        data: _rows.map(r => Math.round(adj(fn(r), r) / 1000)),
+        data: _rows.map(r => adj(fn(r), r) / 1000),
         backgroundColor: color,
         stack: 'income',
       };
@@ -203,8 +218,12 @@
     // ─────────────────────────────────────────────
     // INCOME CHART
     // One dataset per source type; p1+p2 combined gross draws.
-    // Bars sum to gross spending target in funded years — no shortfall overlay.
+    // Bars sum to exactly the gross spending target in funded years (no rounding per-source).
+    // Red shortfall fills the gap when income genuinely can't meet the target.
     // ─────────────────────────────────────────────
+
+    const _targetData     = _rows.map(r => adj(r.target || 0, r) / 1000);
+    const _engineShortfall = _rows.map(r => adj(Math.max(0, (r.target || 0) - (r.householdGrossIncome || 0)), r) / 1000);
 
     let sets = [];
     sets.push(ds('State Pension', r => (r.p1SP         || 0) + (r.p2SP         || 0), COLOURS.p1SP));
@@ -215,6 +234,44 @@
     sets.push(ds('Interest',      r => (r.p1IntDraw    || 0) + (r.p2IntDraw    || 0), COLOURS.intDraw));
     sets.push(ds('Dividends',     r => (r.p1Divs       || 0) + (r.p2Divs       || 0), COLOURS.p1Divs));
     sets.push(ds('Cash',          r => (r.p1Drawn.Cash || 0) + (r.p2Drawn.Cash || 0), COLOURS.p1Cash));
+
+    // Red shortfall — fills gap between visible sources and target
+    sets.push({
+      label: 'Spending shortfall',
+      data: _engineShortfall.slice(),
+      backgroundColor: COLOURS.shortfall,
+      stack: 'income',
+    });
+
+    // Flat target line
+    sets.push({
+      label: 'Spending target',
+      data: _targetData.slice(),
+      type: 'line',
+      stack: undefined,
+      backgroundColor: 'transparent',
+      borderColor: COLOURS.target,
+      borderWidth: 2,
+      borderDash: [6, 3],
+      pointRadius: 0,
+      tension: 0,
+      order: 0,
+    });
+
+    // Recompute shortfall when sources are toggled on/off
+    function recomputeShortfall(chart) {
+      const sfIdx = chart.data.datasets.findIndex(d => d.label === 'Spending shortfall');
+      if (sfIdx < 0) return;
+      const sourceSets = chart.data.datasets.filter(
+        d => d.stack === 'income' && d.label !== 'Spending shortfall'
+      );
+      chart.data.datasets[sfIdx].data = _targetData.map((tgt, i) => {
+        const visibleGross = sourceSets.reduce((sum, d) => {
+          return sum + (chart.isDatasetVisible(chart.data.datasets.indexOf(d)) ? (d.data[i] || 0) : 0);
+        }, 0);
+        return Math.max(_engineShortfall[i], tgt - visibleGross);
+      });
+    }
 
     const incCtx = document.getElementById('incomeChart')?.getContext('2d');
     if (incCtx) {
@@ -232,6 +289,8 @@
                 label: ctx => {
                   const val = (ctx.parsed.y || 0) * 1000;
                   if (!val) return null;
+                  if (ctx.dataset.label === 'Spending shortfall') return `Shortfall: ${D.formatMoney(val)}`;
+                  if (ctx.dataset.label === 'Spending target')    return `Target: ${D.formatMoney(val)}`;
                   return `${ctx.dataset.label}: ${D.formatMoney(val)}`;
                 },
               },
@@ -257,7 +316,7 @@
           },
         },
       });
-      renderIncomeLegend(_incomeChart);
+      renderIncomeLegend(_incomeChart, recomputeShortfall);
     }
 
     // ─────────────────────────────────────────────
