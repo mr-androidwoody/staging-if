@@ -1184,6 +1184,48 @@ input[type="radio"] { accent-color: var(--accent); }
   height: 280px;
 }
 
+/* ─────────────────────────────
+   Income legend layout (2 rows, horizontal flow)
+   ───────────────────────────── */
+
+.legend-group {
+  margin-bottom: 14px;
+}
+
+.legend-heading {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b778c;
+  margin-bottom: 6px;
+}
+
+.split-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.split-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+
+  /* force ~7 per row */
+  flex: 0 0 calc((100% - 96px) / 7);
+}
+
+.split-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.split-legend-item.is-hidden {
+  opacity: 0.4;
+}
+
 .alerts {
   display: flex;
   flex-direction: column;
