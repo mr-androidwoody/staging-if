@@ -23,13 +23,12 @@
       </div>
       <div class="top-header__controls">
         <nav class="top-header__tabs">
-          <button data-action="switch-tab" data-tab="setup"       class="tab-btn tab-active">Setup</button>
+          <button data-action="switch-tab" data-tab="setup" class="tab-btn tab-active">Setup</button>
           <span class="tab-sep" aria-hidden="true"></span>
           <button data-action="switch-tab" data-tab="assumptions" class="tab-btn">Assumptions</button>
           <span class="tab-sep" aria-hidden="true"></span>
-          <button data-action="switch-tab" data-tab="results"     class="tab-btn">Results</button>
+          <button data-action="switch-tab" data-tab="results" class="tab-btn">Results</button>
         </nav>
-
       </div>
     </div>
   </header>
@@ -37,504 +36,543 @@
   <!-- ═══ Scrolling page content ═══ -->
   <div class="page-content">
 
-  <!-- ═══════════════════════════════════════════
-       TAB 1 — SETUP
-  ═══════════════════════════════════════════ -->
-  <div id="tab-setup" class="tab-panel">
+    <!-- ═══════════════════════════════════════════
+         TAB 1 — SETUP
+    ═══════════════════════════════════════════ -->
+    <div id="tab-setup" class="tab-panel">
 
-
-    <div class="setup-hero">
-      <div class="setup-hero__title">
-        <h1>Portfolio setup</h1>
-      </div>
-      <div class="setup-hero__actions">
-        <button class="btn btn-secondary" data-action="load-excel" type="button">
-          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 9l4-4 4 4"/><path d="M4 15v4h16v-4"/></svg>
-          Load Excel
-        </button>
-        <button class="btn btn-secondary" data-action="load-setup" type="button">
-          <svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h7l2 2h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z"/></svg>
-          Load saved
-        </button>
-      </div>
-    </div>
-
-    <!-- Summary panels -->
-    <div class="setup-grid">
-
-      <!-- Person 1 -->
-      <div class="setup-panel">
-        <div class="setup-panel-title">Person 1</div>
-
-        <div class="people-grid">
-          <div>
-            <label>Name</label>
-            <input data-action="setup-summary-input" id="sp-p1name" type="text" placeholder="Person 1"/>
-          </div>
-
-          <div>
-            <label>Birth Year</label>
-            <div class="stepper-input"><input data-action="setup-summary-input" id="sp-p1dob" type="number" placeholder="e.g. 1968"/><button class="stepper-btn" data-step-for="sp-p1dob" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="sp-p1dob" data-step-direction="-1" type="button">&#x25BC;</button></div>
-          </div>
-
-          <div>
-            <label>State Pension £</label>
-            <input type="text" id="p1SP" class="currency-input" placeholder="e.g. 12,000"/>
-          </div>
-
-          <div>
-            <label>State Pension Age</label>
-            <div class="stepper-input"><input type="number" id="p1SPAge" placeholder="e.g. 67"/><button class="stepper-btn" data-step-for="p1SPAge" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="p1SPAge" data-step-direction="-1" type="button">&#x25BC;</button></div>
-          </div>
-
-          <div>
-            <label>Gross Salary £/yr</label>
-            <input type="text" id="p1Salary" class="currency-input" placeholder="e.g. 0"/>
-          </div>
-
-          <div>
-            <label>Salary Stop Age</label>
-            <div class="stepper-input"><input type="number" id="p1SalaryStopAge" placeholder="e.g. 60"/><button class="stepper-btn" data-step-for="p1SalaryStopAge" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="p1SalaryStopAge" data-step-direction="-1" type="button">&#x25BC;</button></div>
-          </div>
+      <div class="setup-hero">
+        <div class="setup-hero__title">
+          <h1>Portfolio setup</h1>
         </div>
-      </div>
-
-      <!-- Person 2 -->
-      <div class="setup-panel">
-        <div class="setup-panel-title" style="display:flex;align-items:center;gap:8px">
-          <span>Person 2</span>
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:400;color:var(--muted);cursor:pointer;margin-left:auto;text-transform:none;letter-spacing:0">
-            <input type="checkbox" id="p2enabled" data-action="toggle-p2" checked style="width:auto;margin:0;cursor:pointer">
-            Include
-          </label>
-        </div>
-
-        <div class="people-grid" id="p2-setup-fields">
-          <div>
-            <label>Name</label>
-            <input data-action="setup-summary-input" id="sp-p2name" type="text" placeholder="Person 2"/>
-          </div>
-
-          <div>
-            <label>Birth Year</label>
-            <div class="stepper-input"><input data-action="setup-summary-input" id="sp-p2dob" type="number" placeholder="e.g. 1967"/><button class="stepper-btn" data-step-for="sp-p2dob" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="sp-p2dob" data-step-direction="-1" type="button">&#x25BC;</button></div>
-          </div>
-
-          <div>
-            <label>State Pension £</label>
-            <input type="text" id="p2SP" class="currency-input" placeholder="e.g. 12,547"/>
-          </div>
-
-          <div>
-            <label>State Pension Age</label>
-            <div class="stepper-input"><input type="number" id="p2SPAge" placeholder="e.g. 67"/><button class="stepper-btn" data-step-for="p2SPAge" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="p2SPAge" data-step-direction="-1" type="button">&#x25BC;</button></div>
-          </div>
-
-          <div>
-            <label>Gross Salary £/yr</label>
-            <input type="text" id="p2Salary" class="currency-input" placeholder="e.g. 0"/>
-          </div>
-
-          <div>
-            <label>Salary Stop Age</label>
-            <div class="stepper-input"><input type="number" id="p2SalaryStopAge" placeholder="e.g. 63"/><button class="stepper-btn" data-step-for="p2SalaryStopAge" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="p2SalaryStopAge" data-step-direction="-1" type="button">&#x25BC;</button></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Overall allocation -->
-      <div class="setup-panel">
-        <div class="setup-panel-title">Allocation</div>
-
-        <div id="alloc-summary">
-          <div class="alloc-row">
-            <div class="alloc-head"><span>Equities</span><strong class="alloc-pct">–</strong></div>
-            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#2563eb"></div></div>
-          </div>
-          <div class="alloc-row">
-            <div class="alloc-head"><span>Bonds</span><strong class="alloc-pct">–</strong></div>
-            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#10b981"></div></div>
-          </div>
-          <div class="alloc-row">
-            <div class="alloc-head"><span>Cashlike</span><strong class="alloc-pct">–</strong></div>
-            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#f59e0b"></div></div>
-          </div>
-          <div class="alloc-row">
-            <div class="alloc-head"><span>Cash</span><strong class="alloc-pct">–</strong></div>
-            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#d7dee9"></div></div>
-          </div>
-
-          <div class="alloc-row" style="margin-top:4px;border:none">
-            <span class="alloc-label">Total allocation</span>
-            <span class="alloc-balanced" id="alloc-total-label">–</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Wrapper totals -->
-      <div class="setup-panel">
-        <div class="setup-panel-title">Wrappers</div>
-
-        <div id="wrapper-summary">
-          <div class="wrapper-row"><span class="wrapper-name">ISA</span><span class="wrapper-val" id="wt-ISA">£0</span></div>
-          <div class="wrapper-row"><span class="wrapper-name">SIPP</span><span class="wrapper-val" id="wt-SIPP">£0</span></div>
-          <div class="wrapper-row"><span class="wrapper-name">GIA</span><span class="wrapper-val" id="wt-GIA">£0</span></div>
-          <div class="wrapper-row"><span class="wrapper-name">Cash</span><span class="wrapper-val" id="wt-Cash">£0</span></div>
-        </div>
-
-        <div class="wrapper-total-footer">
-          <span class="meta-label">Total Portfolio Value</span>
-          <div class="meta-value" id="sp-total">£0</div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Range bar -->
-    <div class="range-card">
-      <div class="range-field">
-        <label>Start Year</label>
-        <div class="stepper-input"><input data-action="setup-summary-input" id="sp-startYear" type="number" placeholder="e.g. 2026"/><button class="stepper-btn" data-step-for="sp-startYear" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="sp-startYear" data-step-direction="-1" type="button">&#x25BC;</button></div>
-      </div>
-      <div class="range-field">
-        <label>End Year</label>
-        <div class="stepper-input"><input data-action="setup-summary-input" id="sp-endYear" type="number" placeholder="e.g. 2060"/><button class="stepper-btn" data-step-for="sp-endYear" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for="sp-endYear" data-step-direction="-1" type="button">&#x25BC;</button></div>
-      </div>
-    </div>
-
-    <!-- Accounts table -->
-    <div class="accounts-panel">
-
-      <div class="accounts-toolbar">
-        <div class="accounts-toolbar-left">
-          <h2>Accounts</h2>
-          <button class="btn-add" data-action="add-account" type="button">+ Add account</button>
-        </div>
-        <div class="accounts-toolbar-right">
-          <button class="btn btn-success" data-action="save-setup" type="button">
-            <svg viewBox="0 0 24 24"><path d="M5 21h14"/><path d="M7 21V5h8l2 2v14"/><path d="M9 9h6"/><path d="M9 13h6"/></svg>
-            Save portfolio
+        <div class="setup-hero__actions">
+          <button class="btn btn-secondary" data-action="load-excel" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 9l4-4 4 4"/><path d="M4 15v4h16v-4"/></svg>
+            Load Excel
           </button>
-          <button class="btn btn-primary" data-action="switch-tab" data-tab="assumptions" type="button">
-            Continue to assumptions &#x2192;
+          <button class="btn btn-secondary" data-action="load-setup" type="button">
+            <svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h7l2 2h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z"/></svg>
+            Load saved
           </button>
         </div>
       </div>
 
-      <table class="acct-table">
-        <thead>
-          <tr>
-            <th class="col-name">Account name</th>
-            <th class="col-wrap">Wrapper</th>
-            <th class="col-owner">Owner</th>
-            <th class="col-value right">Value (£)</th>
-            <th class="col-alloc right">Equities %</th>
-            <th class="col-alloc right">Bonds %</th>
-            <th class="col-alloc right">Cashlike %</th>
-            <th class="col-alloc right">Cash %</th>
-            <th class="col-rate right">Rate %</th>
-            <th class="col-draw right">Mo. draw £</th>
-            <th class="col-total">Total</th>
-            <th class="col-action"></th>
-          </tr>
-        </thead>
+      <!-- Summary panels -->
+      <div class="setup-grid">
 
-        <tbody id="acct-tbody"></tbody>
-      </table>
+        <!-- Person 1 -->
+        <div class="setup-panel">
+          <div class="setup-panel-title">Person 1</div>
 
-    </div>
+          <div class="people-grid">
+            <div>
+              <label>Name</label>
+              <input data-action="setup-summary-input" id="sp-p1name" type="text" placeholder="Person 1"/>
+            </div>
 
-  </div><!-- /#tab-setup -->
+            <div>
+              <label>Birth Year</label>
+              <div class="stepper-input">
+                <input data-action="setup-summary-input" id="sp-p1dob" type="number" placeholder="e.g. 1968"/>
+                <button class="stepper-btn" data-step-for="sp-p1dob" data-step-direction="1" type="button">&#x25B2;</button>
+                <button class="stepper-btn" data-step-for="sp-p1dob" data-step-direction="-1" type="button">&#x25BC;</button>
+              </div>
+            </div>
 
-  <!-- ═══════════════════════════════════════════
-       TAB 2 — ASSUMPTIONS
-  ═══════════════════════════════════════════ -->
-  <div id="tab-assumptions" class="tab-panel">
+            <div>
+              <label>State Pension £</label>
+              <input type="text" id="p1SP" class="currency-input" placeholder="e.g. 12,000"/>
+            </div>
 
-    <div class="assump-layout">
+            <div>
+              <label>State Pension Age</label>
+              <div class="stepper-input">
+                <input type="number" id="p1SPAge" placeholder="e.g. 67"/>
+                <button class="stepper-btn" data-step-for="p1SPAge" data-step-direction="1" type="button">&#x25B2;</button>
+                <button class="stepper-btn" data-step-for="p1SPAge" data-step-direction="-1" type="button">&#x25BC;</button>
+              </div>
+            </div>
 
-      <div class="assump-row-top">
+            <div>
+              <label>Gross Salary £/yr</label>
+              <input type="text" id="p1Salary" class="currency-input" placeholder="e.g. 0"/>
+            </div>
 
-      <!-- ── Panel: Person 1 ── -->
-      <div class="assump-card">
-        <div class="assump-card-title">Person 1</div>
-        <div class="assump-info-label" data-p1>Summary</div>
-        <div class="assump-info-row"><span class="assump-info-key">Name</span><span class="assump-info-val" id="ai-p1name">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">Birth year</span><span class="assump-info-val" id="ai-p1dob">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">Salary (£/yr)</span><span class="assump-info-val" id="ai-p1salary">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">Salary stops age</span><span class="assump-info-val" id="ai-p1salarystop">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">State pension age</span><span class="assump-info-val" id="ai-p1spage">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">State pension (£/yr)</span><span class="assump-info-val" id="ai-p1sp">–</span></div>
-        <div class="assump-info-row" style="margin-top:0.5rem">
-          <span class="assump-info-key">Projection</span>
-          <span class="assump-info-val"><span id="ai-startyear">–</span> → <span id="ai-endyear">–</span></span>
-        </div>
-        <!-- Hidden inputs still needed by gatherInputs() -->
-        <input type="hidden" id="p1DOB">
-        <input type="hidden" id="p2DOB">
-        <input type="hidden" id="startYear">
-        <input type="hidden" id="endYear">
-        <input type="hidden" id="p1Cash">
-        <input type="hidden" id="p2Cash">
-        <input type="hidden" id="p1SIPP">
-        <input type="hidden" id="p2SIPP">
-        <input type="hidden" id="p1ISA">
-        <input type="hidden" id="p2ISA">
-        <input type="hidden" id="p1GIA">
-        <input type="hidden" id="p2GIA">
-        <input type="hidden" id="p1Salary">
-        <input type="hidden" id="p1SalaryStopAge">
-        <input type="hidden" id="p2Salary">
-        <input type="hidden" id="p2SalaryStopAge">
-        <input type="hidden" id="p1SPAge">
-        <input type="hidden" id="p1SP">
-        <input type="hidden" id="p2SPAge">
-        <input type="hidden" id="p2SP">
-      </div>
-
-      <!-- ── Panel: Person 2 ── -->
-      <div class="assump-card p2-field">
-        <div class="assump-card-title">Person 2</div>
-        <div class="assump-info-label" data-p2>Summary</div>
-        <div class="assump-info-row"><span class="assump-info-key">Name</span><span class="assump-info-val" id="ai-p2name">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">Birth year</span><span class="assump-info-val" id="ai-p2dob">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">Salary (£/yr)</span><span class="assump-info-val" id="ai-p2salary">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">Salary stops age</span><span class="assump-info-val" id="ai-p2salarystop">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">State pension age</span><span class="assump-info-val" id="ai-p2spage">–</span></div>
-        <div class="assump-info-row"><span class="assump-info-key">State pension (£/yr)</span><span class="assump-info-val" id="ai-p2sp">–</span></div>
-      </div>
-
-      <!-- ── Panel: Portfolio Balances ── -->
-      <div class="assump-card">
-        <div class="assump-card-title">Portfolio Balances</div>
-        <div class="assump-info-grid">
-          <div class="assump-info-block">
-            <div class="assump-info-label" data-p1>Person 1</div>
-            <div class="assump-info-row"><span class="assump-info-key">Cash</span><span class="assump-info-val" id="ai-p1cash">–</span></div>
-            <div class="assump-info-row"><span class="assump-info-key">SIPP</span><span class="assump-info-val" id="ai-p1sipp">–</span></div>
-            <div class="assump-info-row"><span class="assump-info-key">ISA</span><span class="assump-info-val" id="ai-p1isa">–</span></div>
-            <div class="assump-info-row"><span class="assump-info-key">GIA</span><span class="assump-info-val" id="ai-p1gia">–</span></div>
-          </div>
-          <div class="assump-info-block p2-field">
-            <div class="assump-info-label" data-p2>Person 2</div>
-            <div class="assump-info-row"><span class="assump-info-key">Cash</span><span class="assump-info-val" id="ai-p2cash">–</span></div>
-            <div class="assump-info-row"><span class="assump-info-key">SIPP</span><span class="assump-info-val" id="ai-p2sipp">–</span></div>
-            <div class="assump-info-row"><span class="assump-info-key">ISA</span><span class="assump-info-val" id="ai-p2isa">–</span></div>
-            <div class="assump-info-row"><span class="assump-info-key">GIA</span><span class="assump-info-val" id="ai-p2gia">–</span></div>
+            <div>
+              <label>Salary Stop Age</label>
+              <div class="stepper-input">
+                <input type="number" id="p1SalaryStopAge" placeholder="e.g. 60"/>
+                <button class="stepper-btn" data-step-for="p1SalaryStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                <button class="stepper-btn" data-step-for="p1SalaryStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="field" style="margin-top:0.75rem">
-          <label>Dividend yield on GIA equities (%)</label>
-          <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1" style="width:80px">
-          <div class="hint" style="margin-top:3px">Dividends treated as taxable income each year (not reinvested).</div>
-        </div>
-        <!-- Interest-bearing accounts list -->
-        <div id="int-accts-list" style="margin-top:0.75rem"></div>
-      </div>
 
-      <!-- ── Panel: Spending ── -->
-      <div class="assump-card">
-        <div class="assump-card-title">Spending</div>
-        <div class="field">
-          <label>Annual household spending (£)</label>
-          <input type="text" id="spending" class="currency-input" placeholder="e.g. 45,000">
-        </div>
-        <div class="field" style="margin-top:0.5rem">
-          <label data-p1-stepdown>Reduce spending from Person 1's age 75 by</label>
-          <select id="stepDownPct">
-            <option value="0">No step-down</option>
-            <option value="5">5%</option>
-            <option value="10">10%</option>
-            <option value="15">15%</option>
-            <option value="20">20%</option>
-            <option value="25">25%</option>
-          </select>
-        </div>
-        <div class="hint" data-p1-stepdown-hint>Reduces the gross spending target from the year Person 1 turns 75.</div>
-      </div>
-
-      </div><!-- /.assump-row-top -->
-
-      <div class="assump-row-bottom">
-
-      <!-- ── Panel: Growth & Inflation ── -->
-      <div class="assump-card">
-        <div class="assump-card-title">Growth &amp; Inflation</div>
-        <div class="two-col">
-          <div class="field"><label>Portfolio growth (%/yr)</label><input type="number" id="growth" step="0.1" placeholder="e.g. 4"></div>
-          <div class="field"><label>Inflation (%/yr)</label><input type="number" id="inflation" step="0.1" placeholder="e.g. 2.5"></div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap">
-          <span style="font-size:11px;color:#666;margin-right:2px">Growth preset:</span>
-          <button type="button" class="preload-btn" id="preset-cautious" onclick="
-            document.getElementById('growth').value='3';
-            ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
-            this.style.fontWeight='bold';
-          ">Cautious 3%</button>
-          <button type="button" class="preload-btn" id="preset-baseline" onclick="
-            document.getElementById('growth').value='4';
-            ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
-            this.style.fontWeight='bold';
-          ">Baseline 4%</button>
-          <button type="button" class="preload-btn" id="preset-balanced" onclick="
-            document.getElementById('growth').value='5';
-            ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
-            this.style.fontWeight='bold';
-          ">Balanced 5%</button>
-        </div>
-        <div class="hint" style="margin-top:4px">Growth is nominal. Real return ≈ growth − inflation.</div>
-      </div>
-
-      <!-- ── Panel: Tax ── -->
-      <div class="assump-card">
-        <div class="assump-card-title">Tax</div>
-        <div class="field">
-          <label>Tax threshold uprating</label>
-          <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px">
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#333;font-weight:400;cursor:pointer">
-              <input type="radio" name="thresholdMode" id="thresholdFrozen" value="frozen" checked style="width:auto;margin:0"> Frozen – fiscal drag applies
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#333;font-weight:400;cursor:pointer">
-              <input type="radio" name="thresholdMode" id="thresholdFromYear" value="fromYear" style="width:auto;margin:0"> Uprated from year
-              <input type="number" id="thresholdFromYearVal" value="2028" min="2026" max="2060"
-                style="width:64px;padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px"
-                onfocus="document.getElementById('thresholdFromYear').checked=true">
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#333;font-weight:400;cursor:pointer">
-              <input type="radio" name="thresholdMode" id="thresholdAlways" value="always" style="width:auto;margin:0"> Always uprated with inflation
+        <!-- Person 2 -->
+        <div class="setup-panel">
+          <div class="setup-panel-title" style="display:flex;align-items:center;gap:8px">
+            <span>Person 2</span>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:400;color:var(--muted);cursor:pointer;margin-left:auto;text-transform:none;letter-spacing:0">
+              <input type="checkbox" id="p2enabled" data-action="toggle-p2" checked style="width:auto;margin:0;cursor:pointer">
+              Include
             </label>
           </div>
-          <div class="hint" style="margin-top:4px">Uprating applies to PA, basic-rate limit, higher-rate threshold, and CGT exempt amount.</div>
+
+          <div class="people-grid" id="p2-setup-fields">
+            <div>
+              <label>Name</label>
+              <input data-action="setup-summary-input" id="sp-p2name" type="text" placeholder="Person 2"/>
+            </div>
+
+            <div>
+              <label>Birth Year</label>
+              <div class="stepper-input">
+                <input data-action="setup-summary-input" id="sp-p2dob" type="number" placeholder="e.g. 1967"/>
+                <button class="stepper-btn" data-step-for="sp-p2dob" data-step-direction="1" type="button">&#x25B2;</button>
+                <button class="stepper-btn" data-step-for="sp-p2dob" data-step-direction="-1" type="button">&#x25BC;</button>
+              </div>
+            </div>
+
+            <div>
+              <label>State Pension £</label>
+              <input type="text" id="p2SP" class="currency-input" placeholder="e.g. 12,547"/>
+            </div>
+
+            <div>
+              <label>State Pension Age</label>
+              <div class="stepper-input">
+                <input type="number" id="p2SPAge" placeholder="e.g. 67"/>
+                <button class="stepper-btn" data-step-for="p2SPAge" data-step-direction="1" type="button">&#x25B2;</button>
+                <button class="stepper-btn" data-step-for="p2SPAge" data-step-direction="-1" type="button">&#x25BC;</button>
+              </div>
+            </div>
+
+            <div>
+              <label>Gross Salary £/yr</label>
+              <input type="text" id="p2Salary" class="currency-input" placeholder="e.g. 0"/>
+            </div>
+
+            <div>
+              <label>Salary Stop Age</label>
+              <div class="stepper-input">
+                <input type="number" id="p2SalaryStopAge" placeholder="e.g. 63"/>
+                <button class="stepper-btn" data-step-for="p2SalaryStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                <button class="stepper-btn" data-step-for="p2SalaryStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overall allocation -->
+        <div class="setup-panel">
+          <div class="setup-panel-title">Allocation</div>
+
+          <div id="alloc-summary">
+            <div class="alloc-row">
+              <div class="alloc-head"><span>Equities</span><strong class="alloc-pct">–</strong></div>
+              <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#2563eb"></div></div>
+            </div>
+            <div class="alloc-row">
+              <div class="alloc-head"><span>Bonds</span><strong class="alloc-pct">–</strong></div>
+              <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#10b981"></div></div>
+            </div>
+            <div class="alloc-row">
+              <div class="alloc-head"><span>Cashlike</span><strong class="alloc-pct">–</strong></div>
+              <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#f59e0b"></div></div>
+            </div>
+            <div class="alloc-row">
+              <div class="alloc-head"><span>Cash</span><strong class="alloc-pct">–</strong></div>
+              <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:0%;background:#d7dee9"></div></div>
+            </div>
+
+            <div class="alloc-row" style="margin-top:4px;border:none">
+              <span class="alloc-label">Total allocation</span>
+              <span class="alloc-balanced" id="alloc-total-label">–</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wrapper totals -->
+        <div class="setup-panel">
+          <div class="setup-panel-title">Wrappers</div>
+
+          <div id="wrapper-summary">
+            <div class="wrapper-row"><span class="wrapper-name">ISA</span><span class="wrapper-val" id="wt-ISA">£0</span></div>
+            <div class="wrapper-row"><span class="wrapper-name">SIPP</span><span class="wrapper-val" id="wt-SIPP">£0</span></div>
+            <div class="wrapper-row"><span class="wrapper-name">GIA</span><span class="wrapper-val" id="wt-GIA">£0</span></div>
+            <div class="wrapper-row"><span class="wrapper-name">Cash</span><span class="wrapper-val" id="wt-Cash">£0</span></div>
+          </div>
+
+          <div class="wrapper-total-footer">
+            <span class="meta-label">Total Portfolio Value</span>
+            <div class="meta-value" id="sp-total">£0</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Accounts table -->
+      <div class="accounts-panel">
+
+        <div class="accounts-toolbar">
+          <div class="accounts-toolbar-left">
+            <h2>Accounts</h2>
+            <button class="btn-add" data-action="add-account" type="button">+ Add account</button>
+          </div>
+          <div class="accounts-toolbar-right">
+            <button class="btn btn-success" data-action="save-setup" type="button">
+              <svg viewBox="0 0 24 24"><path d="M5 21h14"/><path d="M7 21V5h8l2 2v14"/><path d="M9 9h6"/><path d="M9 13h6"/></svg>
+              Save portfolio
+            </button>
+            <button class="btn btn-primary" data-action="switch-tab" data-tab="assumptions" type="button">
+              Continue to assumptions &#x2192;
+            </button>
+          </div>
+        </div>
+
+        <table class="acct-table">
+          <thead>
+            <tr>
+              <th class="col-name">Account name</th>
+              <th class="col-wrap">Wrapper</th>
+              <th class="col-owner">Owner</th>
+              <th class="col-value right">Value (£)</th>
+              <th class="col-alloc right">Equities %</th>
+              <th class="col-alloc right">Bonds %</th>
+              <th class="col-alloc right">Cashlike %</th>
+              <th class="col-alloc right">Cash %</th>
+              <th class="col-rate right">Rate %</th>
+              <th class="col-draw right">Mo. draw £</th>
+              <th class="col-total">Total</th>
+              <th class="col-action"></th>
+            </tr>
+          </thead>
+
+          <tbody id="acct-tbody"></tbody>
+        </table>
+
+      </div>
+
+    </div><!-- /#tab-setup -->
+
+    <!-- ═══════════════════════════════════════════
+         TAB 2 — ASSUMPTIONS
+    ═══════════════════════════════════════════ -->
+    <div id="tab-assumptions" class="tab-panel">
+
+      <div class="assump-layout">
+
+        <div class="assump-row-top">
+
+          <!-- ── Panel: Person 1 ── -->
+          <div class="assump-card">
+            <div class="assump-card-title">Person 1</div>
+            <div class="assump-info-label" data-p1>Summary</div>
+            <div class="assump-info-row"><span class="assump-info-key">Name</span><span class="assump-info-val" id="ai-p1name">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">Birth year</span><span class="assump-info-val" id="ai-p1dob">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">Salary (£/yr)</span><span class="assump-info-val" id="ai-p1salary">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">Salary stops age</span><span class="assump-info-val" id="ai-p1salarystop">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">State pension age</span><span class="assump-info-val" id="ai-p1spage">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">State pension (£/yr)</span><span class="assump-info-val" id="ai-p1sp">–</span></div>
+            <div class="assump-info-row" style="margin-top:0.5rem">
+              <span class="assump-info-key">Projection</span>
+              <span class="assump-info-val"><span id="ai-startyear">–</span> → <span id="ai-endyear">–</span></span>
+            </div>
+
+            <!-- Hidden inputs still needed by gatherInputs() -->
+            <input type="hidden" id="p1DOB">
+            <input type="hidden" id="p2DOB">
+            <input type="hidden" id="startYear">
+            <input type="hidden" id="endYear">
+            <input type="hidden" id="p1Cash">
+            <input type="hidden" id="p2Cash">
+            <input type="hidden" id="p1SIPP">
+            <input type="hidden" id="p2SIPP">
+            <input type="hidden" id="p1ISA">
+            <input type="hidden" id="p2ISA">
+            <input type="hidden" id="p1GIA">
+            <input type="hidden" id="p2GIA">
+            <input type="hidden" id="p1Salary">
+            <input type="hidden" id="p1SalaryStopAge">
+            <input type="hidden" id="p2Salary">
+            <input type="hidden" id="p2SalaryStopAge">
+            <input type="hidden" id="p1SPAge">
+            <input type="hidden" id="p1SP">
+            <input type="hidden" id="p2SPAge">
+            <input type="hidden" id="p2SP">
+          </div>
+
+          <!-- ── Panel: Person 2 ── -->
+          <div class="assump-card p2-field">
+            <div class="assump-card-title">Person 2</div>
+            <div class="assump-info-label" data-p2>Summary</div>
+            <div class="assump-info-row"><span class="assump-info-key">Name</span><span class="assump-info-val" id="ai-p2name">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">Birth year</span><span class="assump-info-val" id="ai-p2dob">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">Salary (£/yr)</span><span class="assump-info-val" id="ai-p2salary">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">Salary stops age</span><span class="assump-info-val" id="ai-p2salarystop">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">State pension age</span><span class="assump-info-val" id="ai-p2spage">–</span></div>
+            <div class="assump-info-row"><span class="assump-info-key">State pension (£/yr)</span><span class="assump-info-val" id="ai-p2sp">–</span></div>
+          </div>
+
+          <!-- ── Panel: Portfolio Balances ── -->
+          <div class="assump-card">
+            <div class="assump-card-title">Portfolio Balances</div>
+            <div class="assump-info-grid">
+              <div class="assump-info-block">
+                <div class="assump-info-label" data-p1>Person 1</div>
+                <div class="assump-info-row"><span class="assump-info-key">Cash</span><span class="assump-info-val" id="ai-p1cash">–</span></div>
+                <div class="assump-info-row"><span class="assump-info-key">SIPP</span><span class="assump-info-val" id="ai-p1sipp">–</span></div>
+                <div class="assump-info-row"><span class="assump-info-key">ISA</span><span class="assump-info-val" id="ai-p1isa">–</span></div>
+                <div class="assump-info-row"><span class="assump-info-key">GIA</span><span class="assump-info-val" id="ai-p1gia">–</span></div>
+              </div>
+              <div class="assump-info-block p2-field">
+                <div class="assump-info-label" data-p2>Person 2</div>
+                <div class="assump-info-row"><span class="assump-info-key">Cash</span><span class="assump-info-val" id="ai-p2cash">–</span></div>
+                <div class="assump-info-row"><span class="assump-info-key">SIPP</span><span class="assump-info-val" id="ai-p2sipp">–</span></div>
+                <div class="assump-info-row"><span class="assump-info-key">ISA</span><span class="assump-info-val" id="ai-p2isa">–</span></div>
+                <div class="assump-info-row"><span class="assump-info-key">GIA</span><span class="assump-info-val" id="ai-p2gia">–</span></div>
+              </div>
+            </div>
+            <div class="field" style="margin-top:0.75rem">
+              <label>Dividend yield on GIA equities (%)</label>
+              <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1" style="width:80px">
+              <div class="hint" style="margin-top:3px">Dividends treated as taxable income each year (not reinvested).</div>
+            </div>
+            <div id="int-accts-list" style="margin-top:0.75rem"></div>
+          </div>
+
+          <!-- ── Panel: Spending ── -->
+          <div class="assump-card">
+            <div class="assump-card-title">Spending</div>
+
+            <div class="two-col">
+              <div class="field">
+                <label>Annual household spending (£)</label>
+                <input type="text" id="spending" class="currency-input" placeholder="e.g. 45,000">
+              </div>
+
+              <div class="field">
+                <label
+                  data-p1-stepdown
+                  title="Reduces the household spending target from the year Person 1 reaches age 75."
+                >
+                  Reduced spending
+                </label>
+                <select id="stepDownPct">
+                  <option value="0">No step-down</option>
+                  <option value="5">5%</option>
+                  <option value="10">10%</option>
+                  <option value="15">15%</option>
+                  <option value="20">20%</option>
+                  <option value="25">25%</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Start Year</label>
+                <div class="stepper-input">
+                  <input data-action="setup-summary-input" id="sp-startYear" type="number" placeholder="e.g. 2026"/>
+                  <button class="stepper-btn" data-step-for="sp-startYear" data-step-direction="1" type="button">&#x25B2;</button>
+                  <button class="stepper-btn" data-step-for="sp-startYear" data-step-direction="-1" type="button">&#x25BC;</button>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>End Year</label>
+                <div class="stepper-input">
+                  <input data-action="setup-summary-input" id="sp-endYear" type="number" placeholder="e.g. 2060"/>
+                  <button class="stepper-btn" data-step-for="sp-endYear" data-step-direction="1" type="button">&#x25B2;</button>
+                  <button class="stepper-btn" data-step-for="sp-endYear" data-step-direction="-1" type="button">&#x25BC;</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="hint" data-p1-stepdown-hint>Reduces the gross spending target from the year Person 1 turns 75.</div>
+          </div>
+
+        </div><!-- /.assump-row-top -->
+
+        <div class="assump-row-bottom">
+
+          <!-- ── Panel: Growth & Inflation ── -->
+          <div class="assump-card">
+            <div class="assump-card-title">Growth &amp; Inflation</div>
+            <div class="two-col">
+              <div class="field"><label>Portfolio growth (%/yr)</label><input type="number" id="growth" step="0.1" placeholder="e.g. 4"></div>
+              <div class="field"><label>Inflation (%/yr)</label><input type="number" id="inflation" step="0.1" placeholder="e.g. 2.5"></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:11px;color:#666;margin-right:2px">Growth preset:</span>
+              <button type="button" class="preload-btn" id="preset-cautious" onclick="
+                document.getElementById('growth').value='3';
+                ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
+                this.style.fontWeight='bold';
+              ">Cautious 3%</button>
+              <button type="button" class="preload-btn" id="preset-baseline" onclick="
+                document.getElementById('growth').value='4';
+                ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
+                this.style.fontWeight='bold';
+              ">Baseline 4%</button>
+              <button type="button" class="preload-btn" id="preset-balanced" onclick="
+                document.getElementById('growth').value='5';
+                ['preset-cautious','preset-baseline','preset-balanced'].forEach(id=>document.getElementById(id).style.fontWeight='normal');
+                this.style.fontWeight='bold';
+              ">Balanced 5%</button>
+            </div>
+            <div class="hint" style="margin-top:4px">Growth is nominal. Real return ≈ growth − inflation.</div>
+          </div>
+
+          <!-- ── Panel: Tax ── -->
+          <div class="assump-card">
+            <div class="assump-card-title">Tax</div>
+            <div class="field">
+              <label>Tax threshold uprating</label>
+              <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#333;font-weight:400;cursor:pointer">
+                  <input type="radio" name="thresholdMode" id="thresholdFrozen" value="frozen" checked style="width:auto;margin:0"> Frozen – fiscal drag applies
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#333;font-weight:400;cursor:pointer">
+                  <input type="radio" name="thresholdMode" id="thresholdFromYear" value="fromYear" style="width:auto;margin:0"> Uprated from year
+                  <input type="number" id="thresholdFromYearVal" value="2028" min="2026" max="2060"
+                    style="width:64px;padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px"
+                    onfocus="document.getElementById('thresholdFromYear').checked=true">
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#333;font-weight:400;cursor:pointer">
+                  <input type="radio" name="thresholdMode" id="thresholdAlways" value="always" style="width:auto;margin:0"> Always uprated with inflation
+                </label>
+              </div>
+              <div class="hint" style="margin-top:4px">Uprating applies to PA, basic-rate limit, higher-rate threshold, and CGT exempt amount.</div>
+            </div>
+          </div>
+
+          <!-- ── Panel: Withdrawal Split Mode ── -->
+          <div class="assump-card">
+            <div class="assump-card-title">Withdrawal Split Mode</div>
+            <div class="subsection" style="margin-bottom:4px">Split mode</div>
+            <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:0.85rem">
+              <input type="radio" name="withdrawalMode" value="50/50"> 50/50 mechanical split (wrapper order only)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem">
+              <input type="radio" name="withdrawalMode" value="tax-aware" checked> Tax-aware (SIPP fills PA, then proportional by headroom)
+            </label>
+            <div class="subsection" style="margin-top:0.75rem;margin-bottom:4px">Wrapper order (1st → last) — applies after Cash</div>
+            <div class="subsection" data-p1 style="margin-bottom:2px">Person 1</div>
+            <div class="order-row">
+              <select id="p1Order1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
+              <select id="p1Order2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option></select>
+              <select id="p1Order3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option></select>
+            </div>
+            <div class="subsection p2-field" data-p2 style="margin-top:0.5rem;margin-bottom:2px">Person 2</div>
+            <div class="order-row p2-field">
+              <select id="p2Order1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
+              <select id="p2Order2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option></select>
+              <select id="p2Order3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option></select>
+            </div>
+            <div class="hint" style="margin-top:6px">Interest-bearing accounts drawn first, then Cash (automatic), then wrapper order above.</div>
+          </div>
+
+          <!-- ── Panel: Bed & ISA ── -->
+          <div class="assump-card">
+            <div class="assump-card-title">Bed &amp; ISA</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <input type="checkbox" id="bniEnabled" style="width:auto;margin:0;cursor:pointer">
+              <label for="bniEnabled" style="font-size:12px;color:#333;margin:0;cursor:pointer;font-weight:500">Enable bed-and-ISA strategy</label>
+            </div>
+            <div class="subsection" data-p1 style="margin-bottom:2px">Person 1</div>
+            <div class="field">
+              <label>GIA → ISA (£/yr)</label>
+              <input type="text" id="bniP1GIA" class="currency-input" placeholder="e.g. 20,000">
+            </div>
+            <div class="subsection p2-field" data-p2 style="margin-top:0.25rem;margin-bottom:2px">Person 2</div>
+            <div class="field p2-field">
+              <label>GIA → ISA (£/yr)</label>
+              <input type="text" id="bniP2GIA" class="currency-input" placeholder="e.g. 5,000">
+            </div>
+            <div class="hint" style="margin-top:6px">Each transfer capped at source balance and £20k ISA allowance per person per year.</div>
+          </div>
+
+        </div><!-- /.assump-row-bottom -->
+
+      </div><!-- /.assump-layout -->
+
+      <div style="padding:0.75rem 0 0.5rem">
+        <button type="button" class="run-btn" data-action="run-projection">▶ Run projection</button>
+      </div>
+
+    </div><!-- /#tab-assumptions -->
+
+    <!-- ═══════════════════════════════════════════
+         TAB 3 — RESULTS
+    ═══════════════════════════════════════════ -->
+    <div id="tab-results" class="tab-panel">
+
+      <div style="margin-bottom:1rem">
+        <button type="button" class="run-btn" data-action="run-projection">▶ Run projection</button>
+      </div>
+
+      <div class="controls">
+        <div>
+          <span class="controls-label">Person</span>
+          <div class="toggle-group" style="margin-top:4px">
+            <button class="active" data-action="view-both">Both</button>
+            <button data-action="view-p1" data-p1-btn>Person 1</button>
+            <button data-action="view-p2" data-p2-btn>Person 2</button>
+          </div>
+        </div>
+        <div>
+          <span class="controls-label">Values</span>
+          <div class="toggle-group" style="margin-top:4px">
+            <button class="active" data-action="real-on">Real</button>
+            <button data-action="real-off">Nominal</button>
+          </div>
+        </div>
+        <div style="margin-left:auto">
+          <span class="controls-label">View</span>
+          <div class="toggle-group" style="margin-top:4px">
+            <button class="active" data-action="tab-charts">Charts</button>
+            <button data-action="tab-tables">Tables</button>
+          </div>
         </div>
       </div>
 
-      <!-- ── Panel: Withdrawal Split Mode ── -->
-      <div class="assump-card">
-        <div class="assump-card-title">Withdrawal Split Mode</div>
-        <div class="subsection" style="margin-bottom:4px">Split mode</div>
-        <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:0.85rem">
-          <input type="radio" name="withdrawalMode" value="50/50"> 50/50 mechanical split (wrapper order only)
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem">
-          <input type="radio" name="withdrawalMode" value="tax-aware" checked> Tax-aware (SIPP fills PA, then proportional by headroom)
-        </label>
-        <div class="subsection" style="margin-top:0.75rem;margin-bottom:4px">Wrapper order (1st → last) — applies after Cash</div>
-        <div class="subsection" data-p1 style="margin-bottom:2px">Person 1</div>
-        <div class="order-row">
-          <select id="p1Order1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
-          <select id="p1Order2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option></select>
-          <select id="p1Order3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option></select>
-        </div>
-        <div class="subsection p2-field" data-p2 style="margin-top:0.5rem;margin-bottom:2px">Person 2</div>
-        <div class="order-row p2-field">
-          <select id="p2Order1"><option value="GIA">GIA</option><option value="SIPP">SIPP</option><option value="ISA">ISA</option></select>
-          <select id="p2Order2"><option value="SIPP">SIPP</option><option value="GIA">GIA</option><option value="ISA">ISA</option></select>
-          <select id="p2Order3"><option value="ISA">ISA</option><option value="GIA">GIA</option><option value="SIPP">SIPP</option></select>
-        </div>
-        <div class="hint" style="margin-top:6px">Interest-bearing accounts drawn first, then Cash (automatic), then wrapper order above.</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Total tax paid</div><div class="metric-value" id="m-tax">–</div></div>
+        <div class="metric"><div class="metric-label">Avg effective rate</div><div class="metric-value" id="m-rate">–</div></div>
+        <div class="metric"><div class="metric-label">Peak tax year</div><div class="metric-value" id="m-peak">–</div></div>
+        <div class="metric"><div class="metric-label">Portfolio at end</div><div class="metric-value" id="m-port">–</div></div>
       </div>
 
-      <!-- ── Panel: Bed & ISA ── -->
-      <div class="assump-card">
-        <div class="assump-card-title">Bed &amp; ISA</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <input type="checkbox" id="bniEnabled" style="width:auto;margin:0;cursor:pointer">
-          <label for="bniEnabled" style="font-size:12px;color:#333;margin:0;cursor:pointer;font-weight:500">Enable bed-and-ISA strategy</label>
+      <div class="charts">
+        <div class="chart-card">
+          <h2>Sources of income</h2>
+          <div class="chart-wrap"><canvas id="incomeChart"></canvas></div>
+          <div id="incomeLegend" class="split-legend"></div>
         </div>
-        <div class="subsection" data-p1 style="margin-bottom:2px">Person 1</div>
-        <div class="field">
-          <label>GIA → ISA (£/yr)</label>
-          <input type="text" id="bniP1GIA" class="currency-input" placeholder="e.g. 20,000">
+        <div class="chart-card">
+          <h2>Tax paid &amp; effective rate</h2>
+          <div class="chart-wrap"><canvas id="taxChart"></canvas></div>
         </div>
-        <div class="subsection p2-field" data-p2 style="margin-top:0.25rem;margin-bottom:2px">Person 2</div>
-        <div class="field p2-field">
-          <label>GIA → ISA (£/yr)</label>
-          <input type="text" id="bniP2GIA" class="currency-input" placeholder="e.g. 5,000">
-        </div>
-        <div class="hint" style="margin-top:6px">Each transfer capped at source balance and £20k ISA allowance per person per year.</div>
-      </div>
-
-      </div><!-- /.assump-row-bottom -->
-
-    </div><!-- /.assump-layout -->
-
-    <div style="padding:0.75rem 0 0.5rem">
-      <button type="button" class="run-btn" data-action="run-projection">▶ Run projection</button>
-    </div>
-
-  </div><!-- /#tab-assumptions -->
-
-  <!-- ═══════════════════════════════════════════
-       TAB 3 — RESULTS
-  ═══════════════════════════════════════════ -->
-  <div id="tab-results" class="tab-panel">
-
-    <div style="margin-bottom:1rem">
-      <button type="button" class="run-btn" data-action="run-projection">▶ Run projection</button>
-    </div>
-
-    <div class="controls">
-      <div>
-        <span class="controls-label">Person</span>
-        <div class="toggle-group" style="margin-top:4px">
-          <button class="active" data-action="view-both">Both</button>
-          <button data-action="view-p1" data-p1-btn>Person 1</button>
-          <button data-action="view-p2" data-p2-btn>Person 2</button>
+        <div class="chart-card">
+          <h2>Wealth by type</h2>
+          <div class="chart-wrap"><canvas id="wealthChart"></canvas></div>
         </div>
       </div>
-      <div>
-        <span class="controls-label">Values</span>
-        <div class="toggle-group" style="margin-top:4px">
-         <button class="active" data-action="real-on">Real</button>
-         <button data-action="real-off">Nominal</button>
+
+      <div id="alerts-container" class="alerts"></div>
+
+      <div id="tables-panel" style="display:none;flex-direction:column;gap:1rem">
+        <div class="chart-card">
+          <h2>Tax by year</h2>
+          <div style="overflow-x:auto"><table id="tax-table" class="data-table"></table></div>
+        </div>
+        <div class="chart-card">
+          <h2>Portfolio values by year</h2>
+          <div style="overflow-x:auto"><table id="wealth-table" class="data-table"></table></div>
         </div>
       </div>
-      <div style="margin-left:auto">
-        <span class="controls-label">View</span>
-        <div class="toggle-group" style="margin-top:4px">
-          <button class="active" data-action="tab-charts">Charts</button>
-          <button data-action="tab-tables">Tables</button>
-        </div>
-      </div>
-    </div>
 
-    <div class="metrics">
-      <div class="metric"><div class="metric-label">Total tax paid</div><div class="metric-value" id="m-tax">–</div></div>
-      <div class="metric"><div class="metric-label">Avg effective rate</div><div class="metric-value" id="m-rate">–</div></div>
-      <div class="metric"><div class="metric-label">Peak tax year</div><div class="metric-value" id="m-peak">–</div></div>
-      <div class="metric"><div class="metric-label">Portfolio at end</div><div class="metric-value" id="m-port">–</div></div>
-    </div>
-
-    <div class="charts">
-      <div class="chart-card">
-        <h2>Sources of income</h2>
-        <div class="chart-wrap"><canvas id="incomeChart"></canvas></div>
-        <div id="incomeLegend" class="split-legend"></div>
-      </div>
-      <div class="chart-card">
-        <h2>Tax paid &amp; effective rate</h2>
-        <div class="chart-wrap"><canvas id="taxChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h2>Wealth by type</h2>
-        <div class="chart-wrap"><canvas id="wealthChart"></canvas></div>
-      </div>
-    </div>
-
-    <div id="alerts-container" class="alerts"></div>
-
-    <div id="tables-panel" style="display:none;flex-direction:column;gap:1rem">
-      <div class="chart-card">
-        <h2>Tax by year</h2>
-        <div style="overflow-x:auto"><table id="tax-table" class="data-table"></table></div>
-      </div>
-      <div class="chart-card">
-        <h2>Portfolio values by year</h2>
-        <div style="overflow-x:auto"><table id="wealth-table" class="data-table"></table></div>
-      </div>
-    </div>
-
-  </div><!-- /#tab-results -->
+    </div><!-- /#tab-results -->
 
   </div><!-- /.page-content -->
 
