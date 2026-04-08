@@ -134,10 +134,10 @@
       const { p1, p2 } = getNames();
     
       const p1sets = datasets.map((ds, i) => ({ ds, i }))
-        .filter(x => x.ds.label.includes(`– ${p1}`));
-    
+        .filter(x => x.ds.label.endsWith(p1));
+
       const p2sets = datasets.map((ds, i) => ({ ds, i }))
-        .filter(x => x.ds.label.includes(`– ${p2}`));
+        .filter(x => x.ds.label.endsWith(p2));
     
       function cleanLabel(label, name) {
         return label.replace(`– ${name}`, '').trim();
