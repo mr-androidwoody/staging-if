@@ -1213,8 +1213,7 @@ input[type="radio"] { accent-color: var(--accent); }
   gap: 6px;
   white-space: nowrap;
 
-  flex: 0 1 auto;
-  min-width: 110px;
+  flex: 0 0 auto;
 }
 
 .split-legend-swatch {
