@@ -136,7 +136,7 @@
 
       chart.data.datasets.forEach((ds, i) => {
         if (ds.stack !== 'income') return;
-        if (ds.label === 'Spending shortfall') return;
+        if (ds.label === 'Shortfall') return;
 
         const item = document.createElement('div');
         item.className = 'split-legend-item';
@@ -172,7 +172,7 @@
       sfSwatch.className = 'split-legend-swatch';
       sfSwatch.style.background = '#DC2626';
       const sfLabel = document.createElement('span');
-      sfLabel.textContent = 'Spending shortfall';
+      sfLabel.textContent = 'Shortfall';
       sfItem.appendChild(sfSwatch);
       sfItem.appendChild(sfLabel);
       host.appendChild(sfItem);
@@ -247,21 +247,19 @@
     });
 
     let sets = [];
-    // Row 1: Salary, Cash, Interest, Dividends
-    // Row 2: GIA, ISA, SIPP / WP, State Pension  (+Shortfall = 9th item)
+    sets.push(ds('State Pension', r => r.p1SP         || 0, r => r.p2SP         || 0, COLOURS.p1SP));
     sets.push(ds('Salary',        r => r.p1SalInc     || 0, r => r.p2SalInc     || 0, COLOURS.salary));
-    sets.push(ds('Cash',          r => r.p1Drawn.Cash || 0, r => r.p2Drawn.Cash || 0, COLOURS.p1Cash));
+    sets.push(ds('SIPP',          r => r.p1Drawn.SIPP || 0, r => r.p2Drawn.SIPP || 0, COLOURS.p1SIPP));
+    sets.push(ds('ISA',           r => r.p1Drawn.ISA  || 0, r => r.p2Drawn.ISA  || 0, COLOURS.p1ISA));
+    sets.push(ds('GIA',           r => r.p1Drawn.GIA  || 0, r => r.p2Drawn.GIA  || 0, COLOURS.p1GIA));
     sets.push(ds('Interest',      r => r.p1IntDraw    || 0, r => r.p2IntDraw    || 0, COLOURS.intDraw));
     sets.push(ds('Dividends',     r => r.p1Divs       || 0, r => r.p2Divs       || 0, COLOURS.p1Divs));
-    sets.push(ds('GIA',           r => r.p1Drawn.GIA  || 0, r => r.p2Drawn.GIA  || 0, COLOURS.p1GIA));
-    sets.push(ds('ISA',           r => r.p1Drawn.ISA  || 0, r => r.p2Drawn.ISA  || 0, COLOURS.p1ISA));
-    sets.push(ds('SIPP / WP',     r => r.p1Drawn.SIPP || 0, r => r.p2Drawn.SIPP || 0, COLOURS.p1SIPP));
-    sets.push(ds('State Pension', r => r.p1SP         || 0, r => r.p2SP         || 0, COLOURS.p1SP));
+    sets.push(ds('Cash',          r => r.p1Drawn.Cash || 0, r => r.p2Drawn.Cash || 0, COLOURS.p1Cash));
 
     // Red shortfall — gap between visible income and full household target
     // Seeded from engine shortfall (zero in funded years); grows as sources are toggled off
     sets.push({
-      label: 'Spending shortfall',
+      label: 'Shortfall',
       data: _engineShortfall.slice(),
       backgroundColor: COLOURS.shortfall,
       stack: 'income',
@@ -270,10 +268,10 @@
     // Recompute shortfall when sources are toggled on/off
     // Always measures against the full household target
     function recomputeShortfall(chart) {
-      const sfIdx = chart.data.datasets.findIndex(d => d.label === 'Spending shortfall');
+      const sfIdx = chart.data.datasets.findIndex(d => d.label === 'Shortfall');
       if (sfIdx < 0) return;
       const sourceSets = chart.data.datasets.filter(
-        d => d.stack === 'income' && d.label !== 'Spending shortfall'
+        d => d.stack === 'income' && d.label !== 'Shortfall'
       );
       chart.data.datasets[sfIdx].data = _targetData.map((tgt, i) => {
         const visibleGross = sourceSets.reduce((sum, d) => {
@@ -299,7 +297,7 @@
                 label: ctx => {
                   const val = (ctx.parsed.y || 0) * 1000;
                   if (!val) return null;
-                  if (ctx.dataset.label === 'Spending shortfall') return `Shortfall: ${D.formatMoney(val)}`;
+                  if (ctx.dataset.label === 'Shortfall') return `Shortfall: ${D.formatMoney(val)}`;
                   if (ctx.dataset.label === 'Spending target')    return `Target: ${D.formatMoney(val)}`;
                   return `${ctx.dataset.label}: ${D.formatMoney(val)}`;
                 },
