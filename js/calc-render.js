@@ -162,10 +162,10 @@
     if (!host) return;
     host.innerHTML = '';
 
-    const hint = document.createElement('p');
-    hint.className = 'sidebar-legend__hint';
-    hint.textContent = 'Click to toggle';
-    host.appendChild(hint);
+    const header = document.createElement('div');
+    header.className = 'sidebar-legend__header';
+    header.innerHTML = '<span>Source</span><span>Lifetime</span>';
+    host.appendChild(header);
 
     chart.data.datasets.forEach((ds, i) => {
       if (ds.stack !== 'income') return;
@@ -185,7 +185,7 @@
 
       const value = document.createElement('span');
       value.className = 'sidebar-legend__value';
-      const raw = ds._firstYearValue || 0;
+      const raw = ds._lifetimeValue || 0;
       value.textContent = raw > 0 ? fmt(raw) : '—';
 
       item.appendChild(swatch);
@@ -203,7 +203,7 @@
     });
 
     // Shortfall — always shown, not toggleable
-    const sfRaw = (_rows[0] ? _engineShortfall[0] * 1000 : 0);
+    const sfRaw = _engineShortfall.reduce((s, v) => s + v * 1000, 0);
     const sfItem = document.createElement('div');
     sfItem.className = 'sidebar-legend__item sidebar-legend__item--fixed';
     const sfSwatch = document.createElement('span');
@@ -223,6 +223,7 @@
       const sfNote = document.createElement('span');
       sfNote.className = 'sidebar-legend__fixed-note';
       sfNote.textContent = 'always on';
+      sfNote.style.marginLeft = 'auto';
       sfItem.appendChild(sfNote);
     }
     host.appendChild(sfItem);
@@ -265,13 +266,12 @@
       const fn   = _viewPerson === 'p1' ? p1fn
                  : _viewPerson === 'p2' ? p2fn
                  : both;
-      const r0 = _rows[0];
       return {
         label,
         data: _rows.map(r => adj(fn(r) || 0, r) / 1000),
         backgroundColor: color,
         stack: 'income',
-        _firstYearValue: adj(fn(r0) || 0, r0),
+        _lifetimeValue: _rows.reduce((s, r) => s + adj(fn(r) || 0, r), 0),
       };
     }
 
