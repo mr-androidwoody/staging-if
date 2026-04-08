@@ -289,12 +289,9 @@
               stacked: true,
             
               max: Math.ceil(
-                Math.max(..._rows.map(r => {
-                  return (
-                    r.p1SP + (r.p1SalInc || 0) + r.p1Drawn.SIPP + r.p1Drawn.ISA + r.p1Drawn.GIA + r.p1IntDraw + r.p1Drawn.Cash +
-                    r.p2SP + (r.p2SalInc || 0) + r.p2Drawn.SIPP + r.p2Drawn.ISA + r.p2Drawn.GIA + r.p2IntDraw + r.p2Drawn.Cash
-                  ) / 1000;
-                })) * 1.1 / 5
+                Math.max(...labels.map((_, i) =>
+                  sets.reduce((sum, s) => sum + (s.data[i] || 0), 0)
+                )) * 1.1 / 5
               ) * 5,
             
               title: {
