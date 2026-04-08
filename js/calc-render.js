@@ -268,9 +268,9 @@
     if (spendingCtx) {
     
       function getNet(r) {
-        if (_viewPerson === 'p1') return (r.p1GrossIncome || 0) - (r.p1Tax || 0);
-        if (_viewPerson === 'p2') return (r.p2GrossIncome || 0) - (r.p2Tax || 0);
-        return (r.householdNetIncome || 0);
+        if (_viewPerson === 'p1') return (r.p1NaturalNet || 0);
+        if (_viewPerson === 'p2') return (r.p2NaturalNet || 0);
+        return (r.householdNaturalNet || 0);
       }
     
       const targetData = _rows.map(r =>

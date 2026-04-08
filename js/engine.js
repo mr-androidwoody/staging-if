@@ -380,7 +380,16 @@
       const spendingShortfall = Math.max(0, target - householdNetIncome);
       const spendingSurplus   = Math.max(0, householdNetIncome - target);
 
-      rows.push({
+      const p1NaturalIncome = p1SP + p1SalInc + p1IntDraw + p1Divs;    
+      const p2NaturalIncome =  p2SP + p2SalInc + p2IntDraw + p2Divs;
+    
+      const householdNaturalIncome = p1NaturalIncome + p2NaturalIncome;
+    
+      const p1NaturalNet = p1NaturalIncome - p1Income.tax - p1NI;
+      const p2NaturalNet = p2NaturalIncome - p2Income.tax - p2NI;
+      const householdNaturalNet = p1NaturalNet + p2NaturalNet;
+
+        rows.push({
         year, p1Age, p2Age,
 
         target,
