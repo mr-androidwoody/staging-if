@@ -10,6 +10,7 @@
   let _taxChart        = null;
   let _wealthChart     = null;
   let _spendingChart   = null;
+  let _engineShortfall = [];
 
   // ─────────────────────────────────────────────
   // HELPERS
@@ -180,9 +181,16 @@
 
       const label = document.createElement('span');
       label.textContent = ds.label;
+      label.style.flex = '1';
+
+      const value = document.createElement('span');
+      value.className = 'sidebar-legend__value';
+      const raw = ds._firstYearValue || 0;
+      value.textContent = raw > 0 ? fmt(raw) : '—';
 
       item.appendChild(swatch);
       item.appendChild(label);
+      item.appendChild(value);
 
       item.addEventListener('click', () => {
         chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
@@ -195,6 +203,7 @@
     });
 
     // Shortfall — always shown, not toggleable
+    const sfRaw = (_rows[0] ? _engineShortfall[0] * 1000 : 0);
     const sfItem = document.createElement('div');
     sfItem.className = 'sidebar-legend__item sidebar-legend__item--fixed';
     const sfSwatch = document.createElement('span');
@@ -202,12 +211,20 @@
     sfSwatch.style.background = '#DC2626';
     const sfLabel = document.createElement('span');
     sfLabel.textContent = 'Shortfall';
-    const sfNote = document.createElement('span');
-    sfNote.className = 'sidebar-legend__fixed-note';
-    sfNote.textContent = 'always on';
+    sfLabel.style.flex = '1';
     sfItem.appendChild(sfSwatch);
     sfItem.appendChild(sfLabel);
-    sfItem.appendChild(sfNote);
+    if (sfRaw > 0) {
+      const sfVal = document.createElement('span');
+      sfVal.className = 'sidebar-legend__value';
+      sfVal.textContent = fmt(sfRaw);
+      sfItem.appendChild(sfVal);
+    } else {
+      const sfNote = document.createElement('span');
+      sfNote.className = 'sidebar-legend__fixed-note';
+      sfNote.textContent = 'always on';
+      sfItem.appendChild(sfNote);
+    }
     host.appendChild(sfItem);
   }
 
@@ -248,11 +265,13 @@
       const fn   = _viewPerson === 'p1' ? p1fn
                  : _viewPerson === 'p2' ? p2fn
                  : both;
+      const r0 = _rows[0];
       return {
         label,
         data: _rows.map(r => adj(fn(r) || 0, r) / 1000),
         backgroundColor: color,
         stack: 'income',
+        _firstYearValue: adj(fn(r0) || 0, r0),
       };
     }
 
@@ -266,7 +285,7 @@
     // Full household target — always the 65k line regardless of person toggle
     const _targetData      = _rows.map(r => adj(r.target || 0, r) / 1000);
     // Engine shortfall — gap between visible person's gross income and full household target
-    const _engineShortfall = _rows.map(r => {
+    _engineShortfall = _rows.map(r => {
       const p1Gross = (r.p1SP || 0) + (r.p1SalInc || 0) + (r.p1Drawn.SIPP || 0) +
                       (r.p1Drawn.ISA || 0) + (r.p1Drawn.GIA || 0) +
                       (r.p1IntDraw || 0) + (r.p1Divs || 0) + (r.p1Drawn.Cash || 0);
