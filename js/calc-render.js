@@ -278,21 +278,7 @@
       host.appendChild(item);
     });
 
-    // Spending target — line, shown as a note
-    const tgtItem = document.createElement('div');
-    tgtItem.className = 'sidebar-legend__item sidebar-legend__item--fixed';
-    tgtItem.style.borderTop = '1px solid var(--border)';
-    tgtItem.style.marginTop = '4px';
-    tgtItem.style.paddingTop = '6px';
-    const tgtSwatch = document.createElement('span');
-    tgtSwatch.style.cssText = 'width:18px;height:3px;border-top:2px dashed #1F2937;display:inline-block;flex:0 0 18px;margin-right:5px;';
-    const tgtLabel = document.createElement('span');
-    tgtLabel.textContent = 'Spending target';
-    tgtLabel.style.flex = '1';
-    tgtLabel.style.color = 'var(--muted)';
-    tgtItem.appendChild(tgtSwatch);
-    tgtItem.appendChild(tgtLabel);
-    host.appendChild(tgtItem);
+
   }
     function renderCharts() {
     if (!_rows.length) return;
@@ -443,43 +429,29 @@
 
     // ─────────────────────────────────────────────
     // GROSS VS NET INCOME CHART
-    // Stacked bars by source + Tax segment on top + spending target line.
-    // Tax segment shows what gross - net = tax paid each year.
+    // Two segments only: Net income (bottom) + Tax (top).
+    // Bar total = gross drawn (~£65k target). Tax segment shows what's lost.
     // ─────────────────────────────────────────────
     const spendingCtx = document.getElementById('spendingChart')?.getContext('2d');
     if (spendingCtx) {
       const grossNetSets = [];
 
-      function gds(label, p1fn, p2fn, color) {
-        const both = r => (p1fn(r) || 0) + (p2fn(r) || 0);
-        const fn   = _viewPerson === 'p1' ? p1fn
-                   : _viewPerson === 'p2' ? p2fn
-                   : both;
-        return {
-          label,
-          data: _rows.map(r => Math.round(adj(fn(r), r) / 1000)),
-          backgroundColor: color,
-          stack: 'gross',
-          type: 'bar',
-          _lifetimeValue: _rows.reduce((s, r) => s + adj(fn(r) || 0, r), 0),
-        };
-      }
+      const netFn = r => _viewPerson === 'p1' ? (r.p1NetIncome || 0)
+                       : _viewPerson === 'p2' ? (r.p2NetIncome || 0)
+                       : (r.householdNetIncome || 0);
 
-      grossNetSets.push(gds('Salary',        r => r.p1SalInc     || 0, r => r.p2SalInc     || 0, COLOURS.salary));
-      grossNetSets.push(gds('Cash',          r => r.p1Drawn.Cash || 0, r => r.p2Drawn.Cash || 0, COLOURS.p1Cash));
-      grossNetSets.push(gds('Interest',      r => r.p1IntDraw    || 0, r => r.p2IntDraw    || 0, COLOURS.intDraw));
-      grossNetSets.push(gds('Dividends',     r => r.p1Divs       || 0, r => r.p2Divs       || 0, COLOURS.p1Divs));
-      grossNetSets.push(gds('GIA',           r => r.p1Drawn.GIA  || 0, r => r.p2Drawn.GIA  || 0, COLOURS.p1GIA));
-      grossNetSets.push(gds('ISA',           r => r.p1Drawn.ISA  || 0, r => r.p2Drawn.ISA  || 0, COLOURS.p1ISA));
-      grossNetSets.push(gds('SIPP / WP',     r => r.p1Drawn.SIPP || 0, r => r.p2Drawn.SIPP || 0, COLOURS.p1SIPP));
-      grossNetSets.push(gds('State Pension', r => r.p1SP         || 0, r => r.p2SP         || 0, COLOURS.p1SP));
+      const taxFn = r => _viewPerson === 'p1' ? (r.p1Tax || 0)
+                       : _viewPerson === 'p2' ? (r.p2Tax || 0)
+                       : (r.householdTax || 0);
 
-      // Tax segment — stacked on top of income sources
-      const taxFn = r => _viewPerson === 'p1'
-        ? (r.p1IncomeTax || 0) + (r.p1CGT || 0)
-        : _viewPerson === 'p2'
-          ? (r.p2IncomeTax || 0) + (r.p2CGT || 0)
-          : (r.p1IncomeTax || 0) + (r.p1CGT || 0) + (r.p2IncomeTax || 0) + (r.p2CGT || 0);
+      grossNetSets.push({
+        label: 'Net income',
+        data: _rows.map(r => Math.round(adj(netFn(r), r) / 1000)),
+        backgroundColor: '#4472C4',
+        stack: 'gross',
+        type: 'bar',
+        _lifetimeValue: _rows.reduce((s, r) => s + adj(netFn(r), r), 0),
+      });
 
       grossNetSets.push({
         label: 'Tax',
@@ -489,21 +461,6 @@
         type: 'bar',
         _lifetimeValue: _rows.reduce((s, r) => s + adj(taxFn(r), r), 0),
         _fixed: true,
-      });
-
-      // Spending target line
-      grossNetSets.push({
-        label: 'Spending target',
-        data: _rows.map(r => Math.round(adj(r.target || 0, r) / 1000)),
-        type: 'line',
-        stack: undefined,
-        backgroundColor: 'transparent',
-        borderColor: COLOURS.target,
-        borderWidth: 2,
-        borderDash: [6, 3],
-        pointRadius: 0,
-        tension: 0,
-        order: 0,
       });
 
       if (_spendingChart) _spendingChart.destroy();
