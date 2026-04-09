@@ -434,20 +434,6 @@
                 </div>
               </div>
             </div>
-            <div class="assump-section">
-              <p class="assump-section__label">GIA dividends</p>
-              <div class="assump-section__body">
-                <div class="field" style="margin-bottom:6px">
-                  <label>Dividend yield on GIA equities (%)</label>
-                  <div class="stepper-input">
-                    <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1">
-                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="1" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="-1" type="button">&#x25BC;</button>
-                  </div>
-                </div>
-                <div class="hint">Dividends treated as taxable income each year (not reinvested).</div>
-              </div>
-            </div>
             <div class="assump-section" id="int-accts-section" style="display:none">
               <p class="assump-section__label">Interest-bearing accounts</p>
               <div class="assump-section__body" id="int-accts-list"></div>
@@ -575,6 +561,20 @@
                 </label>
               </div>
               <div class="hint" style="margin-top:6px">Uprating applies to PA, basic-rate limit, higher-rate threshold, and CGT exempt amount.</div>
+            </div>
+            <div class="assump-section">
+              <p class="assump-section__label">GIA dividends</p>
+              <div class="assump-section__body">
+                <div class="field" style="margin-bottom:6px">
+                  <label>Dividend yield on GIA equities (%)</label>
+                  <div class="stepper-input">
+                    <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1">
+                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="1" type="button">&#x25B2;</button>
+                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="-1" type="button">&#x25BC;</button>
+                  </div>
+                </div>
+                <div class="hint">Dividends treated as taxable income each year (not reinvested).</div>
+              </div>
             </div>
           </div>
 
