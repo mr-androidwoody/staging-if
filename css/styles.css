@@ -575,7 +575,7 @@ input[type="radio"] { accent-color: var(--accent); }
   min-height: 280px;
 }
 
-/* Panel title aligned to assump-section__label */
+/* Panel title — aligned to assump-section__label */
 .setup-panel-title {
   font-size: 0.7rem;
   font-weight: 700;
@@ -613,61 +613,7 @@ input[type="radio"] { accent-color: var(--accent); }
   color: var(--muted);
 }
 
-/* Allocation bars */
-.alloc-row { margin-bottom: 12px; display: block; }
-.alloc-row:last-child { margin-bottom: 0; }
-
-.alloc-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-
-.alloc-head strong,
-.alloc-pct {
-  color: var(--text);
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.alloc-label { display: none; }
-.alloc-bar-wrap { width: 100%; height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
-.alloc-bar { height: 100%; border-radius: 999px; transition: width 0.2s; }
-
-/* Total row — sits below the bars, right-aligned badge */
-.alloc-total-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
-/* "100% / Ready" badge */
-.alloc-balanced {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  padding: 5px 12px;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: var(--radius-xs);
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #0c8a5c;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-/* Wrapper rows — adopt assump-info-row--boxed pattern */
+/* Shared pill row — used by both Allocation and Wrappers panels */
 .wrapper-row {
   display: flex;
   justify-content: space-between;
@@ -685,7 +631,23 @@ input[type="radio"] { accent-color: var(--accent); }
 .wrapper-row:last-child { margin-bottom: 0; }
 .wrapper-val { color: var(--text); font-weight: 700; }
 
-/* Wrapper total footer — right-aligned, assump pattern */
+/* Total allocation row — same pill, bold label, green value inline */
+.alloc-total-row {
+  margin-top: 8px;
+}
+
+.alloc-total-row .alloc-total-label {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.alloc-balanced {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0c8a5c;
+}
+
+/* Wrapper total footer — label left, value right */
 .wrapper-total-footer {
   margin-top: 12px;
   padding-top: 12px;
@@ -773,7 +735,7 @@ input[type="radio"] { accent-color: var(--accent); }
 .accounts-toolbar-top p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   line-height: 1.42;
 }
 
