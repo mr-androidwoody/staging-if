@@ -350,8 +350,8 @@
       // Income tax first (required for CGT band stacking)
       const p1NonSavings = p1SP + p1SalInc + p1Drawn.sippTaxable;
       const p2NonSavings = p2SP + p2SalInc + p2Drawn.sippTaxable;
-      const p1Income     = C.calcIncomeTaxDetailed(p1NonSavings, p1IntTaxable, p1Divs, effThresholds);
-      const p2Income     = C.calcIncomeTaxDetailed(p2NonSavings, p2IntTaxable, p2Divs, effThresholds);
+      const p1Income     = C.calcIncomeTaxDetailed(p1NonSavings, p1IntTaxable, p1DivsUsed, effThresholds);
+      const p2Income     = C.calcIncomeTaxDetailed(p2NonSavings, p2IntTaxable, p2DivsUsed, effThresholds);
 
       // FIX 1: single CGT per person — one exemption applied to full annual gains
       const p1TaxableGain = Math.max(0, p1AnnualGains - effCGTExempt);
@@ -474,8 +474,8 @@
         p2NaturalNet,
         householdNaturalNet,
 
-        p1TaxInc: p1NonSavings + p1IntTaxable + p1Divs,
-        p2TaxInc: p2NonSavings + p2IntTaxable + p2Divs,
+        p1TaxInc: p1NonSavings + p1IntTaxable + p1DivsUsed,
+        p2TaxInc: p2NonSavings + p2IntTaxable + p2DivsUsed,
         p1AnnualGains,
         p2AnnualGains,
         bniCGTBill: p1CGT + p2CGT,

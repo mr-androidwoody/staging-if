@@ -820,7 +820,7 @@
 
       grossNetSets.push({
         label: 'Net income',
-        data: _rows.map(r => Math.round(adj(netFn(r), r) / 1000)),
+        data: _rows.map(r => adj(netFn(r), r) / 1000),
         backgroundColor: '#4472C4',
         stack: 'gross',
         type: 'bar',
@@ -829,7 +829,7 @@
 
       grossNetSets.push({
         label: 'Tax',
-        data: _rows.map(r => Math.round(adj(taxFn(r), r) / 1000)),
+        data: _rows.map(r => adj(taxFn(r), r) / 1000),
         backgroundColor: '#C55A11',
         stack: 'gross',
         type: 'bar',
