@@ -195,25 +195,6 @@
       startYear: safeNumber(safeValue('sp-startYear')),
       endYear:   safeNumber(safeValue('sp-endYear')),
       accounts:  state.portfolioAccounts,
-      assumptions: {
-        spending:          safeValue('spending'),
-        stepDownPct:       safeValue('stepDownPct'),
-        growth:            safeValue('growth'),
-        inflation:         safeValue('inflation'),
-        thresholdMode:     document.querySelector('input[name="thresholdMode"]:checked')?.value || 'frozen',
-        thresholdFromYear: safeValue('thresholdFromYearVal'),
-        withdrawalMode:    document.querySelector('input[name="withdrawalMode"]:checked')?.value || 'tax-aware',
-        p1Order1:          safeValue('p1Order1'),
-        p1Order2:          safeValue('p1Order2'),
-        p1Order3:          safeValue('p1Order3'),
-        p2Order1:          safeValue('p2Order1'),
-        p2Order2:          safeValue('p2Order2'),
-        p2Order3:          safeValue('p2Order3'),
-        bniEnabled:        safeEl('bniEnabled')?.checked || false,
-        bniP1GIA:          safeValue('bniP1GIA'),
-        bniP2GIA:          safeValue('bniP2GIA'),
-        dividendYield:     safeValue('dividendYield'),
-      },
     };
   }
 
@@ -258,39 +239,6 @@
       });
     }
     refreshSetupSummary();
-
-    const a = data.assumptions;
-    if (!a) return;
-    sv('spending',             a.spending          || '');
-    sv('stepDownPct',          a.stepDownPct       || '0');
-    sv('growth',               a.growth            || '');
-    sv('inflation',            a.inflation         || '');
-    sv('thresholdFromYearVal', a.thresholdFromYear || '2028');
-    sv('dividendYield',        a.dividendYield     || '1.5');
-    sv('bniP1GIA',             a.bniP1GIA          || '');
-    sv('bniP2GIA',             a.bniP2GIA          || '');
-
-    if (a.thresholdMode) {
-      const r = document.querySelector(`input[name="thresholdMode"][value="${a.thresholdMode}"]`);
-      if (r) r.checked = true;
-    }
-    if (a.withdrawalMode) {
-      const r = document.querySelector(`input[name="withdrawalMode"][value="${a.withdrawalMode}"]`);
-      if (r) r.checked = true;
-    }
-
-    ['p1Order1','p1Order2','p1Order3','p2Order1','p2Order2','p2Order3'].forEach(id => {
-      sv(id, a[id] || '');
-    });
-
-    const bni = safeEl('bniEnabled');
-    if (bni) {
-      bni.checked = !!a.bniEnabled;
-      ['bniP1GIA','bniP2GIA'].forEach(id => {
-        const el = safeEl(id);
-        if (el) { el.disabled = !a.bniEnabled; el.style.opacity = a.bniEnabled ? '' : '0.45'; }
-      });
-    }
   }
 
   function applyAssumptionsInputs(a) {
@@ -345,18 +293,6 @@
   function saveSetupData() {
     syncAccountsFromDOM();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(readSetupInputs()));
-  }
-
-  function loadSetup() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return showToast('No saved data found.', true);
-    try {
-      applySetupInputs(JSON.parse(raw));
-      showToast('Portfolio loaded ✓');
-    } catch (err) {
-      console.error(err);
-      showToast('Load failed – see console', true);
-    }
   }
 
   function saveAssumptionsData() {
@@ -818,48 +754,6 @@
   }
 
   // ─────────────────────────────
-  // LOAD SAVED — ghost blue feedback, resets after 800ms
-  // ─────────────────────────────
-  const loadSetupBtn = safeEl('loadSetupBtn');
-  if (loadSetupBtn) {
-    loadSetupBtn.addEventListener('click', () => {
-      const raw = localStorage.getItem(STORAGE_KEY);
-
-      if (!raw) {
-        // Flash button to error state in-place, reset after 2.5s
-        loadSetupBtn.textContent = 'No saved data found';
-        loadSetupBtn.classList.add('btn-load-error');
-        clearTimeout(loadSetupBtn._errTimer);
-        loadSetupBtn._errTimer = window.setTimeout(() => {
-          loadSetupBtn.textContent = 'Load saved';
-          loadSetupBtn.classList.remove('btn-load-error');
-        }, 2500);
-        return;
-      }
-
-      triggerLoadFeedback(loadSetupBtn, 'Load saved', 800);
-      try {
-        applySetupInputs(JSON.parse(raw));
-        // Flash success state on the button in-place
-        loadSetupBtn.textContent = 'Portfolio loaded ✓';
-        loadSetupBtn.classList.remove('btn-secondary', 'btn-loading');
-        loadSetupBtn.classList.add('btn-load-success');
-        clearTimeout(loadSetupBtn._successTimer);
-        loadSetupBtn._successTimer = window.setTimeout(() => {
-          loadSetupBtn.textContent = 'Load saved';
-          loadSetupBtn.classList.remove('btn-load-success');
-          loadSetupBtn.classList.add('btn-secondary');
-          loadSetupBtn.disabled = false;
-        }, 2000);
-      } catch (err) {
-        console.error(err);
-        showToast('Load failed – see console', true);
-        resetLoadBtn(loadSetupBtn, 'Load saved');
-      }
-    });
-  }
-
-  // ─────────────────────────────
   // LOAD EXCEL — ghost blue while file picker is open.
   // Resets on excel-loaded event (success) or after 8s fallback
   // (user cancelled the picker or load took too long).
@@ -999,6 +893,15 @@
   RetireTabs.init();
   CR.initResultsTabs();
   CR.initTableSelector();
+
+  const savedPortfolio = localStorage.getItem(STORAGE_KEY);
+  if (savedPortfolio) {
+    try {
+      applySetupInputs(JSON.parse(savedPortfolio));
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   const savedAssumptions = localStorage.getItem(ASSUMPTIONS_KEY);
   if (savedAssumptions) {
