@@ -1154,6 +1154,25 @@ input[type="radio"] { accent-color: var(--accent); }
   letter-spacing: -0.02em;
 }
 
+.metric-value--small {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.metric--income-target {
+  background: var(--text);
+  border-color: transparent;
+}
+
+.metric--income-target .metric-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.metric--income-target .metric-value {
+  color: #ffffff;
+}
+
 /* ─────────────────────────────
    Results: chart tab bar
    ───────────────────────────── */
