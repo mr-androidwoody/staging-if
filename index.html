@@ -527,16 +527,16 @@
               </div>
             </div>
             <div class="assump-section">
-              <p class="assump-section__label">Growth presets</p>
+              <p class="assump-section__label"><span class="assump-tooltip-anchor">Growth presets<span class="assump-tooltip">Sets the nominal portfolio growth rate. Real return equals growth minus inflation.</span></span></p>
               <div class="assump-radio-group">
                 <label class="assump-radio-label">
-                  <input type="radio" name="growthPreset" value="3" onchange="document.getElementById('growth').value='3'"> Cautious — 3%
+                  <input type="radio" name="growthPreset" value="3" onchange="document.getElementById('growth').value='3'"> Cautious 3%
                 </label>
                 <label class="assump-radio-label">
-                  <input type="radio" name="growthPreset" value="4" onchange="document.getElementById('growth').value='4'"> Baseline — 4%
+                  <input type="radio" name="growthPreset" value="4" onchange="document.getElementById('growth').value='4'"> Baseline 4%
                 </label>
                 <label class="assump-radio-label">
-                  <input type="radio" name="growthPreset" value="5" onchange="document.getElementById('growth').value='5'"> Balanced — 5%
+                  <input type="radio" name="growthPreset" value="5" onchange="document.getElementById('growth').value='5'"> Balanced 5%
                 </label>
               </div>
             </div>
@@ -549,7 +549,7 @@
               <p class="assump-section__label">Tax threshold uprating</p>
               <div class="assump-radio-group">
                 <label class="assump-radio-label">
-                  <input type="radio" name="thresholdMode" id="thresholdFrozen" value="frozen" checked> Frozen — fiscal drag applies
+                  <input type="radio" name="thresholdMode" id="thresholdFrozen" value="frozen" checked> Frozen (fiscal drag applies)
                 </label>
                 <label class="assump-radio-label">
                   <input type="radio" name="thresholdMode" id="thresholdFromYear" value="fromYear"> Uprated from year
@@ -581,7 +581,9 @@
 
           <!-- Withdrawal Split Mode -->
           <div class="assump-card">
-            <div class="assump-card-title">Withdrawal Split Mode</div>
+            <div class="assump-card-title">
+              <span class="assump-tooltip-anchor">Withdrawal Split Mode<span class="assump-tooltip">Controls how withdrawals are split between people. Tax-aware mode optimises each person's allowances before drawing; 50/50 splits the target mechanically regardless of tax position.</span></span>
+            </div>
             <div class="assump-section">
               <p class="assump-section__label">Split mode</p>
               <div class="assump-radio-group">
@@ -594,7 +596,7 @@
               </div>
             </div>
             <div class="assump-section">
-              <p class="assump-section__label">Wrapper order (1st → last) — after Cash</p>
+              <p class="assump-section__label">Wrapper order (1st to last) after Cash</p>
               <div class="assump-section__body">
                 <p class="assump-section__label" data-p1 style="margin-bottom:4px">Person 1</p>
                 <div class="order-row">
@@ -615,15 +617,17 @@
 
           <!-- Bed & ISA -->
           <div class="assump-card">
-            <div class="assump-card-title">Bed &amp; ISA</div>
+            <div class="assump-card-title">
+              <span class="assump-tooltip-anchor">Bed &amp; ISA<span class="assump-tooltip">Sells GIA holdings and repurchases inside an ISA each year, sheltering future growth from tax. Capped at the £20k annual ISA allowance per person.</span></span>
+            </div>
             <div class="assump-section">
               <p class="assump-section__label">Strategy</p>
               <div class="assump-radio-group" style="margin-bottom:10px">
                 <label class="assump-radio-label">
-                  <input type="radio" name="bniEnabled" id="bniEnabled" value="true"> Enabled
+                  <input type="radio" name="bniEnabled" id="bniEnabled" value="true"> Enabled <span class="assump-inline-field__hint" style="margin-left:4px">Transfer GIA to ISA annually</span>
                 </label>
                 <label class="assump-radio-label">
-                  <input type="radio" name="bniEnabled" id="bniDisabled" value="false" checked> Disabled
+                  <input type="radio" name="bniEnabled" id="bniDisabled" value="false" checked> Disabled <span class="assump-inline-field__hint" style="margin-left:4px">No transfers made</span>
                 </label>
               </div>
               <div class="assump-section__body">
