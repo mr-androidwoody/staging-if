@@ -776,19 +776,19 @@
     // ─────────────────────────────────────────────
     const taxData = _rows.map(r => {
       const t = _viewPerson === 'p1'
-        ? r.p1IncomeTax + r.p1CGT
+        ? r.p1IncomeTax + r.p1CGT + r.p1NI
         : _viewPerson === 'p2'
-          ? r.p2IncomeTax + r.p2CGT
-          : r.p1IncomeTax + r.p1CGT + r.p2IncomeTax + r.p2CGT;
+          ? r.p2IncomeTax + r.p2CGT + r.p2NI
+          : r.p1IncomeTax + r.p1CGT + r.p1NI + r.p2IncomeTax + r.p2CGT + r.p2NI;
       return Math.round(adj(t, r));
     });
 
     const rateData = _rows.map(r => {
       const tax = _viewPerson === 'p1'
-        ? r.p1IncomeTax + r.p1CGT
+        ? r.p1IncomeTax + r.p1CGT + r.p1NI
         : _viewPerson === 'p2'
-          ? r.p2IncomeTax + r.p2CGT
-          : r.p1IncomeTax + r.p1CGT + r.p2IncomeTax + r.p2CGT;
+          ? r.p2IncomeTax + r.p2CGT + r.p2NI
+          : r.p1IncomeTax + r.p1CGT + r.p1NI + r.p2IncomeTax + r.p2CGT + r.p2NI;
 
       const gross = _viewPerson === 'p1'
         ? (r.p1GrossIncome || 0)
@@ -808,13 +808,15 @@
     if (spendingCtx) {
       const grossNetSets = [];
 
-      const netFn = r => _viewPerson === 'p1' ? (r.p1NetIncome || 0)
-                       : _viewPerson === 'p2' ? (r.p2NetIncome || 0)
-                       : (r.householdNetIncome || 0);
+      const grossFn = r => _viewPerson === 'p1' ? (r.p1GrossIncome || 0)
+                        : _viewPerson === 'p2' ? (r.p2GrossIncome || 0)
+                        : (r.householdGrossIncome || 0);
 
       const taxFn = r => _viewPerson === 'p1' ? (r.p1IncomeTax || 0) + (r.p1CGT || 0) + (r.p1NI || 0)
                        : _viewPerson === 'p2' ? (r.p2IncomeTax || 0) + (r.p2CGT || 0) + (r.p2NI || 0)
                        : (r.p1IncomeTax || 0) + (r.p1CGT || 0) + (r.p1NI || 0) + (r.p2IncomeTax || 0) + (r.p2CGT || 0) + (r.p2NI || 0);
+
+      const netFn = r => grossFn(r) - taxFn(r);
 
       grossNetSets.push({
         label: 'Net income',
