@@ -200,15 +200,29 @@
     const fmt0 = n => '£' + Math.round(n).toLocaleString('en-GB');
 
     if (label === 'Salary') {
-      // Find which person has salary and until when
-      const hasSal = rows.find(r => (r.p1SalInc || 0) + (r.p2SalInc || 0) > 0);
-      const lastSal = [...rows].reverse().find(r => (r.p1SalInc || 0) + (r.p2SalInc || 0) > 0);
+      const hasSal  = rows.find(r => (r.p1SalInc || 0) + (r.p2SalInc || 0) > 0);
       if (!hasSal) return null;
-      const p1Has = hasSal.p1SalInc > 0;
-      const name  = p1Has ? (document.getElementById('sp-p1name')?.value || 'Person 1').trim()
-                           : (document.getElementById('sp-p2name')?.value || 'Person 2').trim();
-      const annual = p1Has ? hasSal.p1SalInc : hasSal.p2SalInc;
-      return `${name}'s salary of ${fmt0(annual)}/yr, drawn until ${lastSal.year} (age ${p1Has ? lastSal.p1Age : lastSal.p2Age})`;
+      const p1name  = (document.getElementById('sp-p1name')?.value || 'Person 1').trim();
+      const p2name  = (document.getElementById('sp-p2name')?.value || 'Person 2').trim();
+      const p1Has   = hasSal.p1SalInc > 0;
+      const p2Has   = hasSal.p2SalInc > 0;
+
+      if (p1Has && p2Has && viewPerson === 'both') {
+        // Both have salary — show combined detail
+        const lastP1  = [...rows].reverse().find(r => (r.p1SalInc || 0) > 0);
+        const lastP2  = [...rows].reverse().find(r => (r.p2SalInc || 0) > 0);
+        const p1Annual = hasSal.p1SalInc;
+        const p2Annual = hasSal.p2SalInc;
+        const combined = p1Annual + p2Annual;
+        return `${p1name}'s salary of ${fmt0(p1Annual)}/yr (to age ${lastP1.p1Age}) and ${p2name}'s salary of ${fmt0(p2Annual)}/yr (to age ${lastP2.p2Age}), combined ${fmt0(combined)}/yr`;
+      }
+
+      // Single person has salary, or person filter active
+      const p1Show  = viewPerson === 'p2' ? false : p1Has;
+      const name    = p1Show ? p1name : p2name;
+      const annual  = p1Show ? hasSal.p1SalInc : hasSal.p2SalInc;
+      const lastSal = [...rows].reverse().find(r => (p1Show ? r.p1SalInc : r.p2SalInc) > 0);
+      return `${name}'s salary of ${fmt0(annual)}/yr, drawn until ${lastSal.year} (age ${p1Show ? lastSal.p1Age : lastSal.p2Age})`;
     }
 
     if (label === 'Cash') {
