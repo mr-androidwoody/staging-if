@@ -288,6 +288,11 @@
     if (!host) return;
     host.innerHTML = '';
 
+    const intro = document.createElement('p');
+    intro.className = 'chart-intro';
+    intro.textContent = 'Shows how your retirement income is drawn from each source year by year. Click any legend item to show or hide it in the chart.';
+    host.appendChild(intro);
+
     const header = document.createElement('div');
     header.className = 'sidebar-legend__header';
     header.innerHTML = '<span>Source</span><span>Lifetime</span>';
@@ -383,6 +388,11 @@
     const host = document.getElementById('spendingLegend');
     if (!host) return;
     host.innerHTML = '';
+
+    const intro = document.createElement('p');
+    intro.className = 'chart-intro';
+    intro.textContent = 'Shows gross income drawn each year split between net spending and tax paid. Click any legend item to show or hide it in the chart.';
+    host.appendChild(intro);
 
     const header = document.createElement('div');
     header.className = 'sidebar-legend__header';
