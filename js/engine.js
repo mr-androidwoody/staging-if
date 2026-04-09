@@ -125,16 +125,24 @@
         }
       }
 
-      // Priority 1: interest-bearing accounts
+      // Priority 1: interest-bearing accounts — capped to spending gap only
       let intDrawTotal = 0, p1IntDraw = 0, p2IntDraw = 0;
       let p1IntTaxable = 0, p2IntTaxable = 0;
+
+      // How much of the target is already covered before interest draws
+      const preIntGuaranteed = p1SP + p2SP + p1SalInc + p2SalInc + p1Divs + p2Divs;
+      // Surplus salary/SP above target goes to p1 cash buffer
+      const preIntSurplus    = Math.max(0, preIntGuaranteed - target);
+      if (preIntSurplus > 0) p1Bal.Cash = (p1Bal.Cash || 0) + preIntSurplus;
+      let intBudget = Math.max(0, target - preIntGuaranteed);
+
       intAccts.forEach(a => {
         if ((a.balance || 0) <= 0) return;
 
         const effectiveRate  = C.interestEffective(a.rate);
         const interestEarned = (a.balance || 0) * effectiveRate;
         const annualTarget   = (a.monthlyDraw || 0) * 12;
-        const isP1           = a.owner === 'p1'; // FIX: compare token, not display name
+        const isP1           = a.owner === 'p1';
 
         if (annualTarget <= 0) {
           a.balance += interestEarned;
@@ -145,13 +153,15 @@
           return;
         }
 
-        const drawActual    = Math.min(annualTarget, a.balance + interestEarned);
+        // Cap draw to remaining spending budget
+        const drawActual    = Math.min(annualTarget, intBudget, a.balance + interestEarned);
         const interestDrawn = Math.min(drawActual, interestEarned);
 
         a.balance -= Math.max(0, drawActual - interestDrawn);
         a.balance += interestEarned - interestDrawn;
 
         intDrawTotal += drawActual;
+        intBudget    -= drawActual;
         if (isP1) p1IntDraw += drawActual;
         else p2IntDraw += drawActual;
 
@@ -211,8 +221,8 @@
           p1Drawn.ISA += extra.ISA;
           p1Drawn.sippTaxable += extra.sippTaxable;
         }
-      } else {
-        // FIX 3: tax-aware mode — SIPP to fill PA, then proportional split by remaining headroom
+      } else if (shortfall > 0) {
+        // Tax-aware mode — only runs when there is a spending shortfall to fill
 
         // Step 1: PA headroom — deduct all known income that consumes PA
         const p1GuaranteedNS = p1SP + p1SalInc + p1IntTaxable + p1Divs;
@@ -300,6 +310,10 @@
             p1Drawn.sippTaxable += p1Last.sippTaxable;
           }
         }
+      } else {
+        // Tax-aware mode, shortfall === 0: no portfolio draw needed
+        p1Drawn = { GIA: 0, SIPP: 0, ISA: 0, Cash: 0, sippTaxable: 0 };
+        p2Drawn = { GIA: 0, SIPP: 0, ISA: 0, Cash: 0, sippTaxable: 0 };
       }
 
       p1Drawn.Cash += p1CashDrawn;
