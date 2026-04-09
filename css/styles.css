@@ -1154,9 +1154,11 @@ input[type="radio"] { accent-color: var(--accent); }
   flex: 0 1 auto;
 }
 
-/* Radio label titles — no bold */
+/* Radio label titles — no bold, no wrap */
 .assump-radio-label strong {
   font-weight: 400;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ─────────────────────────────
