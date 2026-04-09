@@ -692,7 +692,7 @@ input[type="radio"] { accent-color: var(--accent); }
   border-radius: 0;
 }
 .alloc-total-row .alloc-total-label { font-weight: 700; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.alloc-balanced { font-size: 0.82rem; font-weight: 800; color: #0c8a5c; }
+.alloc-balanced { font-size: 1.2rem; font-weight: 800; color: #0c8a5c; }
 
 /* Wrapper total footer — label left, value right */
 .wrapper-total-footer {
