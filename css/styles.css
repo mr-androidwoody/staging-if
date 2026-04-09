@@ -1116,6 +1116,34 @@ input[type="radio"] { accent-color: var(--accent); }
   margin-right: 2px;
 }
 
+/* ─────────────────────────────
+   Inline field row: narrow input + hint text side by side
+   ───────────────────────────── */
+
+.assump-inline-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assump-inline-field__input {
+  flex: 0 0 auto;
+  width: 25%;
+  min-width: 80px;
+}
+
+.assump-inline-field__input .stepper-input,
+.assump-inline-field__input .currency-stepper {
+  width: 100%;
+}
+
+.assump-inline-field__hint {
+  flex: 1 1 auto;
+  font-size: 0.74rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
 /* Wrapper order dropdowns — slightly more refined */
 .order-row + .order-row {
   margin-top: 4px;
