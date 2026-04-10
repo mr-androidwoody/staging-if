@@ -403,12 +403,13 @@
   ];
 
   function applyBniState(enabled) {
+    document.querySelectorAll('.bni-field').forEach(row => {
+      row.style.opacity      = enabled ? '' : '0.45';
+      row.style.pointerEvents = enabled ? '' : 'none';
+    });
     ['bniP1GIA', 'bniP2GIA'].forEach(id => {
       const el = safeEl(id);
-      if (el) { el.disabled = !enabled; el.style.opacity = enabled ? '' : '0.45'; }
-      el?.closest('.currency-stepper')?.querySelectorAll('.stepper-btn').forEach(b => {
-        b.disabled = !enabled; b.style.opacity = enabled ? '' : '0.45';
-      });
+      if (el) el.disabled = !enabled;
     });
   }
 
