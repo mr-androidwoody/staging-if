@@ -1846,6 +1846,7 @@ input[type="radio"] { accent-color: var(--accent); }
   margin-bottom: 16px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--border);
+  min-width: 0;
 }
 
 .table-toolbar__left,
@@ -1853,6 +1854,7 @@ input[type="radio"] { accent-color: var(--accent); }
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .table-toolbar__right .chart-sidebar__label {
@@ -1860,7 +1862,7 @@ input[type="radio"] { accent-color: var(--accent); }
   white-space: nowrap;
 }
 
-/* Horizontal variant of sidebar-toggle */
+/* Horizontal variant of sidebar-toggle — preserves the inset track */
 .sidebar-toggle--row {
   flex-direction: row;
   padding: 3px;
