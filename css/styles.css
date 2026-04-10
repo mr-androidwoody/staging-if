@@ -907,20 +907,19 @@ input[type="radio"] { accent-color: var(--accent); }
 .col-value { width: 9%; }
 .col-alloc { width: 8%; }
 .col-rate { width: 7%; }
+
+/* Scoped stepper overrides for narrow account table columns */
+.acct-table .stepper-input input {
+  padding-right: 22px;
+  text-align: left;
+}
+.acct-table .stepper-btn {
+  width: 16px;
+}
 .col-draw { width: 8%; }
 .col-total { width: 7%; text-align: center; }
 .col-action { width: 7%; }
 .rate-note { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-
-/* Scoped stepper overrides for narrow account table columns */
-.acct-table .stepper-input input {
-  padding-right: 20px;
-  text-align: right;
-}
-
-.acct-table .stepper-btn {
-  width: 16px;
-}
 
 /* ========================================
    Assumptions tab
