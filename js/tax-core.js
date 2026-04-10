@@ -1,4 +1,4 @@
-export function calculateTax(input, rules) {
+function calculateTax(input, rules) {
   const {
     salary = 0,
     interest = 0,
@@ -198,3 +198,5 @@ export function calculateTax(input, rules) {
 function round(n) {
   return Math.round(n * 100) / 100;
 }
+
+window.calculateTax = calculateTax;
