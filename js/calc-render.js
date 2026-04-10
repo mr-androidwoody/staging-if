@@ -991,65 +991,66 @@
       const wealthData = [
         {
           label: `${p1} Cash`,
-          data: _rows.map(r => Math.round(adj(r.snap.p1Cash || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p1Cash || 0, r))),
           backgroundColor: '#B0B0B0',
           stack: 'wealth',
         },
         {
           label: `${p1} Interest`,
-          data: _rows.map(r => Math.round(adj(r.snap.p1IntBal || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p1IntBal || 0, r))),
           backgroundColor: '#9B59B6',
           stack: 'wealth',
         },
         {
           label: `${p1} GIA`,
-          data: _rows.map(r => Math.round(adj(r.snap.p1GIA || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p1GIA || 0, r))),
           backgroundColor: '#A9D18E',
           stack: 'wealth',
         },
         {
           label: `${p1} SIPP / WP`,
-          data: _rows.map(r => Math.round(adj(r.snap.p1SIPP || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p1SIPP || 0, r))),
           backgroundColor: '#ED7D31',
           stack: 'wealth',
         },
         {
           label: `${p1} ISA`,
-          data: _rows.map(r => Math.round(adj(r.snap.p1ISA || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p1ISA || 0, r))),
           backgroundColor: '#5B9BD5',
           stack: 'wealth',
         },
         {
           label: `${p2} Cash`,
-          data: _rows.map(r => Math.round(adj(r.snap.p2Cash || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p2Cash || 0, r))),
           backgroundColor: '#D0D0D0',
           stack: 'wealth',
         },
         {
           label: `${p2} Interest`,
-          data: _rows.map(r => Math.round(adj(r.snap.p2IntBal || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p2IntBal || 0, r))),
           backgroundColor: '#C39BD3',
           stack: 'wealth',
         },
         {
           label: `${p2} GIA`,
-          data: _rows.map(r => Math.round(adj(r.snap.p2GIA || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p2GIA || 0, r))),
           backgroundColor: '#78C86A',
           stack: 'wealth',
         },
         {
           label: `${p2} SIPP / WP`,
-          data: _rows.map(r => Math.round(adj(r.snap.p2SIPP || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p2SIPP || 0, r))),
           backgroundColor: '#FFC000',
           stack: 'wealth',
         },
         {
           label: `${p2} ISA`,
-          data: _rows.map(r => Math.round(adj(r.snap.p2ISA || 0, r))),
+          data: _rows.map(r => Math.round(adj(r.snap?.p2ISA || 0, r))),
           backgroundColor: '#2E86C1',
           stack: 'wealth',
         },
       ];
+    }
 
       if (_wealthChart) _wealthChart.destroy();
       _wealthChart = new Chart(wealthCtx, {
