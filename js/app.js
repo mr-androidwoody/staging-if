@@ -606,7 +606,7 @@
   }
 
   function gatherInputs() {
-    const bniEnabled   = safeEl('bniEnabled')?.checked || false;
+    const bniEnabled   = document.querySelector('input[name="bniEnabled"]:checked')?.value === 'true';
     const growthRaw    = gv('growth');
     const inflationRaw = gv('inflation');
 
