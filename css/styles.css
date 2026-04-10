@@ -889,39 +889,12 @@ input[type="radio"] { accent-color: var(--accent); }
   border-color: #dde3ec;
 }
 
-/* Primary percentage value */
-.value {
-  font-size: 0.9rem;
+.total-badge {
+  font-size: 0.76rem;
   font-weight: 700;
-  color: var(--text);
-  line-height: 1.1;
-}
-
-/* Container for stacked layout */
-.status {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-/* Secondary status text (Ready / Allocate / Reduce) */
-.status-text {
-  font-size: 11px;
-  font-weight: 500;
-}
-
-/* State colours */
-.status-ok .value,
-.status-ok .status-text {
-  color: #16a34a;
-}
-
-.status-warn .status-text {
-  color: #d97706;
-}
-
-.status-err .status-text {
-  color: #dc2626;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
 }
 
 .total-ok { background: #dcfce7; color: #16a34a; }
@@ -932,12 +905,22 @@ input[type="radio"] { accent-color: var(--accent); }
 .col-wrap { width: 7%; }
 .col-owner { width: 7%; }
 .col-value { width: 9%; }
-.col-alloc { width: 6%; }
-.col-rate { width: 6%; }
+.col-alloc { width: 8%; }
+.col-rate { width: 7%; }
 .col-draw { width: 8%; }
 .col-total { width: 7%; text-align: center; }
 .col-action { width: 7%; }
 .rate-note { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+/* Scoped stepper overrides for narrow account table columns */
+.acct-table .stepper-input input {
+  padding-right: 20px;
+  text-align: right;
+}
+
+.acct-table .stepper-btn {
+  width: 16px;
+}
 
 /* ========================================
    Assumptions tab
@@ -1892,14 +1875,12 @@ input[type="radio"] { accent-color: var(--accent); }
 /* Horizontal variant of sidebar-toggle — preserves the inset track */
 .sidebar-toggle--row {
   flex-direction: row;
-  flex: 0 0 auto;
   padding: 3px;
   border-radius: 10px;
 }
 
 .sidebar-toggle--row button {
   flex: 0 0 auto;
-  width: auto;
   padding: 6px 14px;
 }
 
