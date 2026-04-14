@@ -266,10 +266,9 @@
     }
 
     if (label === 'Shortfall') {
-      const sfCount = _engineShortfall.filter(v => v * 1000 >= 20000).length;
-      if (!sfCount) return 'Portfolio fully meets the spending target across all years — no shortfall';
-      const firstSfIdx = _engineShortfall.findIndex(v => v * 1000 >= 20000);
-      return `Spending target unmet in ${sfCount} year${sfCount !== 1 ? 's' : ''}, first occurring in ${rows[firstSfIdx]?.year ?? '–'}`;
+      const sfRows = rows.filter(r => (r.cashflowShortfall || 0) > 0);
+      if (!sfRows.length) return 'Portfolio fully meets the spending target across all years — no shortfall';
+      return `Spending target unmet in ${sfRows.length} year${sfRows.length !== 1 ? 's' : ''}, first occurring in ${sfRows[0].year}`;
     }
 
     return null;
@@ -341,8 +340,8 @@
     // Read from the live chart dataset so the value updates when items are toggled
     const sfDataset = chart.data.datasets.find(d => d.label === 'Shortfall');
     const sfRaw = sfDataset
-      ? sfDataset.data.reduce((s, v) => s + (v || 0) * 1000, 0)
-      : _engineShortfall.reduce((s, v) => s + v * 1000, 0);
+      ? sfDataset.data.reduce((s, v) => (v || 0) * 1000 >= 20000 ? s + (v || 0) * 1000 : s, 0)
+      : _engineShortfall.reduce((s, v) => v * 1000 >= 20000 ? s + v * 1000 : s, 0);
     const sfItem = document.createElement('div');
     sfItem.className = 'sidebar-legend__item sidebar-legend__item--fixed';
     const sfSwatch = document.createElement('span');
@@ -626,20 +625,16 @@
 
   function buildShortfallInsight() {
     const NEAR_DEPLETION = 20000;
-    // _engineShortfall is in £k, parallel to _rows by index
-    const sfIndices = _engineShortfall.map((v, i) => v * 1000 >= 20000 ? i : -1).filter(i => i >= 0);
+    const allSfRows  = _rows.filter(r => (r.cashflowShortfall || 0) > 0);
     const frag = document.createDocumentFragment();
-    if (!sfIndices.length) return frag;
+    if (!allSfRows.length) return frag;
 
-    const allSfRows = sfIndices.map(i => _rows[i]);
-    const sfValues  = sfIndices.map(i => _engineShortfall[i] * 1000); // convert £k → £
-    const total    = sfValues.reduce((s, v) => s + v, 0);
-    const peak     = Math.max(...sfValues);
-    const peakIdx  = sfValues.indexOf(peak);
-    const peakRow  = allSfRows[peakIdx];
+    const total    = allSfRows.reduce((s, r) => s + (r.cashflowShortfall || 0), 0);
+    const peak     = Math.max(...allSfRows.map(r => r.cashflowShortfall || 0));
+    const peakRow  = allSfRows.find(r => (r.cashflowShortfall || 0) === peak);
     const first    = allSfRows[0];
     const last     = allSfRows[allSfRows.length - 1];
-    const sfRows   = allSfRows; // alias for items block below
+    const sfRows   = allSfRows; // alias kept for items block below
 
     // Determine severity from minimum portfolio value across all shortfall years
     const minPortfolio = Math.min(...allSfRows.map(r => r.totalPortfolio || 0));
@@ -879,7 +874,7 @@
         },
       });
       renderIncomeLegend(_incomeChart, recomputeShortfall);
-      const hasGenuineShortfall = _engineShortfall.some(v => v * 1000 >= 20000);
+      const hasGenuineShortfall = _rows.some(r => (r.cashflowShortfall || 0) > 0);
       renderInsightButton('income', hasGenuineShortfall);
     }
 
