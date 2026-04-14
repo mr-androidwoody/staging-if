@@ -76,9 +76,13 @@
   // ─────────────────────────────────────────────
   // TAX CALCULATIONS
   // ─────────────────────────────────────────────
-  function calcCGT(taxableIncomeAfterPA, taxableGain, TAX) {
+  // taperedPA is optional: pass income.taperedPA for correctness when the person's PA
+  // has been reduced by the £100k taper. Falls back to TAX.PA (= no taper in effect).
+  // Basic band = basicLimit − effectivePA (the width of the 20% band available for CGT stacking).
+  function calcCGT(taxableIncomeAfterPA, taxableGain, TAX, taperedPA) {
     if (taxableGain <= 0) return 0;
-    const basicBand      = Math.max(0, TAX.basicLimit - TAX.PA);
+    const effectivePA    = (taperedPA !== undefined && taperedPA !== null) ? taperedPA : TAX.PA;
+    const basicBand      = Math.max(0, TAX.basicLimit - effectivePA);
     const basicUsed      = Math.min(Math.max(0, taxableIncomeAfterPA), basicBand);
     const basicRemaining = Math.max(0, basicBand - basicUsed);
     const atBasic        = Math.min(taxableGain, basicRemaining);
@@ -108,9 +112,9 @@
                psa: 0, nsTax: 0, savTax: 0, divTax: 0 };
     }
 
-    // PA taper: £1 reduction per £2 over £100k, exact (no rounding).
-    // HMRC works in exact amounts — Math.floor is incorrect here.
-    const reduction = Math.max(0, (totalIncome - TAX.taperStart) / 2);
+    // PA taper: £1 reduction per £2 over £100k, floored to whole pounds (HMRC spec).
+    // e.g. income £100,001 → floor(1/2) = 0 reduction, PA stays £12,570.
+    const reduction = Math.floor(Math.max(0, (totalIncome - TAX.taperStart) / 2));
     const pa = totalIncome > TAX.taperStart
       ? Math.max(0, TAX.PA - reduction)
       : TAX.PA;
@@ -166,6 +170,9 @@
       tax: nsTax + savTax + divTax,
       taxableIncomeAfterPA: nsNet + savNet + divNet,
       pa,
+      taperedPA: pa,   // explicit alias — pa is already the tapered value; callers needing
+                       // the effective basic band should use (basicLimit - taperedPA), not
+                       // (basicLimit - TAX.PA), to get the correct width after taper.
       paUsed: pa - paRem,
       nsNet, savNet, divNet,
       srsCover,

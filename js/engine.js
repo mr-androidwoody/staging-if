@@ -254,129 +254,26 @@
         shortfall  -= cashDrawn;
       }
 
-      // Priority 3: wrapper draws
+      // Priority 3: wrapper draws — delegated to withdrawal strategy layer.
       const p1WrapperOrder = p1Order.filter(w => w !== 'Cash' && !(w === 'SIPP' && p1SIPPLocked));
       const p2WrapperOrder = p2Order.filter(w => w !== 'Cash' && !(w === 'SIPP' && p2SIPPLocked));
-      let p1Drawn, p2Drawn;
 
-      if (withdrawalMode === '50/50') {
-        // Purely mechanical equal split — no tax logic applied
-        const p1Half  = shortfall / 2;
-        p1Drawn       = C.withdraw(p1Bal, p1WrapperOrder, p1Half);
-        const p1Unmet = Math.max(0, p1Half - p1Drawn.GIA - p1Drawn.SIPP - p1Drawn.ISA);
+      // PA headroom: how much more taxable income each person can absorb before paying tax.
+      // Required by the tax-aware strategy to size the SIPP draw correctly.
+      // Non-savings (SP, salary), interest, and dividends all consume PA first.
+      const p1GuaranteedNS = p1SP + p1SalInc;
+      const p2GuaranteedNS = p2SP + p2SalInc;
+      const p1PAHeadroom   = Math.max(0, effThresholds.PA - p1GuaranteedNS - p1IntTaxable - p1Divs);
+      const p2PAHeadroom   = Math.max(0, effThresholds.PA - p2GuaranteedNS - p2IntTaxable - p2Divs);
 
-        p2Drawn       = C.withdraw(p2Bal, p2WrapperOrder, shortfall / 2 + p1Unmet);
-        const p2Unmet = Math.max(
-          0,
-          (shortfall / 2 + p1Unmet) - p2Drawn.GIA - p2Drawn.SIPP - p2Drawn.ISA
-        );
-
-        if (p2Unmet > 0) {
-          const extra = C.withdraw(p1Bal, p1WrapperOrder, p2Unmet);
-          p1Drawn.GIA += extra.GIA;
-          p1Drawn.SIPP += extra.SIPP;
-          p1Drawn.ISA += extra.ISA;
-          p1Drawn.sippTaxable += extra.sippTaxable;
-        }
-      } else if (shortfall > 0) {
-        // Tax-aware mode — only runs when there is a spending shortfall to fill
-
-        // Step 1: PA headroom — non-savings (SP, salary), interest, and dividends all
-        // consume PA in order, reducing headroom available for a tax-free SIPP draw.
-        const p1GuaranteedNS = p1SP + p1SalInc;
-        const p2GuaranteedNS = p2SP + p2SalInc;
-        const p1PAHeadroom   = Math.max(0, effThresholds.PA - p1GuaranteedNS - p1IntTaxable - p1Divs);
-        const p2PAHeadroom   = Math.max(0, effThresholds.PA - p2GuaranteedNS - p2IntTaxable - p2Divs);
-
-        // Step 2: draw SIPP to fill PA — only if pension is accessible.
-        // Gross = headroom / SIPP_TAXABLE_RATIO (75% of draw is taxable income).
-        const p1SippTarget = (!p1SIPPLocked && p1PAHeadroom > 0)
-          ? Math.min(p1PAHeadroom / C.SIPP_TAXABLE_RATIO, p1Bal.SIPP || 0)
-          : 0;
-        const p2SippTarget = (!p2SIPPLocked && p2PAHeadroom > 0)
-          ? Math.min(p2PAHeadroom / C.SIPP_TAXABLE_RATIO, p2Bal.SIPP || 0)
-          : 0;
-
-        p1Drawn = C.withdraw(p1Bal, ['SIPP'], p1SippTarget);
-        p2Drawn = C.withdraw(p2Bal, ['SIPP'], p2SippTarget);
-
-        // Step 3: remaining shortfall split proportionally by remaining PA headroom
-        const p1SippTaxable = p1Drawn.sippTaxable;
-        const p2SippTaxable = p2Drawn.sippTaxable;
-        const p1RemHeadroom = Math.max(0, p1PAHeadroom - p1SippTaxable);
-        const p2RemHeadroom = Math.max(0, p2PAHeadroom - p2SippTaxable);
-        const sippDrawTotal = p1Drawn.SIPP + p2Drawn.SIPP;
-        const remShortfall  = Math.max(0, shortfall - sippDrawTotal);
-
-        const totalHeadroom = p1RemHeadroom + p2RemHeadroom;
-        const p1Weight      = totalHeadroom > 0 ? p1RemHeadroom / totalHeadroom : 0.5;
-        const p2Weight      = 1 - p1Weight;
-
-        const p1NonSippOrder = p1WrapperOrder.filter(w => w !== 'SIPP' && w !== 'Cash');
-        const p2NonSippOrder = p2WrapperOrder.filter(w => w !== 'SIPP' && w !== 'Cash');
-
-        const p1RemDrawn = C.withdraw(p1Bal, p1NonSippOrder, remShortfall * p1Weight);
-        const p2RemDrawn = C.withdraw(p2Bal, p2NonSippOrder, remShortfall * p2Weight);
-
-        // Merge draws
-        p1Drawn.GIA += p1RemDrawn.GIA;
-        p1Drawn.ISA += p1RemDrawn.ISA;
-        p2Drawn.GIA += p2RemDrawn.GIA;
-        p2Drawn.ISA += p2RemDrawn.ISA;
-
-        // Fallback: unmet demand goes to the other person, including SIPP as last resort
-        const p1Unmet = Math.max(
-          0,
-          remShortfall * p1Weight - p1RemDrawn.GIA - p1RemDrawn.ISA - p1RemDrawn.SIPP
-        );
-        const p2Unmet = Math.max(
-          0,
-          remShortfall * p2Weight - p2RemDrawn.GIA - p2RemDrawn.ISA - p2RemDrawn.SIPP
-        );
-
-        if (p1Unmet > 0) {
-          const extra = C.withdraw(p2Bal, p2WrapperOrder, p1Unmet);
-          p2Drawn.GIA += extra.GIA;
-          p2Drawn.ISA += extra.ISA;
-          p2Drawn.SIPP += extra.SIPP;
-          p2Drawn.sippTaxable += extra.sippTaxable;
-        }
-        if (p2Unmet > 0) {
-          const extra = C.withdraw(p1Bal, p1WrapperOrder, p2Unmet);
-          p1Drawn.GIA += extra.GIA;
-          p1Drawn.ISA += extra.ISA;
-          p1Drawn.SIPP += extra.SIPP;
-          p1Drawn.sippTaxable += extra.sippTaxable;
-        }
-
-        // Final catch-all: if shortfall still unmet, draw more SIPP — but only if accessible.
-        const totalDrawn = p1Drawn.GIA + p1Drawn.SIPP + p1Drawn.ISA
-                         + p2Drawn.GIA + p2Drawn.SIPP + p2Drawn.ISA;
-        const stillUnmet = Math.max(0, shortfall - totalDrawn);
-        if (stillUnmet > 0) {
-          const p1Extra = !p1SIPPLocked
-            ? C.withdraw(p1Bal, ['SIPP'], stillUnmet / 2)
-            : { SIPP: 0, sippTaxable: 0 };
-          const p2Share = stillUnmet / 2 + Math.max(0, stillUnmet / 2 - p1Extra.SIPP);
-          const p2Extra = !p2SIPPLocked
-            ? C.withdraw(p2Bal, ['SIPP'], p2Share)
-            : { SIPP: 0, sippTaxable: 0 };
-          p1Drawn.SIPP += p1Extra.SIPP;
-          p1Drawn.sippTaxable += p1Extra.sippTaxable;
-          p2Drawn.SIPP += p2Extra.SIPP;
-          p2Drawn.sippTaxable += p2Extra.sippTaxable;
-          const p2StillUnmet = Math.max(0, stillUnmet / 2 - p2Extra.SIPP);
-          if (p2StillUnmet > 0 && !p1SIPPLocked) {
-            const p1Last = C.withdraw(p1Bal, ['SIPP'], p2StillUnmet);
-            p1Drawn.SIPP += p1Last.SIPP;
-            p1Drawn.sippTaxable += p1Last.sippTaxable;
-          }
-        }
-      } else {
-        // Tax-aware mode, shortfall === 0: no portfolio draw needed
-        p1Drawn = { GIA: 0, SIPP: 0, ISA: 0, Cash: 0, sippTaxable: 0 };
-        p2Drawn = { GIA: 0, SIPP: 0, ISA: 0, Cash: 0, sippTaxable: 0 };
-      }
+      const { p1Drawn, p2Drawn } = window.RetireWithdrawalStrategy.withdrawalStrategy({
+        mode:           withdrawalMode,
+        shortfall,
+        p1Bal,          p2Bal,
+        p1WrapperOrder, p2WrapperOrder,
+        p1SIPPLocked,   p2SIPPLocked,
+        p1PAHeadroom,   p2PAHeadroom,
+      });
 
       p1Drawn.Cash += p1CashDrawn;
       p2Drawn.Cash += p2CashDrawn;
@@ -405,14 +302,22 @@
       // Income tax first (required for CGT band stacking)
       const p1NonSavings = p1SP + p1SalInc + p1Drawn.sippTaxable;
       const p2NonSavings = p2SP + p2SalInc + p2Drawn.sippTaxable;
-      const p1Income     = C.calcIncomeTaxDetailed(p1NonSavings, p1IntTaxable, p1Divs, effThresholds);
-      const p2Income     = C.calcIncomeTaxDetailed(p2NonSavings, p2IntTaxable, p2Divs, effThresholds);
+
+      // Named tax inputs — the boundary for Phase 1 tax extraction.
+      // Each field maps directly to a taxable income category per person.
+      const p1TaxInput = { nonSavings: p1NonSavings, interest: p1IntTaxable, dividends: p1Divs };
+      const p2TaxInput = { nonSavings: p2NonSavings, interest: p2IntTaxable, dividends: p2Divs };
+
+      const p1Income = C.calcIncomeTaxDetailed(p1TaxInput.nonSavings, p1TaxInput.interest, p1TaxInput.dividends, effThresholds);
+      const p2Income = C.calcIncomeTaxDetailed(p2TaxInput.nonSavings, p2TaxInput.interest, p2TaxInput.dividends, effThresholds);
 
       // FIX 1: single CGT per person — one exemption applied to full annual gains
+      // taperedPA passed explicitly so calcCGT uses the correct effective basic band width,
+      // not the statutory TAX.PA (which is wrong if the person is in the £100k–£125k taper zone).
       const p1TaxableGain = Math.max(0, p1AnnualGains - effCGTExempt);
       const p2TaxableGain = Math.max(0, p2AnnualGains - effCGTExempt);
-      const p1CGT         = C.calcCGT(p1Income.taxableIncomeAfterPA, p1TaxableGain, effThresholds);
-      const p2CGT         = C.calcCGT(p2Income.taxableIncomeAfterPA, p2TaxableGain, effThresholds);
+      const p1CGT         = C.calcCGT(p1Income.taxableIncomeAfterPA, p1TaxableGain, effThresholds, p1Income.taperedPA);
+      const p2CGT         = C.calcCGT(p2Income.taxableIncomeAfterPA, p2TaxableGain, effThresholds, p2Income.taperedPA);
 
       // Pay CGT from cash where possible
       if (p1CGT > 0) {
