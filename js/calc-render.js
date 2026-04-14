@@ -625,13 +625,14 @@
 
   function buildShortfallInsight() {
     const NEAR_DEPLETION = 20000;
-    const allSfRows  = _rows.filter(r => (r.cashflowShortfall || 0) > 0);
+    const allSfRows  = _rows.filter((r, i) => (_engineShortfall[i] || 0) * 1000 >= 20000);
     const frag = document.createDocumentFragment();
     if (!allSfRows.length) return frag;
 
-    const total    = allSfRows.reduce((s, r) => s + (r.cashflowShortfall || 0), 0);
-    const peak     = Math.max(...allSfRows.map(r => r.cashflowShortfall || 0));
-    const peakRow  = allSfRows.find(r => (r.cashflowShortfall || 0) === peak);
+    const sfAmounts  = allSfRows.map((r, j) => (_engineShortfall[_rows.indexOf(r)] || 0) * 1000);
+    const total      = sfAmounts.reduce((s, v) => s + v, 0);
+    const peak       = Math.max(...sfAmounts);
+    const peakRow    = allSfRows[sfAmounts.indexOf(peak)];
     const first    = allSfRows[0];
     const last     = allSfRows[allSfRows.length - 1];
     const sfRows   = allSfRows; // alias kept for items block below
@@ -874,7 +875,7 @@
         },
       });
       renderIncomeLegend(_incomeChart, recomputeShortfall);
-      const hasGenuineShortfall = _rows.some(r => (r.cashflowShortfall || 0) > 0);
+      const hasGenuineShortfall = _engineShortfall.some(v => (v || 0) * 1000 >= 20000);
       renderInsightButton('income', hasGenuineShortfall);
     }
 
