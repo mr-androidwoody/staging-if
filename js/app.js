@@ -225,18 +225,19 @@
   function applySetupInputs(data) {
     if (!data) return;
 
-    const sv = (id, val) => { const el = safeEl(id); if (el && val != null) el.value = val; };
+    const sv    = (id, val) => { const el = safeEl(id); if (el && val != null) el.value = val; };
+    const svCur = (id, val) => { const el = safeEl(id); if (el && val != null) R.applyCurrencyFormattingToInput(Object.assign(el, { value: String(val) })); };
     sv('sp-p1name',       data.people?.p1?.name          || '');
     sv('sp-p1dob',        data.people?.p1?.dob           || '');
     sv('p1SPAge',         data.people?.p1?.spAge         || '');
-    sv('p1SP',            data.people?.p1?.sp            || '');
-    sv('p1Salary',        data.people?.p1?.salary        || '');
+    svCur('p1SP',         data.people?.p1?.sp            || '');
+    svCur('p1Salary',     data.people?.p1?.salary        || '');
     sv('p1SalaryStopAge', data.people?.p1?.salaryStopAge || '');
     sv('sp-p2name',       data.people?.p2?.name          || '');
     sv('sp-p2dob',        data.people?.p2?.dob           || '');
     sv('p2SPAge',         data.people?.p2?.spAge         || '');
-    sv('p2SP',            data.people?.p2?.sp            || '');
-    sv('p2Salary',        data.people?.p2?.salary        || '');
+    svCur('p2SP',         data.people?.p2?.sp            || '');
+    svCur('p2Salary',     data.people?.p2?.salary        || '');
     sv('p2SalaryStopAge', data.people?.p2?.salaryStopAge || '');
     sv('sp-startYear',    data.startYear                 || '');
     sv('sp-endYear',      data.endYear                   || '');
@@ -259,6 +260,7 @@
       });
     }
     refreshSetupSummary();
+    refreshPortfolioUI();
   }
 
   function applyAssumptionsInputs(a) {
@@ -352,6 +354,7 @@
     R.updateRowBadge(acc);
     R.applyWrapperFieldState(acc);
     refreshSetupSummary();
+    refreshPortfolioUI();
   }
 
   function removeAccount(el) {
@@ -359,6 +362,48 @@
     if (row) row.remove();
     syncAccountsFromDOM();
     refreshSetupSummary();
+    refreshPortfolioUI();
+  }
+
+  // ─────────────────────────────
+  // PORTFOLIO VALIDATION UI
+  // ─────────────────────────────
+  function refreshPortfolioUI() {
+    const alertBox    = safeEl('portAlertBox');
+    const addBtn      = safeEl('addAccountBtn');
+    const continueBtn = safeEl('continueToAssumptionsBtn');
+
+    const accounts = state.portfolioAccounts;
+    const hasNone  = accounts.length === 0;
+
+    const unbalancedCount = accounts.filter(acc => {
+      const total = D.ALLOC_CLASSES.reduce((s, c) => s + (acc.alloc[c] || 0), 0);
+      return Math.round(total) !== 100;
+    }).length;
+
+    let message = null;
+    if (hasNone) {
+      message = 'Add at least one account';
+    } else if (unbalancedCount > 0) {
+      message = `Balance ${unbalancedCount} account${unbalancedCount > 1 ? 's' : ''} below so they equal exactly 100%`;
+    }
+
+    const isValid = message === null;
+
+    if (alertBox) {
+      alertBox.textContent   = message || '';
+      alertBox.style.display = message ? '' : 'none';
+    }
+
+    // Add account button: visible only when no alert is showing
+    if (addBtn) {
+      addBtn.style.display = message ? 'none' : '';
+    }
+
+    // Continue button: disabled when invalid
+    if (continueBtn) {
+      continueBtn.disabled = !isValid;
+    }
   }
 
   // ─────────────────────────────
@@ -902,6 +947,7 @@
       const accountId = Number(e.target.dataset.accountId);
       const acc = state.portfolioAccounts.find(a => a.id === accountId);
       if (acc) R.updateRowBadge(acc);
+      refreshPortfolioUI();
     }
   });
 
@@ -1129,6 +1175,7 @@
   // INIT
   // ─────────────────────────────
   refreshSetupSummary();
+  refreshPortfolioUI();
   R.initialiseCurrencyInputs();
   applyBniState(false);
   RetireTabs.init();
