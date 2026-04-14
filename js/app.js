@@ -713,6 +713,15 @@
         const MCE = window.RetireMCEngine;
         if (!MCE) throw new Error('RetireMCEngine not loaded — check mc-engine.js script tag.');
 
+        // Run deterministic first (synchronous, cheap) so the Projection tab
+        // is always populated regardless of which mode was last run.
+        const detResult = E.runProjection(inputs, state.portfolioAccounts);
+        if (detResult) {
+          CR.setResults(detResult);
+          CR.renderMetrics();
+          CR.renderCharts();
+        }
+
         const result = await MCE.run({
           inputs,
           simCount:     10_000,
