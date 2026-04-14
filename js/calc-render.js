@@ -816,18 +816,47 @@
     // Extract the engine shortfall from the Shortfall dataset for legend use
     _engineShortfall = sets[sets.length - 1].data.slice();
 
-    // Recompute shortfall when sources are toggled on/off in the legend
+    // Recompute shortfall when sources are toggled on/off in the legend.
+    // Derives values from engine rows (not capped chart data) so toggling any
+    // source correctly grows the shortfall bar by that source's real contribution.
     function recomputeShortfall(chart) {
       const sfIdx = chart.data.datasets.findIndex(d => d.label === 'Shortfall');
       if (sfIdx < 0) return;
-      const sourceSets = chart.data.datasets.filter(
-        d => d.stack === 'income' && d.label !== 'Shortfall'
-      );
+
+      // Source extractors in the same order as buildIncomeDatasets.
+      // Each entry: { label suffix, rowFn } where rowFn returns the nominal £ value.
+      const vp = _viewPerson;
+      const SOURCES = [
+        { label: 'State Pension', fn: r => ((vp === 'p1' ? r.p1SP        : vp === 'p2' ? r.p2SP        : (r.p1SP        ?? 0) + (r.p2SP        ?? 0)) ?? 0) },
+        { label: 'Salary',        fn: r => ((vp === 'p1' ? r.p1SalInc    : vp === 'p2' ? r.p2SalInc    : (r.p1SalInc    ?? 0) + (r.p2SalInc    ?? 0)) ?? 0) },
+        { label: 'Cash',          fn: r => ((vp === 'p1' ? r.p1Drawn?.Cash  : vp === 'p2' ? r.p2Drawn?.Cash  : (r.p1Drawn?.Cash  ?? 0) + (r.p2Drawn?.Cash  ?? 0)) ?? 0) },
+        { label: 'Interest',      fn: r => ((vp === 'p1' ? r.p1IntDraw   : vp === 'p2' ? r.p2IntDraw   : (r.p1IntDraw   ?? 0) + (r.p2IntDraw   ?? 0)) ?? 0) },
+        { label: 'Dividends',     fn: r => ((vp === 'p1' ? r.p1DivsUsed  : vp === 'p2' ? r.p2DivsUsed  : (r.p1DivsUsed  ?? 0) + (r.p2DivsUsed  ?? 0)) ?? 0) },
+        { label: 'GIA',           fn: r => ((vp === 'p1' ? r.p1Drawn?.GIA   : vp === 'p2' ? r.p2Drawn?.GIA   : (r.p1Drawn?.GIA   ?? 0) + (r.p2Drawn?.GIA   ?? 0)) ?? 0) },
+        { label: 'ISA',           fn: r => ((vp === 'p1' ? r.p1Drawn?.ISA   : vp === 'p2' ? r.p2Drawn?.ISA   : (r.p1Drawn?.ISA   ?? 0) + (r.p2Drawn?.ISA   ?? 0)) ?? 0) },
+        { label: 'SIPP / WP',     fn: r => ((vp === 'p1' ? r.p1Drawn?.SIPP  : vp === 'p2' ? r.p2Drawn?.SIPP  : (r.p1Drawn?.SIPP  ?? 0) + (r.p2Drawn?.SIPP  ?? 0)) ?? 0) },
+      ];
+
+      // Map each source label to its dataset index for visibility lookup.
+      // In single-person view the dataset labels are prefixed, so match by suffix.
+      const dsVisibility = SOURCES.map(src => {
+        const idx = chart.data.datasets.findIndex(d =>
+          d.stack === 'income' && d.label !== 'Shortfall' &&
+          (d.label === src.label || d.label.endsWith("'s " + src.label))
+        );
+        return idx;
+      });
+
       chart.data.datasets[sfIdx].data = _targetData.map((tgt, i) => {
-        const visibleGross = sourceSets.reduce((sum, d) => {
-          return sum + (chart.isDatasetVisible(chart.data.datasets.indexOf(d)) ? (d.data[i] || 0) : 0);
-        }, 0);
-        return Math.max(_engineShortfall[i], tgt - visibleGross);
+        const r = _rows[i];
+        let remaining = tgt; // adj'd £k budget
+        for (let s = 0; s < SOURCES.length; s++) {
+          if (!chart.isDatasetVisible(dsVisibility[s])) continue;
+          const val = adj(SOURCES[s].fn(r) || 0, r) / 1000; // adj'd £k
+          if (remaining <= 0) break;
+          remaining -= Math.min(val, remaining);
+        }
+        return Math.max(0, remaining);
       });
     }
 
