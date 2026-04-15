@@ -1059,6 +1059,13 @@
       if (tab === 'setup') {
         document.querySelectorAll('.currency-input').forEach(R.applyCurrencyFormattingToInput);
       }
+      // Restore growth preset radio to match the current growth value
+      if (tab === 'assumptions') {
+        const growthVal = safeEl('growth')?.value?.trim();
+        document.querySelectorAll('input[name="growthPreset"]').forEach(r => {
+          r.checked = r.value === growthVal;
+        });
+      }
       return RetireTabs.switchTab(tab);
     }
 
