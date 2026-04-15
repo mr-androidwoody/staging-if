@@ -409,7 +409,7 @@
       'SIPP/WP (workplace pension \u2014 same tax treatment as SIPP)  |  GIA (general investment account)  |  Cash     ' +
       'Owner: Person 1 or Person 2     ' +
       'Allocation % columns must total 100 \u2014 leave ALL four blank to apply defaults ' +
-      '(100% equities for ISA / SIPP / GIA; 100% cash for Cash)     ' +
+      '(100% equities for ISA / SIPP / GIA; 100% cashlike for Cash with a rate, 100% cash for Cash without)     ' +
       'Yellow rows = cells to fill in';
 
     // Example rows matching the screenshots
@@ -419,7 +419,7 @@
       ['Harry ISA',           'ISA',     'Person 1', 150000, 100, 0, 0, 0,   null, null, ''],
       ['Sally WP',            'SIPP/WP', 'Person 2', 150000, 100, 0, 0, 0,   null, null, 'SIPP/WP = Workplace Pension'],
       ['Harry GIA',           'GIA',     'Person 1', 200000, 100, 0, 0, 0,   null, null, ''],
-      ['Harry Cash savings',  'Cash',    'Person 1',  50000,   0, 0, 0, 100, 3.8,  null, 'Set interest rate for savings accounts'],
+      ['Harry Cash savings',  'Cash',    'Person 1',  50000,   0, 0, 100, 0, 3.8,  null, 'Set interest rate for savings accounts'],
       ['Sally ISA',           'ISA',     'Person 2', 150000, 100, 0, 0, 0,   null, null, ''],
     ];
 
