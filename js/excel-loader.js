@@ -419,7 +419,7 @@
       ['Harry ISA',           'ISA',     'Person 1', 150000, 100, 0, 0, 0,   null, null, ''],
       ['Sally WP',            'SIPP/WP', 'Person 2', 150000, 100, 0, 0, 0,   null, null, 'SIPP/WP = Workplace Pension'],
       ['Harry GIA',           'GIA',     'Person 1', 200000, 100, 0, 0, 0,   null, null, ''],
-      ['Harry Cash savings',  'Cash',    'Person 1',  50000,   0, 0, 100, 0, 3.8,  null, 'Set interest rate for savings accounts'],
+      ['Harry Cash savings',  'Cash',    'Person 1',  50000,   0, 0, 100, 0, 3.8,  400, 'Set interest rate for savings accounts'],
       ['Sally ISA',           'ISA',     'Person 2', 150000, 100, 0, 0, 0,   null, null, ''],
     ];
 
