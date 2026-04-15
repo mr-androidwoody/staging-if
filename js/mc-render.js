@@ -27,6 +27,10 @@
     return (ratio * 100).toFixed(1) + '%';
   }
 
+  function roundToNearest(n, nearest) {
+    return Math.round(n / nearest) * nearest;
+  }
+
   // ── State ─────────────────────────────────────────────────────────────────
   let _result          = null;
   let _meanInflation   = 0.025;
@@ -75,6 +79,7 @@
     const r         = _result;
     const lastIdx   = r.years.length - 1;
     const lastYear  = r.years[lastIdx];
+    const firstYear = r.years[0];
     const modeLabel = _useReal ? 'real' : 'nominal';
 
     const p10 = _deflateArr(r.p10Portfolio);
@@ -82,6 +87,11 @@
     const p50 = _deflateArr(r.p50Portfolio);
     const p75 = _deflateArr(r.p75Portfolio);
     const p90 = _deflateArr(r.p90Portfolio);
+
+    // Opening portfolio (real, year-0)
+    const openingPortfolio = (_spendingContext && _spendingContext.openingPortfolio)
+      ? _spendingContext.openingPortfolio
+      : p50[0];
 
     // Update sim count in subtitle
     const simCountEl = document.getElementById('mc-sim-count');
@@ -104,7 +114,7 @@
     // ── INTRO ─────────────────────────────────────────────────────────────
     const introHTML = `
       <section class="mc-section mc-section--intro">
-        <p>Your retirement plan has been stress-tested across 10,000 simulated
+        <p>Your retirement plan has been stress-tested across ${r.simCount.toLocaleString('en-GB')} simulated
         futures, each with randomly varying investment returns and inflation.
         Unlike the single-path projection, this analysis shows the range of
         outcomes your plan could face – from favourable markets to sustained
@@ -112,6 +122,31 @@
         risks concentrate, and whether you have enough buffer to weather a poor
         sequence of returns early in retirement.</p>
       </section>`;
+
+    // ── KEY FIGURES ROW ───────────────────────────────────────────────────
+    const p10Depletes = depletionYear(p10);
+    const p10Label    = p10Depletes ? `Depletes ${p10Depletes}` : fmt(p10[lastIdx]);
+    const p10Sub      = p10Depletes ? 'Portfolio exhausted' : `by ${lastYear} (${modeLabel})`;
+    const p10Colour   = p10Depletes ? 'var(--danger, #dc2626)' : 'var(--text, #111827)';
+
+    const keyFiguresHTML = `
+      <div class="mc-key-figures">
+        <div class="mc-key-figure">
+          <span class="mc-key-figure__label">Stress case (10th %ile)</span>
+          <span class="mc-key-figure__value" style="color:${p10Colour}">${p10Label}</span>
+          <span class="mc-key-figure__sub">${p10Sub}</span>
+        </div>
+        <div class="mc-key-figure">
+          <span class="mc-key-figure__label">Median outcome (50th %ile)</span>
+          <span class="mc-key-figure__value">${fmt(p50[lastIdx])}</span>
+          <span class="mc-key-figure__sub">by ${lastYear} (${modeLabel})</span>
+        </div>
+        <div class="mc-key-figure">
+          <span class="mc-key-figure__label">Optimistic case (90th %ile)</span>
+          <span class="mc-key-figure__value" style="color:var(--green-2, #16a34a)">${fmt(p90[lastIdx])}</span>
+          <span class="mc-key-figure__sub">by ${lastYear} (${modeLabel})</span>
+        </div>
+      </div>`;
 
     // ── 1. VERDICT ────────────────────────────────────────────────────────
     const successPaths = Math.round(r.successRate * r.simCount);
@@ -136,27 +171,28 @@
 
     // ── 2. SUSTAINABLE SPENDING ───────────────────────────────────────────
     let sustainHTML = '';
+    let headroom    = null;
+
     if (_spendingContext && _spendingContext.sustainableSpending != null) {
-      const { currentSpending, sustainableSpending, sustainableIsFloor, targetConfidence, openingPortfolio } = _spendingContext;
-      const headroom    = sustainableSpending - currentSpending;
-      const isAbove     = headroom >= 0;
-      const absDiff     = Math.abs(Math.round(headroom));
-      const pctOfPort   = openingPortfolio > 0
-        ? ((sustainableSpending / openingPortfolio) * 100).toFixed(1)
+      const { currentSpending, sustainableSpending, sustainableIsFloor, targetConfidence, openingPortfolio: op } = _spendingContext;
+      headroom              = sustainableSpending - currentSpending;
+      const isAbove         = headroom >= 0;
+      const absDiff         = Math.abs(Math.round(headroom));
+      const pctOfPort       = op > 0
+        ? ((sustainableSpending / op) * 100).toFixed(1)
         : null;
-      const confPct     = (targetConfidence * 100).toFixed(0);
+      const confPct         = (targetConfidence * 100).toFixed(0);
 
       const overBy  = isAbove ? 0 : Math.abs(headroom) / currentSpending;
       const sClass  = isAbove        ? 'mc-sustain--safe' :
                       overBy <= 0.15 ? 'mc-sustain--warn' :
                                        'mc-sustain--danger';
 
-      const portClause = pctOfPort ? ` (${pctOfPort}% of your opening portfolio)` : '';
+      const portClause  = pctOfPort ? ` (${pctOfPort}% of your opening portfolio)` : '';
       const floorPrefix = sustainableIsFloor ? 'at least ' : '';
 
       let sustainBody;
       if (sustainableIsFloor) {
-        // All three runs at or above 95% – plan is very strong
         sustainBody = `Your plan succeeds in <strong>${confPct}%</strong> or more of simulations even at
           <strong>${fmt(sustainableSpending)}</strong>/year – <strong>${fmt(absDiff)}</strong>/year above your current target.
           Your plan is highly resilient; the true sustainable spending level is likely higher still.`;
@@ -202,43 +238,63 @@
       </section>`;
 
     // ── 4. STRESS CASE (10th percentile) ──────────────────────────────────
-    const p10Depletes = depletionYear(p10);
+    // Colour the stress card based on severity
+    const p10FinalRatio  = openingPortfolio > 0 ? p10[lastIdx] / openingPortfolio : 1;
+    const stressClass    = p10Depletes          ? 'mc-sustain--danger' :
+                           p10FinalRatio < 0.20 ? 'mc-sustain--warn'   : '';
+
     let stressBody;
     if (p10Depletes) {
       const yearsEarly = lastYear - p10Depletes;
+      // Estimate rough onset: find when p10 first dips below 50% of opening
+      let onsetYear = null;
+      for (let i = 0; i < p10.length; i++) {
+        if (openingPortfolio > 0 && p10[i] < openingPortfolio * 0.5) {
+          onsetYear = r.years[i];
+          break;
+        }
+      }
+      const onsetClause = onsetYear && onsetYear < p10Depletes
+        ? ` Spending pressure typically emerges around <strong>${onsetYear}</strong> as the portfolio falls below half its starting value.`
+        : '';
       stressBody = `In the bottom 10% of outcomes, the portfolio runs out by
         <strong>${p10Depletes}</strong> – ${yearsEarly} year${yearsEarly !== 1 ? 's' : ''} before
-        the end of the projection. This scenario typically reflects a combination
-        of poor early returns and elevated inflation.`;
+        the end of the projection.${onsetClause} This scenario typically reflects a combination
+        of poor early returns and elevated inflation (sequence risk).`;
     } else {
       stressBody = `In a poor returns environment (10th percentile), your portfolio
         retains <strong>${fmt(p10[lastIdx])}</strong> by ${lastYear} (${modeLabel} terms). While
         significantly below the median, the plan remains solvent throughout the
-        projection under this stress scenario.`;
+        projection even under this stress scenario.`;
     }
 
     const stressHTML = `
-      <section class="mc-section">
+      <section class="mc-section${stressClass ? ' mc-sustain ' + stressClass : ''}">
         <h4 class="mc-section-heading">10th percentile – stress case</h4>
         <p>${stressBody}</p>
       </section>`;
 
-    // ── 4. OPTIMISTIC CASE (90th percentile) ──────────────────────────────
-    const p90Final   = p90[lastIdx];
-    const legacyNote = p90Final > 500_000
+    // ── 5. OPTIMISTIC CASE (90th percentile) ──────────────────────────────
+    const p90Final      = p90[lastIdx];
+    const isStrongUpside = p90Final > openingPortfolio * 2;
+    const legacyNote    = p90Final > 500_000
       ? ' This would leave meaningful wealth to pass on or deploy in later life.'
+      : '';
+    const optimisticHeadingStyle = isStrongUpside
+      ? ' style="color:var(--green-2, #16a34a)"'
       : '';
 
     const optimisticHTML = `
       <section class="mc-section">
-        <h4 class="mc-section-heading">90th percentile – optimistic case</h4>
+        <h4 class="mc-section-heading"${optimisticHeadingStyle}>90th percentile – optimistic case</h4>
         <p>In a favourable environment (90th percentile), your portfolio reaches
         <strong>${fmt(p90Final)}</strong> by ${lastYear} (${modeLabel} terms).${legacyNote}</p>
       </section>`;
 
-    // ── 5. INTERQUARTILE RANGE ────────────────────────────────────────────
+    // ── 6. INTERQUARTILE RANGE ────────────────────────────────────────────
     const p25Final = p25[lastIdx];
     const p75Final = p75[lastIdx];
+    const iqrWide  = (p75Final - p25Final) / Math.max(p50[lastIdx], 1) > 1.5;
     const iqrHTML = `
       <section class="mc-section">
         <h4 class="mc-section-heading">Middle 50% of outcomes</h4>
@@ -247,16 +303,16 @@
         (75th percentile) by ${lastYear} (${modeLabel} terms). A tight range
         indicates lower dispersion risk; a wide range reflects sensitivity to
         return sequence.${
-          (p75Final - p25Final) / Math.max(p50[lastIdx], 1) > 1.5
+          iqrWide
             ? ' The spread here is wide – your outcome is highly sensitive to which sequence of returns materialises early in retirement.'
             : ''
         }</p>
       </section>`;
 
-    // ── 6. EARLIEST DEPLETION ─────────────────────────────────────────────
+    // ── 7. EARLIEST DEPLETION ─────────────────────────────────────────────
     let earliestHTML = '';
     if (r.earliestDepletion) {
-      const yearsIn = r.earliestDepletion - r.years[0];
+      const yearsIn = r.earliestDepletion - firstYear;
       earliestHTML = `
         <section class="mc-section">
           <h4 class="mc-section-heading">Earliest depletion</h4>
@@ -267,12 +323,11 @@
         </section>`;
     }
 
-    // ── 7. RUIN PROBABILITY BY DECADE ────────────────────────────────────
+    // ── 8. RUIN PROBABILITY BY DECADE ─────────────────────────────────────
     let decadeRows = '';
     if (r.survivalByYear && r.years) {
-      // Pick one year per decade that falls within the projection
       const decades = [2030, 2040, 2050, 2060, 2070].filter(
-        y => y >= r.years[0] && y <= lastYear
+        y => y >= firstYear && y <= lastYear
       );
       decadeRows = decades.map(decadeYear => {
         const yi = r.years.indexOf(decadeYear);
@@ -300,7 +355,62 @@
         <div class="mc-decade-chart">${decadeRows}</div>
       </section>` : '';
 
-    // ── 8. ASSUMPTIONS NOTE ───────────────────────────────────────────────
+    // ── 9. ACTIONS ────────────────────────────────────────────────────────
+    const actionItems = [];
+
+    if (_spendingContext && _spendingContext.sustainableSpending != null) {
+      const { currentSpending, sustainableSpending, sustainableIsFloor } = _spendingContext;
+      const gap = sustainableSpending - currentSpending;
+
+      if (!sustainableIsFloor && gap < 0) {
+        // Spending exceeds sustainable — compute rounded reduction needed
+        const reduction = roundToNearest(Math.abs(gap), 500);
+        actionItems.push(`Reduce spending by approximately <strong>${fmt(reduction)}/year</strong> to reach the 90% confidence threshold — bringing your target to around <strong>${fmt(currentSpending - reduction)}/year</strong>.`);
+      } else if (gap > 0 && !sustainableIsFloor) {
+        // There's headroom — note it as a positive option
+        const headroomRounded = roundToNearest(gap, 500);
+        actionItems.push(`You have approximately <strong>${fmt(headroomRounded)}/year</strong> of headroom — modest spending increases remain within the 90% confidence band.`);
+      }
+    }
+
+    // Sequence risk / early depletion warning → suggest cash buffer
+    if (r.earliestDepletion) {
+      const yearsIn = r.earliestDepletion - firstYear;
+      if (yearsIn <= 15) {
+        actionItems.push(`The earliest stress-case depletion is <strong>${r.earliestDepletion}</strong> (${yearsIn} years in) — maintaining a 2–3 year cash buffer would reduce sequence-of-returns risk in early retirement.`);
+      }
+    }
+
+    // Sub-95% success rate: suggest short withdrawal delay
+    if (r.successRate >= 0.80 && r.successRate < 0.95) {
+      actionItems.push(`Delaying withdrawals by 1–2 years would allow the portfolio to compound further and meaningfully improve survival odds across the distribution.`);
+    }
+
+    // Wide IQR: note diversification or flexibility value
+    if (iqrWide) {
+      actionItems.push(`The wide spread between the 25th and 75th percentile outcomes suggests a flexible spending strategy — reducing withdrawals by 10–15% in years with negative real returns — would materially improve the downside.`);
+    }
+
+    let actionsHTML = '';
+    if (actionItems.length === 0) {
+      // Strong plan — no material actions needed
+      actionsHTML = `
+        <section class="mc-section mc-sustain mc-sustain--safe">
+          <h4 class="mc-section-heading">Plan assessment</h4>
+          <p>No material changes needed. Your plan is resilient across the full range of simulated scenarios — success rate, sustainable spending, and stress-case outcomes are all within strong bounds.</p>
+        </section>`;
+    } else {
+      const liItems = actionItems.map(item => `<li>${item}</li>`).join('');
+      const isWarn  = r.successRate < 0.95 || (headroom !== null && headroom < 0);
+      const aClass  = isWarn ? 'mc-sustain--warn' : 'mc-sustain--safe';
+      actionsHTML = `
+        <section class="mc-section mc-sustain ${aClass}">
+          <h4 class="mc-section-heading">How to improve this plan</h4>
+          <ul style="margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--text,#374151)">${liItems}</ul>
+        </section>`;
+    }
+
+    // ── 10. ASSUMPTIONS NOTE ──────────────────────────────────────────────
     const eVolRaw  = r.equityVol    != null ? r.equityVol    : 0.16;
     const iVolRaw  = r.inflationVol != null ? r.inflationVol : 0.015;
     const eVol     = (eVolRaw * 100).toFixed(0);
@@ -321,8 +431,9 @@
         All values shown in ${modeLabel} terms.</p>
       </section>`;
 
-    el.innerHTML = introHTML + verdictHTML + sustainHTML + medianHTML + stressHTML +
-                   optimisticHTML + iqrHTML + earliestHTML + ruinHTML + assumHTML;
+    el.innerHTML = introHTML + keyFiguresHTML + verdictHTML + sustainHTML +
+                   medianHTML + stressHTML + optimisticHTML + iqrHTML +
+                   earliestHTML + ruinHTML + actionsHTML + assumHTML;
   }
 
   window.RetireMCRender = { setResults, render, setReal };
