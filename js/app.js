@@ -345,6 +345,11 @@
   }
 
   function deletePortfolioData() {
+    // Clear person name and DOB fields
+    sv('sp-p1name', '');
+    sv('sp-p1dob',  '');
+    sv('sp-p2name', '');
+    sv('sp-p2dob',  '');
     state.portfolioAccounts = [];
     state.nextId = 1;
     const tbody = safeEl('acct-tbody');
