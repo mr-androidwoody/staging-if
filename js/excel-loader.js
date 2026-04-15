@@ -45,6 +45,7 @@
   function normaliseLabel(s) {
     return s
       .toLowerCase()
+      .replace(/\*+$/, '')        // strip trailing asterisk (required field marker)
       .replace(/[–\-\(\)£%\/]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
