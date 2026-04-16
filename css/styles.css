@@ -3248,6 +3248,131 @@ input[type="radio"] { accent-color: var(--accent); }
   width: 100%;
 }
 
+/* ── Segmented control (binary / short-label radio groups) ── */
+.wiz-seg {
+  display: inline-flex;
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.wiz-seg__btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.wiz-seg__btn input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.wiz-seg__btn:has(input:checked) {
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  border: 1px solid var(--border-strong);
+}
+
+.wiz-seg__btn:not(:has(input:checked)):hover {
+  background: rgba(255,255,255,0.6);
+  color: var(--text);
+}
+
+/* Disabled state (coming-soon panels) */
+.wiz-seg--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ── Card-select (multi-option with descriptions) ── */
+.wiz-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.wiz-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--panel-soft);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  user-select: none;
+}
+
+.wiz-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.wiz-card:has(input:checked) {
+  background: rgba(45, 91, 255, 0.06);
+  border-color: var(--accent);
+}
+
+.wiz-card:not(:has(input:checked)):hover {
+  background: rgba(255,255,255,0.75);
+  border-color: var(--border-strong);
+}
+
+.wiz-card__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wiz-card:has(input:checked) .wiz-card__title {
+  color: var(--accent);
+}
+
+.wiz-card__hint {
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* Inline year input inside a wiz-card (threshold mode) */
+.wiz-card__inline-input {
+  width: 72px;
+  height: 26px;
+  padding: 0 7px;
+  font-size: 0.78rem;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text);
+  margin-top: 4px;
+}
+
 /* ── Responsive: stack to 2-col on narrow viewports ── */
 @media (max-width: 900px) {
   .wiz-grid--3 {
