@@ -686,15 +686,7 @@
 
     const total  = state.portfolioAccounts.reduce((s, a) => s + (a.value || 0), 0);
     const nAccts = state.portfolioAccounts.length;
-    let banner = safeEl('handoff-banner');
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'handoff-banner';
-      banner.style.cssText = 'background:#dcfce7;border:1px solid #86efac;border-radius:6px;padding:8px 10px;font-size:12px;color:#166534;margin:0 0 0.75rem';
-      const assumpPanel = document.querySelector('#tab-assumptions .assump-cards');
-      if (assumpPanel) assumpPanel.prepend(banner);
-    }
-    banner.innerHTML = `✓ Portfolio loaded: ${nAccts} accounts, ${D.formatMoney(total)} total`;
+    // Banner removed — wizard layout has no .assump-cards container
 
     updateSidebarNames();
     applyP2State();
