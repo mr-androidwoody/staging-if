@@ -1009,6 +1009,16 @@ input[type="radio"] { accent-color: var(--accent); }
   line-height: 1.42;
 }
 
+/* Assump sub-tab panels — hidden by default; JS reveals the active one */
+.assump-panel {
+  display: none;
+}
+
+/* Override results-tab-bar bottom margin when used inside Assumptions */
+.assump-subtab-bar {
+  margin-bottom: 16px;
+}
+
 .assump-layout {
   display: flex;
   flex-direction: column;
