@@ -1187,6 +1187,22 @@
       let grandP1Int = 0, grandP2Int = 0, grandP1Divs = 0, grandP2Divs = 0;
       let grandP1Cash = 0, grandP1GIA = 0, grandP1SIPP = 0, grandP1ISA = 0;
       let grandP2Cash = 0, grandP2GIA = 0, grandP2SIPP = 0, grandP2ISA = 0;
+
+      // Colour palette — matches Sources of income chart colours
+      const COL = {
+        sp:    { bg: '#EBF0FB', hdr: '#4472C4', txt: '#1a3a7a' },
+        sal:   { bg: '#FFF0F0', hdr: '#FF7F7F', txt: '#8b0000' },
+        int:   { bg: '#F5EEF8', hdr: '#9B59B6', txt: '#4a235a' },
+        div:   { bg: '#EAFAF1', hdr: '#27AE60', txt: '#145a32' },
+        p1:    { bg: '#FEF3EC', hdr: '#ED7D31', txt: '#7e3a0a' },
+        p2:    { bg: '#EBF5FB', hdr: '#2E86C1', txt: '#1a4a6e' },
+        total: { bg: '#F8F9FA', hdr: '#555',    txt: '#222'    },
+        sf:    { bg: '#FEF2F2', hdr: '#DC2626', txt: '#7f1d1d' },
+      };
+      const cs  = (col) => `style="background:${col.bg};color:${col.txt}"`;
+      const th  = (col, content, extra = '') =>
+        `<th ${extra} style="background:${col.hdr};color:#fff;border-color:${col.hdr}">${content}</th>`;
+
       drawRows.forEach(row => {
         const { year, p1Age, p2Age,
                 p1SP, p2SP, p1Sal, p2Sal, p1Int, p2Int, p1Divs, p2Divs,
@@ -1200,17 +1216,18 @@
         grandP1Cash += p1Cash; grandP1GIA += p1GIA; grandP1SIPP += p1SIPP; grandP1ISA += p1ISA;
         grandP2Cash += p2Cash; grandP2GIA += p2GIA; grandP2SIPP += p2SIPP; grandP2ISA += p2ISA;
         const sfCell = shortfall > 100
-          ? `<td class="depleted">${f(shortfall)}</td>`
-          : `<td>—</td>`;
+          ? `<td style="background:${COL.sf.bg};color:${COL.sf.txt};font-weight:600">${f(shortfall)}</td>`
+          : `<td style="background:${COL.total.bg}">—</td>`;
+
         body += `<tr>
           <td>${year}</td><td>${p1Age}</td><td>${p2Age}</td>
-          <td>${f(p1SP)}</td><td>${f(p2SP)}</td>
-          <td>${f(p1Sal)}</td><td>${f(p2Sal)}</td>
-          <td>${f(p1Int)}</td><td>${f(p2Int)}</td>
-          <td>${f(p1Divs)}</td><td>${f(p2Divs)}</td>
-          <td>${f(p1Cash)}</td><td>${f(p1GIA)}</td><td>${f(p1SIPP)}</td><td>${f(p1ISA)}</td>
-          <td>${f(p2Cash)}</td><td>${f(p2GIA)}</td><td>${f(p2SIPP)}</td><td>${f(p2ISA)}</td>
-          <td>${f(rowTotal)}</td>${sfCell}
+          <td ${cs(COL.sp)}>${f(p1SP)}</td><td ${cs(COL.sp)}>${f(p2SP)}</td>
+          <td ${cs(COL.sal)}>${f(p1Sal)}</td><td ${cs(COL.sal)}>${f(p2Sal)}</td>
+          <td ${cs(COL.int)}>${f(p1Int)}</td><td ${cs(COL.int)}>${f(p2Int)}</td>
+          <td ${cs(COL.div)}>${f(p1Divs)}</td><td ${cs(COL.div)}>${f(p2Divs)}</td>
+          <td ${cs(COL.p1)}>${f(p1Cash)}</td><td ${cs(COL.p1)}>${f(p1GIA)}</td><td ${cs(COL.p1)}>${f(p1SIPP)}</td><td ${cs(COL.p1)}>${f(p1ISA)}</td>
+          <td ${cs(COL.p2)}>${f(p2Cash)}</td><td ${cs(COL.p2)}>${f(p2GIA)}</td><td ${cs(COL.p2)}>${f(p2SIPP)}</td><td ${cs(COL.p2)}>${f(p2ISA)}</td>
+          <td ${cs(COL.total)}><strong>${f(rowTotal)}</strong></td>${sfCell}
         </tr>`;
       });
       const grandTotal = grandP1SP + grandP2SP + grandP1Sal + grandP2Sal
@@ -1219,33 +1236,36 @@
                        + grandP2Cash + grandP2GIA + grandP2SIPP + grandP2ISA;
       body += `<tr class="total-row">
         <td colspan="3">Total</td>
-        <td>${f(grandP1SP)}</td><td>${f(grandP2SP)}</td>
-        <td>${f(grandP1Sal)}</td><td>${f(grandP2Sal)}</td>
-        <td>${f(grandP1Int)}</td><td>${f(grandP2Int)}</td>
-        <td>${f(grandP1Divs)}</td><td>${f(grandP2Divs)}</td>
-        <td>${f(grandP1Cash)}</td><td>${f(grandP1GIA)}</td><td>${f(grandP1SIPP)}</td><td>${f(grandP1ISA)}</td>
-        <td>${f(grandP2Cash)}</td><td>${f(grandP2GIA)}</td><td>${f(grandP2SIPP)}</td><td>${f(grandP2ISA)}</td>
-        <td>${f(grandTotal)}</td><td>—</td>
+        <td ${cs(COL.sp)}>${f(grandP1SP)}</td><td ${cs(COL.sp)}>${f(grandP2SP)}</td>
+        <td ${cs(COL.sal)}>${f(grandP1Sal)}</td><td ${cs(COL.sal)}>${f(grandP2Sal)}</td>
+        <td ${cs(COL.int)}>${f(grandP1Int)}</td><td ${cs(COL.int)}>${f(grandP2Int)}</td>
+        <td ${cs(COL.div)}>${f(grandP1Divs)}</td><td ${cs(COL.div)}>${f(grandP2Divs)}</td>
+        <td ${cs(COL.p1)}>${f(grandP1Cash)}</td><td ${cs(COL.p1)}>${f(grandP1GIA)}</td><td ${cs(COL.p1)}>${f(grandP1SIPP)}</td><td ${cs(COL.p1)}>${f(grandP1ISA)}</td>
+        <td ${cs(COL.p2)}>${f(grandP2Cash)}</td><td ${cs(COL.p2)}>${f(grandP2GIA)}</td><td ${cs(COL.p2)}>${f(grandP2SIPP)}</td><td ${cs(COL.p2)}>${f(grandP2ISA)}</td>
+        <td ${cs(COL.total)}><strong>${f(grandTotal)}</strong></td><td ${cs(COL.total)}>—</td>
       </tr></tbody>`;
+
       dTbl.innerHTML = `<thead>
         <tr>
-          <th rowspan="2">Year</th><th rowspan="2">${p1} age</th><th rowspan="2">${p2} age</th>
-          <th colspan="2">State Pension</th>
-          <th colspan="2">Salary</th>
-          <th colspan="2">Interest</th>
-          <th colspan="2">Dividends</th>
-          <th colspan="4">${p1}'s wrapper draws</th>
-          <th colspan="4">${p2}'s wrapper draws</th>
-          <th rowspan="2">Total</th>
-          <th rowspan="2">Shortfall</th>
+          <th rowspan="2" style="background:#444;color:#fff">Year</th>
+          <th rowspan="2" style="background:#444;color:#fff">${p1} age</th>
+          <th rowspan="2" style="background:#444;color:#fff">${p2} age</th>
+          ${th(COL.sp,  'State Pension', 'colspan="2"')}
+          ${th(COL.sal, 'Salary',        'colspan="2"')}
+          ${th(COL.int, 'Interest',      'colspan="2"')}
+          ${th(COL.div, 'Dividends',     'colspan="2"')}
+          ${th(COL.p1,  `${p1}'s wrapper draws`, 'colspan="4"')}
+          ${th(COL.p2,  `${p2}'s wrapper draws`, 'colspan="4"')}
+          ${th(COL.total, 'Total',     'rowspan="2"')}
+          ${th(COL.sf,    'Shortfall', 'rowspan="2"')}
         </tr>
         <tr>
-          <th>${p1}</th><th>${p2}</th>
-          <th>${p1}</th><th>${p2}</th>
-          <th>${p1}</th><th>${p2}</th>
-          <th>${p1}</th><th>${p2}</th>
-          <th>Cash</th><th>GIA</th><th>SIPP</th><th>ISA</th>
-          <th>Cash</th><th>GIA</th><th>SIPP</th><th>ISA</th>
+          ${th(COL.sp,  p1)}${th(COL.sp,  p2)}
+          ${th(COL.sal, p1)}${th(COL.sal, p2)}
+          ${th(COL.int, p1)}${th(COL.int, p2)}
+          ${th(COL.div, p1)}${th(COL.div, p2)}
+          ${th(COL.p1, 'Cash')}${th(COL.p1, 'GIA')}${th(COL.p1, 'SIPP')}${th(COL.p1, 'ISA')}
+          ${th(COL.p2, 'Cash')}${th(COL.p2, 'GIA')}${th(COL.p2, 'SIPP')}${th(COL.p2, 'ISA')}
         </tr>
       </thead>` + body;
     }
