@@ -3121,7 +3121,7 @@ input[type="radio"] { accent-color: var(--accent); }
 .wiz-label.wiz-muted {
   font-size: 0.74rem;
   color: var(--muted);
-  padding-top: 0;
+  padding-top: 8px;
   padding-bottom: 6px;
   font-style: italic;
   width: 100%;
