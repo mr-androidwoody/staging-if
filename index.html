@@ -476,32 +476,37 @@
 
       <!-- ══ PANEL 1 — Money ══ -->
       <div class="wiz-panel" id="wiz-panel-1">
-        <div class="wiz-grid wiz-grid--3">
+        <div class="wiz-grid wiz-grid--2-1">
 
-          <!-- P1 balances -->
-          <div class="wiz-col">
-            <div class="wiz-col-heading" data-p1>Person 1 — balances</div>
-            <table class="wiz-table">
-              <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1cash">–</span></td></tr>
-              <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1sipp">–</span></td></tr>
-              <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1isa">–</span></td></tr>
-              <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
-            </table>
-            <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
-          </div>
+          <!-- Paired balance columns with spanning intro -->
+          <div class="wiz-col-pair">
+            <p class="wiz-col-pair__intro">Your current account balances are shown below, pulled from Your assets. To change them, go back and edit your accounts.</p>
 
-          <!-- P2 balances -->
-          <div class="wiz-col p2-field">
-            <div class="wiz-col-heading" data-p2>Person 2 — balances</div>
-            <table class="wiz-table">
-              <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2cash">–</span></td></tr>
-              <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2sipp">–</span></td></tr>
-              <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2isa">–</span></td></tr>
-              <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2gia">–</span></td></tr>
-            </table>
-            <div class="wiz-total-row">
-              <span class="wiz-total-label">Total investments</span>
-              <span class="wiz-total-val" id="ai-total">–</span>
+            <!-- P1 balances -->
+            <div class="wiz-col">
+              <div class="wiz-col-heading" data-p1>Person 1 — balances</div>
+              <table class="wiz-table">
+                <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1cash">–</span></td></tr>
+                <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1sipp">–</span></td></tr>
+                <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1isa">–</span></td></tr>
+                <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
+              </table>
+              <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
+            </div>
+
+            <!-- P2 balances -->
+            <div class="wiz-col p2-field">
+              <div class="wiz-col-heading" data-p2>Person 2 — balances</div>
+              <table class="wiz-table">
+                <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2cash">–</span></td></tr>
+                <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2sipp">–</span></td></tr>
+                <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2isa">–</span></td></tr>
+                <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2gia">–</span></td></tr>
+              </table>
+              <div class="wiz-total-row">
+                <span class="wiz-total-label">Total investments</span>
+                <span class="wiz-total-val" id="ai-total">–</span>
+              </div>
             </div>
           </div>
 
