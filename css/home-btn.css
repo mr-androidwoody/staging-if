@@ -1,6 +1,11 @@
 /* ── Home button overlay ─────────────────────────────────────────────────── */
-/* Positioned absolutely within .top-header (which is already position:fixed) */
-/* Does not participate in the grid/flex layout of .top-header__inner         */
+/* Positioned absolutely within .top-header__inner (position:relative)        */
+/* Inherits the content-max constraint automatically                          */
+
+/* Give the inner container a positioning context */
+.top-header__inner {
+  position: relative;
+}
 
 .home-btn {
   display: inline-flex;

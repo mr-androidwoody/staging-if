@@ -499,6 +499,10 @@ input[type="radio"] { accent-color: var(--accent); }
 .stepper-btn:hover { background: #e2e8f4; }
 .stepper-btn:active { opacity: 0.7; }
 
+.tab-sep {
+  display: none;
+}
+
 /* ========================================
    Shared panel styling
    ======================================== */
