@@ -3631,15 +3631,16 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 
 .mc-verdict-body {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  flex-direction: row;
   gap: 32px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .mc-verdict-left {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .mc-verdict-word {
@@ -3664,9 +3665,9 @@ input[type="radio"] { accent-color: var(--accent); }
   flex-direction: column;
   gap: 10px;
   align-items: stretch;
-  align-self: stretch;
   padding-top: 6px;
   min-width: 180px;
+  flex-shrink: 0;
 }
 
 .mc-vstat {
@@ -3715,6 +3716,7 @@ input[type="radio"] { accent-color: var(--accent); }
 .mc-evidence-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
   background: #fff;
   border: 1px solid rgba(0,0,0,0.07);
   border-radius: 12px;
@@ -3726,6 +3728,8 @@ input[type="radio"] { accent-color: var(--accent); }
   padding: 26px 28px;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .mc-evidence-pane--left {
@@ -3812,7 +3816,7 @@ input[type="radio"] { accent-color: var(--accent); }
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: calc(100% - 28px);
+  flex: 1;
 }
 
 .mc-lever {
