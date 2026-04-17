@@ -142,23 +142,26 @@
             <div class="mc-vstat-secondary">−${fmt(gap)} / yr</div>
           </div>`;
       }
+    // shortfallHTML is empty string if no spending context — right column shows only success rate
     }
 
     // ── Section 1: VERDICT HEADER ─────────────────────────────────────
     const s1 = `
       <div class="mc-verdict-header" style="border-left-color:${verdictColour.border};background:${verdictColour.bg}">
         <div class="mc-verdict-eyebrow" style="color:${verdictColour.eyebrow}">Your retirement outlook</div>
-        <div class="mc-verdict-main">
-          <span class="mc-verdict-word" style="color:${verdictColour.main}">${verdictWord}</span>
-          <span class="mc-verdict-rate" style="color:${verdictColour.main}">${fmtPct(rate)}</span>
+        <div class="mc-verdict-left">
+          <div class="mc-verdict-main">
+            <span class="mc-verdict-word" style="color:${verdictColour.main}">${verdictWord}</span>
+            <span class="mc-verdict-rate" style="color:${verdictColour.main}">${fmtPct(rate)}</span>
+          </div>
+          <p class="mc-verdict-sentence">${verdictSentence}</p>
         </div>
-        <p class="mc-verdict-sentence">${verdictSentence}</p>
-        <div class="mc-verdict-stats" style="border-color:${verdictColour.statBorder}">
+        <div class="mc-verdict-right">
           <div class="mc-vstat">
             <div class="mc-vstat-label">Success rate</div>
             <div class="mc-vstat-primary" style="color:${verdictColour.main}">${fmtPct(rate)}</div>
           </div>
-          ${shortfallHTML ? `<div style="border-left:1px solid ${verdictColour.statDiv};display:contents"></div>${shortfallHTML}` : ''}
+          ${shortfallHTML}
         </div>
         <div class="mc-verdict-meta">Based on ${r.simCount.toLocaleString('en-GB')} simulations · ${firstYear} → ${lastYear}</div>
       </div>`;
