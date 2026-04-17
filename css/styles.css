@@ -3669,6 +3669,7 @@ input[type="radio"] { accent-color: var(--accent); }
   flex-direction: column;
   gap: 10px;
   align-items: stretch;
+  align-self: stretch;
   min-width: 190px;
   flex-shrink: 0;
 }
