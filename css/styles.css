@@ -3262,6 +3262,7 @@ input[type="radio"] { accent-color: var(--accent); }
   max-width: 130px;
   margin-left: auto;
   display: block;
+  text-align: center;
 }
 
 .wiz-val .assump-radio-group {
