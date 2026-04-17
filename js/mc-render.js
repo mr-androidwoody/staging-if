@@ -165,21 +165,21 @@
     // ── Section 1: VERDICT HEADER ─────────────────────────────────────
     const s1 = `
       <div class="mc-verdict-header" style="background:${verdictColour.heroBg}">
-        <div class="mc-verdict-eyebrow">Your retirement outlook</div>
-        <div class="mc-verdict-body">
-          <div class="mc-verdict-left">
-            <div class="mc-verdict-word">${verdictWord}</div>
+        <div class="mc-verdict-grid">
+          <div class="mc-verdict-eyebrow">Your retirement outlook</div>
+          <div class="mc-verdict-eyebrow mc-verdict-eyebrow--right">Success rate</div>
+          <div class="mc-verdict-word">${verdictWord}</div>
+          <div class="mc-verdict-bignum">${fmtPct(rate)}</div>
+        </div>
+        <div class="mc-verdict-lower">
+          <div class="mc-verdict-lower__left">
             <p class="mc-verdict-sentence">${verdictSentence}</p>
+            <div class="mc-verdict-meta">Based on ${r.simCount.toLocaleString('en-GB')} simulations · ${firstYear} → ${lastYear}</div>
           </div>
-          <div class="mc-verdict-right">
-            <div class="mc-vstat">
-              <div class="mc-vstat-label">Success rate</div>
-              <div class="mc-vstat-value">${fmtPct(rate)}</div>
-            </div>
+          <div class="mc-verdict-lower__right">
             ${shortfallHTML}
           </div>
         </div>
-        <div class="mc-verdict-meta">Based on ${r.simCount.toLocaleString('en-GB')} simulations · ${firstYear} → ${lastYear}</div>
       </div>`;
 
     // ── Section 2: WHEN PRESSURE OCCURS ──────────────────────────────
