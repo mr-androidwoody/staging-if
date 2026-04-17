@@ -3620,9 +3620,10 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 
 .mc-outlook-card {
-  padding: 18px 20px;
+  padding: 20px 20px 20px 24px;
   background: var(--surface-2, #f9fafb);
   border: 1px solid var(--border, #e5e7eb);
+  border-left-width: 5px;
   border-radius: var(--radius-sm, 8px);
   margin-bottom: 12px;
 }
@@ -3630,28 +3631,29 @@ input[type="radio"] { accent-color: var(--accent); }
 .mc-verdict-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .mc-outlook-dot {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .mc-outlook-verdict {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .mc-outlook-sentence {
   font-size: 14px;
   line-height: 1.65;
   color: var(--muted, #6b7280);
-  margin: 0 0 14px;
+  margin: 0 0 16px;
 }
 
 .mc-stat-row {
@@ -3681,10 +3683,10 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 
 .mc-stat-value {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--text, #111827);
+  color: var(--text, #374151);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3754,14 +3756,51 @@ input[type="radio"] { accent-color: var(--accent); }
   padding-top: 3px;
 }
 
+.mc-lever-row--secondary {
+  opacity: 0.6;
+}
+
+.mc-lever-row--secondary .mc-lever-pill {
+  font-size: 9px;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    YOUR OUTLOOK — primary action
    ═══════════════════════════════════════════════════════════════ */
 
 .mc-primary-action {
   margin-top: 16px;
-  padding: 14px 16px;
-  border-left: 4px solid #3B6D11;
-  border-radius: 0;
+  padding: 16px 18px;
+  border-left: 5px solid #3B6D11;
+  border-radius: 0 var(--radius-sm, 8px) var(--radius-sm, 8px) 0;
   background: var(--surface-2, #f9fafb);
+}
+
+.mc-primary-action__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+
+.mc-primary-action__text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text, #111827);
+  margin: 0;
+}
+
+.mc-survival-note {
+  font-size: 12px;
+  color: var(--muted, #9ca3af);
+  margin-top: 10px;
+  font-style: italic;
+}
+
+.mc-bridge-note {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--muted, #9ca3af);
+  font-style: italic;
 }
