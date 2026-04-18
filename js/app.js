@@ -525,6 +525,13 @@
       if (ownerSel.value === 'p2') {
         row.classList.toggle('p2-disabled', !enabled);
         row.querySelectorAll('input, select').forEach(inp => { inp.disabled = !enabled; });
+        // Re-apply per-account field state so Rate/Draw are correctly
+        // re-disabled for accounts with no cashlike allocation.
+        if (enabled) {
+          const id  = parseInt(row.id.replace('acct-row-', ''), 10);
+          const acc = state.portfolioAccounts.find(a => a.id === id);
+          if (acc) R.applyWrapperFieldState(acc);
+        }
       }
     });
   }
