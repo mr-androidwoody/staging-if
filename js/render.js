@@ -86,6 +86,11 @@
     const fixed      = D.FIXED_CASH_WRAPPERS.has(acc.wrapper);
     const noInterest = _isCashlikeless(acc);
 
+    // For Cash wrapper, force alloc state to cash=100, others=0
+    if (fixed) {
+      acc.alloc = { equities: 0, bonds: 0, cashlike: 0, cash: 100 };
+    }
+
     const wrapperOptions = D.WRAPPERS.map(
       (w) => `<option value="${w}" ${acc.wrapper === w ? 'selected' : ''}>${w === 'SIPP' ? 'SIPP/WP' : w}</option>`
     ).join('');
@@ -101,19 +106,22 @@
       .join('');
 
     const allocInputs = D.ALLOC_CLASSES.map(
-      (cls) => `
+      (cls) => {
+        const allocVal = fixed ? (cls === 'cash' ? 100 : 0) : acc.alloc[cls];
+        return `
       <td class="col-alloc">
         <div class="stepper-input">
           <input type="number" min="0" max="100" step="5"
             data-account-id="${acc.id}"
             data-field="${cls}"
-            value="${acc.alloc[cls]}"
+            value="${allocVal}"
             ${fixed ? 'disabled' : ''}>
           <button class="stepper-btn" data-step-direction="1" type="button">&#x25B2;</button>
           <button class="stepper-btn" data-step-direction="-1" type="button">&#x25BC;</button>
         </div>
       </td>
-    `
+    `;
+      }
     ).join('');
 
     // Rate and draw are cleared and disabled when cashlike % is zero.
