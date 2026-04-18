@@ -3680,7 +3680,7 @@ input[type="radio"] { accent-color: var(--accent); }
    ═══════════════════════════════════════════════════════════════ */
 
 .mc-verdict-header {
-  border-radius: 14px;
+  border-radius: 0 14px 14px 14px;
   padding: 22px 32px 22px;
   margin-bottom: 20px;
 }
