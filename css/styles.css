@@ -2661,9 +2661,12 @@ input[type="radio"] { accent-color: var(--accent); }
    ═══════════════════════════════════════════════════════════════ */
 
 .results-tab--risk-ready {
-  background: var(--panel-solid);
   color: var(--tab-verdict-colour, #dc2626);
   font-weight: 700;
+}
+
+.results-tab--risk-ready.results-tab--active {
+  background: var(--panel-solid);
   border-top: 3px solid var(--tab-verdict-colour, #dc2626);
   border-bottom: 1px solid var(--panel-solid);
   margin-bottom: -5px;
@@ -3603,7 +3606,7 @@ input[type="radio"] { accent-color: var(--accent); }
    ═══════════════════════════════════════════════════════════════ */
 
 .results-tab--outlook.results-tab--active,
-.results-tab--outlook.results-tab--risk-ready {
+.results-tab--outlook.results-tab--risk-ready.results-tab--active {
   color: var(--tab-verdict-colour, #185FA5);
   border-top-color: var(--tab-verdict-colour, #185FA5);
   font-weight: 700;
@@ -4116,8 +4119,6 @@ input[type="radio"] { accent-color: var(--accent); }
   justify-content: center;
   gap: 0;
   padding: 10px 30px 10px 20px;
-  min-height: 70px;
-  margin-bottom: 12px;
   font-size: 0.95rem;
   font-weight: 700;
   color: #fff;
