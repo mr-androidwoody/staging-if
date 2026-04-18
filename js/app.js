@@ -1343,19 +1343,24 @@
 
   // ── Splash screen ────────────────────────────
   (function initSplash() {
-    const splash  = document.getElementById('splash-screen');
+    const splash       = document.getElementById('splash-screen');
     const getStartedBtn = document.getElementById('splashGetStarted');
     const aboutBtn      = document.getElementById('footerAboutBtn');
+    const homeBtn       = document.getElementById('homeBtn');
 
     function hideSplash() {
       if (splash) splash.classList.add('splash-hidden');
     }
     function showSplash() {
-      if (splash) splash.classList.remove('splash-hidden');
+      if (splash) {
+        splash.classList.remove('splash-hidden');
+        splash.scrollTop = 0;
+      }
     }
 
     if (getStartedBtn) getStartedBtn.addEventListener('click', hideSplash);
     if (aboutBtn)      aboutBtn.addEventListener('click', showSplash);
+    if (homeBtn)       homeBtn.addEventListener('click', showSplash);
   })();
   CR.initResultsTabs();
   CR.initTableSelector();
