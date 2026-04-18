@@ -27,6 +27,9 @@
     return (ratio * 100).toFixed(1) + '%';
   }
 
+  function fmtB(n)      { return '<strong>' + fmt(n) + '</strong>'; }
+  function fmtPctB(r)   { return '<strong>' + fmtPct(r) + '</strong>'; }
+
   function roundToNearest(n, nearest) {
     return Math.round(n / nearest) * nearest;
   }
@@ -376,14 +379,14 @@
     } else if (headroom >= 0) {
       const hr = roundToNearest(headroom, 500);
       l1Pill = 'No cut needed'; l1PillClass = 'mc-lever-pill--safe';
-      l1Outcome = `You have around ${fmt(hr)} per year of headroom, already within the ${confPct}% confidence band.`;
+      l1Outcome = `You have around ${fmtB(hr)} per year of headroom, already within the ${confPct}% confidence band.`;
     } else {
       const gap = roundToNearest(Math.abs(headroom), 500);
       const newTarget = roundToNearest(currentSpending - gap, 500);
       const isSmall = Math.abs(headroom) / currentSpending <= 0.15;
       l1Pill = isSmall ? 'Modest cut' : 'Cut needed';
       l1PillClass = isSmall ? 'mc-lever-pill--warn' : 'mc-lever-pill--risk';
-      l1Outcome = `Reducing spending by around ${fmt(gap)} per year to ${fmt(newTarget)} would bring your plan to the ${confPct}% confidence threshold.`;
+      l1Outcome = `Reducing spending by around ${fmtB(gap)} per year to ${fmtB(newTarget)} would bring your plan to the ${confPct}% confidence threshold.`;
     }
 
     // Lever 2 — Delay withdrawals
@@ -396,15 +399,15 @@
       if (rate >= targetConfidence && effective.length) {
         const d = effective[0];
         l2Pill = 'Reinforces'; l2PillClass = 'mc-lever-pill--safe';
-        l2Outcome = `Your plan is already sustainable. Delaying by ${d.yearsDelay} year${d.yearsDelay > 1 ? 's' : ''} would push success to ${fmtPct(d.successRate)}.`;
+        l2Outcome = `Your plan is already sustainable. Delaying by ${d.yearsDelay} year${d.yearsDelay > 1 ? 's' : ''} would push success to ${fmtPctB(d.successRate)}.`;
       } else if (effective.length) {
         const d = effective[0];
         l2Pill = `+${d.yearsDelay} yr fixes it`; l2PillClass = 'mc-lever-pill--safe';
-        l2Outcome = `Delaying withdrawals by ${d.yearsDelay} year${d.yearsDelay > 1 ? 's' : ''} makes the plan sustainable at ${fmtPct(d.successRate)} success.`;
+        l2Outcome = `Delaying withdrawals by ${d.yearsDelay} year${d.yearsDelay > 1 ? 's' : ''} makes the plan sustainable at ${fmtPctB(d.successRate)} success.`;
       } else {
         const best = delayPerturbations.reduce((a, b) => b.successRate > a.successRate ? b : a);
         l2Pill = 'Helps but not enough'; l2PillClass = 'mc-lever-pill--warn';
-        l2Outcome = `Even delaying by 3 years does not fully remove shortfall risk. Best result is ${fmtPct(best.successRate)}, still below ${confPct}%.`;
+        l2Outcome = `Even delaying by 3 years does not fully remove shortfall risk. Best result is ${fmtPctB(best.successRate)}, still below ${confPct}%.`;
       }
     }
 
@@ -454,14 +457,14 @@
         } else {
           const hr = roundToNearest(headroom, 500);
           items.push({ name: 'Spend less', pill: 'No cut needed', pillClass: 'mc-lever-pill--safe',
-            outcome: `You have around ${fmt(hr)} per year of headroom before reaching the ${confPct}% confidence threshold.` });
+            outcome: `You have around ${fmtB(hr)} per year of headroom before reaching the ${confPct}% confidence threshold.` });
         }
       }
       const hr = roundToNearest(headroom, 500);
       if (hr > 0) {
         const higherSpend = roundToNearest(currentSpending + hr, 500);
         items.push({ name: 'Consider spending more', pill: 'Headroom available', pillClass: 'mc-lever-pill--safe',
-          outcome: `Your plan stays above the ${confPct}% threshold even with around ${fmt(hr)} more per year . You could spend up to ${fmt(higherSpend)}/yr and remain resilient.` });
+          outcome: `Your plan stays above the ${confPct}% threshold even with around ${fmtB(hr)} more per year . You could spend up to ${fmtB(higherSpend)}/yr and remain resilient.` });
       }
       items.push({ name: 'Flexible spending', pill: iqrWide ? 'Material gain' : 'Small gain',
         pillClass: iqrWide ? 'mc-lever-pill--safe' : 'mc-lever-pill--neutral',
@@ -504,11 +507,11 @@
     if (hasGap) {
       const gap = roundToNearest(Math.abs(headroom), 500);
       const newTarget = roundToNearest(currentSpending - gap, 500);
-      actionLine   = `Reduce annual spending by around ${fmt(gap)} to ${fmt(newTarget)}.`;
+      actionLine   = `Reduce annual spending by around ${fmtB(gap)} to ${fmtB(newTarget)}.`;
       actionImpact = `This single change brings your plan to the ${confPct}% confidence threshold.`;
     } else if (rate < targetConfidence && delayEffective) {
       actionLine   = `Delay drawing from your portfolio by ${delayMin.yearsDelay} year${delayMin.yearsDelay > 1 ? 's' : ''}.`;
-      actionImpact = `This allows the portfolio to compound without draws and lifts your success rate to ${fmtPct(delayMin.successRate)}.`;
+      actionImpact = `This allows the portfolio to compound without draws and lifts your success rate to ${fmtPctB(delayMin.successRate)}.`;
     } else if (rate < targetConfidence && iqrWide) {
       actionLine   = `Adopt a flexible spending rule.`;
       actionImpact = `Reducing withdrawals by 10 to 15% in down years is the most practical lever available.`;
@@ -545,10 +548,10 @@
       // Strong
       if (sustainableSpending !== null && !sustainableIsFloor && headroom !== null && headroom >= 0) {
         const ceil = roundToNearest(sustainableSpending, 500);
-        bulletItems.push(`Your plan supports up to ${fmt(ceil)} / yr at ${confPct}% confidence , ${fmt(roundToNearest(headroom, 500))} above your current spending.`);
+        bulletItems.push(`Your plan supports up to ${fmtB(ceil)} / yr at ${confPct}% confidence , ${fmtB(roundToNearest(headroom, 500))} above your current spending.`);
       }
       if (p50Mid > 0) {
-        bulletItems.push(`In a typical market, your portfolio is around ${fmt(roundToNearest(p50Mid, 10000))} at ${age80label}.`);
+        bulletItems.push(`In a typical market, your portfolio is around ${fmtB(roundToNearest(p50Mid, 10000))} at ${age80label}.`);
       }
       if (p10DepletesAge !== null) {
         bulletItems.push(`In the worst 1 in 10 paths, funds run low around age ${p10DepletesAge}.`);
@@ -559,10 +562,10 @@
       // Good
       if (sustainableSpending !== null && !sustainableIsFloor && headroom !== null && headroom >= 0) {
         const ceil = roundToNearest(sustainableSpending, 500);
-        bulletItems.push(`Sustainable spending ceiling is ${fmt(ceil)} , ${fmt(roundToNearest(headroom, 500))} above where you are now.`);
+        bulletItems.push(`Sustainable spending ceiling is ${fmtB(ceil)} , ${fmtB(roundToNearest(headroom, 500))} above where you are now.`);
       }
       if (p50End > 0) {
-        bulletItems.push(`Median portfolio at end of projection: ${fmt(roundToNearest(p50End, 10000))}.`);
+        bulletItems.push(`Median portfolio at end of projection: ${fmtB(roundToNearest(p50End, 10000))}.`);
       }
       if (p10DepletesAge !== null) {
         bulletItems.push(`In the worst 1 in 10 paths, funds run low around age ${p10DepletesAge} . Adjustments remain possible.`);
@@ -573,13 +576,13 @@
       // Borderline
       if (hasGap) {
         const gap = roundToNearest(Math.abs(headroom), 500);
-        bulletItems.push(`A ${fmt(gap)} / yr reduction fully closes the gap to the ${confPct}% threshold.`);
+        bulletItems.push(`A ${fmtB(gap)} / yr reduction fully closes the gap to the ${confPct}% threshold.`);
       }
       if (p10DepletesAge !== null) {
         bulletItems.push(`In the worst 1 in 10 paths, funds run out around age ${p10DepletesAge} , while spending flexibility still exists.`);
       }
       if (p50End > 0) {
-        bulletItems.push(`Median portfolio at end of projection: ${fmt(roundToNearest(p50End, 10000))} . The plan works in most scenarios.`);
+        bulletItems.push(`Median portfolio at end of projection: ${fmtB(roundToNearest(p50End, 10000))} . The plan works in most scenarios.`);
       }
     } else {
       // At risk
@@ -587,15 +590,15 @@
         bulletItems.push(`In the worst 1 in 10 paths, funds are exhausted by age ${p10DepletesAge}.`);
       }
       if (p50End > 0) {
-        bulletItems.push(`Median portfolio at end of projection: ${fmt(roundToNearest(p50End, 10000))} . Depletion is a likely outcome, not just a tail risk.`);
+        bulletItems.push(`Median portfolio at end of projection: ${fmtB(roundToNearest(p50End, 10000))} . Depletion is a likely outcome, not just a tail risk.`);
       }
       if (hasGap && delayEffective) {
         const gap = roundToNearest(Math.abs(headroom), 500);
         const newTarget = roundToNearest(currentSpending - gap, 500);
-        bulletItems.push(`Cutting spending to ${fmt(newTarget)} and delaying by ${delayMin.yearsDelay} year${delayMin.yearsDelay > 1 ? 's' : ''} together lift success to ${fmtPct(delayMin.successRate)}.`);
+        bulletItems.push(`Cutting spending to ${fmtB(newTarget)} and delaying by ${delayMin.yearsDelay} year${delayMin.yearsDelay > 1 ? 's' : ''} together lift success to ${fmtPctB(delayMin.successRate)}.`);
       } else if (hasGap) {
         const gap = roundToNearest(Math.abs(headroom), 500);
-        bulletItems.push(`Reducing spending by ${fmt(gap)} / yr would bring your plan to the ${confPct}% confidence threshold.`);
+        bulletItems.push(`Reducing spending by ${fmtB(gap)} / yr would bring your plan to the ${confPct}% confidence threshold.`);
       }
     }
 
