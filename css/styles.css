@@ -4389,6 +4389,21 @@ input[type="radio"] { accent-color: var(--accent); }
   background: var(--bg-page);
 }
 
+#splash-screen .app-footer {
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+  max-width: 816px;
+  margin: 0 auto;
+  border-top: none;
+  box-sizing: border-box;
+}
+
+#splash-screen .app-footer-wrap {
+  width: 100%;
+  border-top: 1px solid var(--border);
+}
+
 .app-footer__copy {
   font-size: 12px;
   color: var(--muted);
