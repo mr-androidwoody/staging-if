@@ -251,6 +251,10 @@
       const inp = row.querySelector(`[data-field="${cls}"]`);
       if (!inp) return;
       inp.disabled = fixed;
+      if (fixed) {
+        inp.value = cls === 'cash' ? 100 : 0;
+        acc.alloc[cls] = cls === 'cash' ? 100 : 0;
+      }
     });
 
     // Rate and monthly draw — enabled only when cashlike % > 0
