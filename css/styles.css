@@ -4131,6 +4131,11 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 
 .btn-test-plan--stale:hover {
+  background: var(--accent-2, #3460e8);
+  opacity: 1;
+}
+
+.btn-test-plan--stale:hover {
   background: #92400e;
 }
 
