@@ -4067,7 +4067,6 @@ input[type="radio"] { accent-color: var(--accent); }
   position: relative;
   z-index: 1;
   border-bottom: 1px solid var(--border);
-  min-height: 110px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
