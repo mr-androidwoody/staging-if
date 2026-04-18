@@ -312,9 +312,9 @@ canvas { display: block; width: 100%; height: auto; }
 
 .btn-remove {
   padding: 7px 12px;
-  background: #fff;
-  color: #6d7c90;
-  border: 1px solid var(--border);
+  background: #eff6ff;
+  color: #2d5bff;
+  border: 1px solid #bfdbfe;
   border-radius: 10px;
   font-size: 0.76rem;
   font-weight: 700;
