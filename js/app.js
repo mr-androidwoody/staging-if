@@ -1350,6 +1350,7 @@
 
     function hideSplash() {
       if (splash) splash.classList.add('splash-hidden');
+      RetireTabs.switchTab('setup');
     }
     function showSplash() {
       if (splash) {
