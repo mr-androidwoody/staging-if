@@ -261,6 +261,12 @@
       _p10DepAge < 80    ? 'your 70s'             :
       _p10DepAge < 90    ? 'your 80s'             : 'your 90s';
 
+    // ── Early margin classification (needed by verdictSentence below) ─
+    const _earlyHeadroom     = sustainableSpending !== null ? sustainableSpending - currentSpending : null;
+    const _earlyMarginRatio  = (_earlyHeadroom !== null && currentSpending > 0) ? _earlyHeadroom / currentSpending : null;
+    const _earlyMarginTight    = _earlyMarginRatio !== null && _earlyMarginRatio >= 0 && _earlyMarginRatio < 0.08;
+    const _earlyMarginModerate = _earlyMarginRatio !== null && _earlyMarginRatio >= 0.08 && _earlyMarginRatio < 0.20;
+
     const verdictSentence =
       rate >= 0.95 && _p10DepletesAtYiEarly === null
         ? 'Your plan is resilient across all tested scenarios, including sustained poor returns. No meaningful risk at any stage.' :
@@ -268,8 +274,14 @@
         ? `Your plan is secure through the early years. Some pressure emerges in ${_depStage} in the weakest scenarios, but overall resilience is high.` :
       rate >= 0.95
         ? 'Your plan holds well in the large majority of scenarios, with only limited vulnerability at the edges.' :
+      rate >= 0.90 && _p10DepletesAtYiEarly === null && _earlyMarginTight
+        ? 'Your plan passes, but the margin is narrow. A poor sequence early in retirement would bring this plan close to its limit. Keep spending steady and review annually.' :
+      rate >= 0.90 && _p10DepletesAtYiEarly === null && _earlyMarginModerate
+        ? 'Your plan is well-founded and survives intact in 9 out of 10 paths. There is some room, but it is not unlimited — keep spending under review.' :
       rate >= 0.90 && _p10DepletesAtYiEarly === null
         ? 'Your plan is well-founded and survives intact in 9 out of 10 paths. The remaining scenarios are edge cases, not central outcomes.' :
+      rate >= 0.90 && _lateRisk && _earlyMarginTight
+        ? `Your plan is solid through the early years, but the margin is narrow. Risk concentrated in ${_depStage} is harder to address when adjustment options are limited — hold spending steady now.` :
       rate >= 0.90 && _lateRisk
         ? `Your plan is solid through the early and middle years. Risk is concentrated in ${_depStage} in weaker scenarios — the point when adjustment options are more limited.` :
       rate >= 0.90
@@ -284,9 +296,27 @@
 
     // ── Headroom / gap ────────────────────────────────────────────────
     let headroom = null;
-    let shortfallHTML = '';
     if (sustainableSpending !== null) {
       headroom = sustainableSpending - currentSpending;
+    }
+
+    // ── Margin of safety classification ──────────────────────────────
+    // marginRatio: headroom as a fraction of current spending.
+    // tight       < 8%  — plan passes but buffer is very thin (~£3,200 on £40k spend)
+    // moderate    < 20% — plan passes with some room but not genuinely comfortable
+    // comfortable ≥ 20% — meaningfully above threshold
+    const marginRatio       = (headroom !== null && currentSpending > 0)
+      ? headroom / currentSpending : null;
+    const marginTight       = marginRatio !== null && marginRatio >= 0 && marginRatio < 0.08;
+    const marginModerate    = marginRatio !== null && marginRatio >= 0.08 && marginRatio < 0.20;
+    const marginComfortable = marginRatio !== null && marginRatio >= 0.20;
+
+    // Warning icon SVG — white stroke on transparent fill, reads on coloured hero background.
+    const warnIcon = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:4px;margin-bottom:2px" aria-label="Narrow margin warning"><path d="M8 2L14.5 13.5H1.5L8 2Z" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" stroke-linejoin="round"/><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.75" fill="rgba(255,255,255,0.85)"/></svg>`;
+
+    // ── Headroom stat HTML ────────────────────────────────────────────
+    let shortfallHTML = '';
+    if (sustainableSpending !== null) {
       if (sustainableIsFloor) {
         shortfallHTML = `
           <div class="mc-vstat">
@@ -294,11 +324,13 @@
             <div class="mc-vstat-value">Substantial</div>
           </div>`;
       } else if (headroom >= 0) {
-        const hr = roundToNearest(headroom, 500);
+        const hr        = roundToNearest(headroom, 500);
+        const statLabel = marginTight ? 'Narrow headroom' : 'Typical headroom';
+        const statValue = marginTight ? `${warnIcon}+${fmt(hr)} / yr` : `+${fmt(hr)} / yr`;
         shortfallHTML = `
           <div class="mc-vstat">
-            <div class="mc-vstat-label">Typical headroom</div>
-            <div class="mc-vstat-value">+${fmt(hr)} / yr</div>
+            <div class="mc-vstat-label">${statLabel}</div>
+            <div class="mc-vstat-value">${statValue}</div>
           </div>`;
       } else {
         const gap = roundToNearest(Math.abs(headroom), 500);
@@ -492,9 +524,21 @@
       }
       const hr = roundToNearest(headroom, 500);
       if (hr > 0) {
-        const higherSpend = roundToNearest(currentSpending + hr, 500);
-        items.push({ name: 'Consider spending more', pill: 'Headroom available', pillClass: 'mc-lever-pill--safe',
-          outcome: `Your plan stays above the ${confPct}% threshold even with around ${fmtB(hr)} more per year . You could spend up to ${fmtB(higherSpend)}/yr and remain resilient.` });
+        if (marginTight) {
+          // Tight margin — replace upside prompt with discipline note
+          items.push({ name: 'Maintain discipline', pill: 'Narrow margin', pillClass: 'mc-lever-pill--warn',
+            outcome: `Headroom is limited at ${fmtB(hr)} per year. Hold spending steady and review this annually rather than treating this as room to spend more.` });
+        } else if (marginModerate) {
+          // Moderate — keep the lever but add caution
+          const higherSpend = roundToNearest(currentSpending + hr, 500);
+          items.push({ name: 'Consider spending more', pill: 'Use with caution', pillClass: 'mc-lever-pill--neutral',
+            outcome: `There is around ${fmtB(hr)} per year of room, but the margin is not wide. Any increase should be modest and kept under review.` });
+        } else {
+          // Comfortable — original upside message
+          const higherSpend = roundToNearest(currentSpending + hr, 500);
+          items.push({ name: 'Consider spending more', pill: 'Headroom available', pillClass: 'mc-lever-pill--safe',
+            outcome: `Your plan stays above the ${confPct}% threshold even with around ${fmtB(hr)} more per year. You could spend up to ${fmtB(higherSpend)}/yr and remain resilient.` });
+        }
       }
       items.push({ name: 'Flexible spending', pill: iqrWide ? 'Material gain' : 'Small gain',
         pillClass: iqrWide ? 'mc-lever-pill--safe' : 'mc-lever-pill--neutral',
@@ -548,10 +592,18 @@
     } else {
       const hrForAction = sustainableSpending !== null && !sustainableIsFloor && headroom > 0
         ? roundToNearest(headroom, 500) : null;
-      actionLine   = hrForAction
-        ? `No changes needed. You could increase spending by up to ${fmtB(hrForAction)} per year.`
-        : `No changes needed.`;
-      actionImpact = `Your plan is already robust across the range of tested scenarios.`;
+      if (marginTight && hrForAction) {
+        actionLine   = `No changes needed, but headroom is limited at ${fmtB(hrForAction)} per year.`;
+        actionImpact = `Maintain your current spending and keep this under annual review. A poor sequence in the early years would consume this margin quickly.`;
+      } else if (marginModerate && hrForAction) {
+        actionLine   = `No changes needed. You have ${fmtB(hrForAction)} per year of room, though the margin is not wide.`;
+        actionImpact = `Any spending increase should be modest and kept under review as market conditions evolve.`;
+      } else {
+        actionLine   = hrForAction
+          ? `No changes needed. You could increase spending by up to ${fmtB(hrForAction)} per year.`
+          : `No changes needed.`;
+        actionImpact = `Your plan is already robust across the range of tested scenarios.`;
+      }
     }
 
     // ── Contextual bullets (right half of action block) ───────────────
