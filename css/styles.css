@@ -4222,8 +4222,10 @@ input[type="radio"] { accent-color: var(--accent); }
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 3rem 1.5rem 2rem;
-  margin: 24px 24px 0;
+  padding: 3rem 3rem 2rem;
+  margin: 24px auto 0;
+  width: 100%;
+  max-width: 920px;
   background: var(--shell);
   border: 1px solid var(--shell-border);
   border-radius: var(--radius-xl);
@@ -4412,8 +4414,9 @@ input[type="radio"] { accent-color: var(--accent); }
 
 #splash-screen .app-footer-wrap {
   width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
   border-top: 1px solid var(--border);
-  padding: 0 24px;
   box-sizing: border-box;
 }
 
