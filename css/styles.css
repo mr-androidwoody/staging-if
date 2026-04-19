@@ -4471,12 +4471,12 @@ input[type="radio"] { accent-color: var(--accent); }
   grid-column: 1 / -1;
 }
 
-/* Card section heading */
+/* Card section heading — single consistent size throughout */
 .ps-card__heading {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.08em;
   color: var(--muted);
   margin-bottom: 8px;
   padding-bottom: 6px;
@@ -4493,9 +4493,9 @@ input[type="radio"] { accent-color: var(--accent); }
 /* Rows inside a card */
 .ps-row {
   display: grid;
-  grid-template-columns: 110px 1fr;
+  grid-template-columns: 105px 1fr;
   gap: 8px;
-  padding: 6px 0;
+  padding: 7px 0;
   border-bottom: 1px solid var(--border);
   align-items: start;
 }
@@ -4505,6 +4505,7 @@ input[type="radio"] { accent-color: var(--accent); }
   padding-bottom: 0;
 }
 
+/* Label — muted, same size as note so the eye rests on value+chip */
 .ps-row__label {
   font-size: 11px;
   color: var(--muted);
@@ -4516,48 +4517,54 @@ input[type="radio"] { accent-color: var(--accent); }
 .ps-row__right {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
-/* A value+chip line (one per person, or one for shared rows) */
+/* Value+chip line: pname | value (grows) | chip (pinned right) */
 .ps-val-line {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
+/* Person name prefix — same size as label so it doesn't dominate */
 .ps-pname {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--muted);
-  min-width: 36px;
+  min-width: 32px;
   flex-shrink: 0;
 }
 
+/* Value — slightly larger and bolder than label/note, grows to push chip right */
 .ps-val {
   font-size: 12px;
   font-weight: 600;
   color: var(--text);
+  flex: 1;
+  min-width: 0;
 }
 
+/* Note — same size as label, muted, tight line-height */
 .ps-note {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
   line-height: 1.4;
 }
 
-/* Verdict chips */
+/* Verdict chips — pinned to right edge by ps-val flex:1 push */
 .ps-chip {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   font-size: 10px;
   font-weight: 700;
-  padding: 1px 7px;
+  padding: 2px 8px;
   border-radius: 20px;
   white-space: nowrap;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .ps-chip__dot {
@@ -4578,13 +4585,13 @@ input[type="radio"] { accent-color: var(--accent); }
   padding: 48px 24px;
   text-align: center;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
 }
 
 .ps-empty strong {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text);
   margin-bottom: 6px;
 }
