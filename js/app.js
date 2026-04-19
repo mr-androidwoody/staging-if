@@ -1043,6 +1043,9 @@
       MCR.setStale(false);
       _resetTestPlanBtn();
 
+      // ── Refresh the deterministic metrics badge now RetireMCResults is populated ──
+      window.RetireCalcRender?.renderMetrics();
+
     } catch (err) {
       _hideLoader();
       if (_outlookTabBtn) _outlookTabBtn.classList.remove('results-tab--simulating');

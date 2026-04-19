@@ -166,6 +166,14 @@
     _spendingContext = spendingContext || null;
     _resultReady     = true;
 
+    // Write the nominal median end value immediately — before the loader delay —
+    // so calc-render.js renderMetrics() can read it as soon as app.js triggers a refresh.
+    if (result && result.p50Portfolio && result.p50Portfolio.length) {
+      window.RetireMCResults = {
+        medianEndPortfolioNominal: result.p50Portfolio[result.p50Portfolio.length - 1],
+      };
+    }
+
     // If loader has already finished its 4s, reveal immediately
     if (!_loaderActive) {
       _revealNarrative();
