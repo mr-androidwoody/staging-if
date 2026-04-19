@@ -35,36 +35,37 @@
     }
     el.innerHTML = _buildHTML(_inputs, _result, _accounts);
     _stale = false;
-    _initScrollSpy();
+    _initTabSwitcher();
   }
 
   // ─────────────────────────────────────────────
-  // SCROLL SPY — highlights active nav link
+  // TAB SWITCHER — one card visible at a time
   // ─────────────────────────────────────────────
-  function _initScrollSpy() {
-    var canvas = document.getElementById('summary-panel');
-    if (!canvas) return;
-    var ids    = ['ps-card-people', 'ps-card-spending', 'ps-card-portfolio', 'ps-card-strategy'];
-    var links  = document.querySelectorAll('.ps-nav__link');
-    if (!links.length) return;
+  var _activeTab = 'ps-card-people';
 
-    function update() {
-      var scrollTop  = canvas.scrollTop;
-      var active     = ids[0];
-      ids.forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el && el.offsetTop - canvas.offsetTop <= scrollTop + 32) active = id;
-      });
-      links.forEach(function(a) {
-        var isActive = a.getAttribute('href') === '#' + active;
-        a.classList.toggle('ps-nav__link--active', isActive);
-      });
-    }
+  function _showTab(id) {
+    _activeTab = id;
+    var ids = ['ps-card-people', 'ps-card-spending', 'ps-card-portfolio', 'ps-card-strategy'];
+    ids.forEach(function(cardId) {
+      var card = document.getElementById(cardId);
+      if (card) card.style.display = (cardId === id) ? '' : 'none';
+    });
+    document.querySelectorAll('.ps-nav__link').forEach(function(btn) {
+      btn.classList.toggle('ps-nav__link--active', btn.dataset.psTab === id);
+    });
+  }
 
-    canvas.removeEventListener('scroll', canvas._psSpy);
-    canvas._psSpy = update;
-    canvas.addEventListener('scroll', update, { passive: true });
-    update();
+  function _initTabSwitcher() {
+    // Show the preserved active tab (or default to first)
+    _showTab(_activeTab);
+    // Wire buttons — guard against double-binding with a flag
+    var nav = document.querySelector('.ps-nav');
+    if (!nav || nav._psTabsWired) return;
+    nav._psTabsWired = true;
+    nav.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-ps-tab]');
+      if (btn) _showTab(btn.dataset.psTab);
+    });
   }
 
   // ─────────────────────────────────────────────
