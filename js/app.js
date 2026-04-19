@@ -806,6 +806,9 @@
       // Land on Plan Summary tab after each projection run
       const summaryBtn = document.querySelector('.results-tab[data-results-tab="summary"]');
       if (summaryBtn) summaryBtn.click();
+      // Ensure metrics band is hidden on plan summary (guard against tabs.js restoring it)
+      const band = document.querySelector('.metrics-band');
+      if (band) band.style.display = 'none';
 
       // If risk has been run before, mark results as stale and hide outlook tab
       if (state.riskRun) {
@@ -1373,7 +1376,8 @@
     btn.addEventListener('click', () => {
       const band = document.querySelector('.metrics-band');
       if (!band) return;
-      band.style.display = btn.dataset.resultsTab === 'outlook' ? 'none' : '';
+      var t = btn.dataset.resultsTab;
+      band.style.display = (t === 'outlook' || t === 'summary') ? 'none' : '';
     });
   });
 
