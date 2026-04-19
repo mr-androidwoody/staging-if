@@ -24,6 +24,10 @@
       strategy,
     } = inputs;
 
+    // Deduct fixed investment management charge before any growth calculations.
+    const MGMT_FEE = 0.0022;
+    const netGrowth = growth - MGMT_FEE;
+
     // Fallback wrapper order used by applyFallback inside withdrawalStrategy.
     // Cash is excluded here; SIPP lock is applied per-year below.
     // app.js no longer supplies p1Order/p2Order — order is fixed as GIA→SIPP→ISA.
@@ -313,8 +317,8 @@
       p2Drawn.Cash += p2CashDrawn;
 
       // Growth (cost basis NOT grown — gains accumulate naturally)
-      C.growBalances(p1Bal, growth);
-      C.growBalances(p2Bal, growth);
+      C.growBalances(p1Bal, netGrowth);
+      C.growBalances(p2Bal, netGrowth);
 
       // Accumulate withdrawal GIA gains using pre-computed gainRatio (no exemption yet)
       p1AnnualGains += p1Drawn.GIA * p1GainRatio;
