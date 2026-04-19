@@ -1629,6 +1629,21 @@ input[type="radio"] { accent-color: var(--accent); }
   line-height: 1.35;
 }
 
+.metric-value-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metric-sublabel {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
 /* ─────────────────────────────
    Deterministic disclaimer bar
    ───────────────────────────── */
