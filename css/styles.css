@@ -4490,10 +4490,10 @@ input[type="radio"] { accent-color: var(--accent); }
   border-bottom: 1px solid var(--border);
 }
 
-/* Rows inside a card */
+/* Rows inside a card: label | values | chip+note */
 .ps-row {
   display: grid;
-  grid-template-columns: 105px 1fr;
+  grid-template-columns: 105px 1fr 140px;
   gap: 8px;
   padding: 7px 0;
   border-bottom: 1px solid var(--border);
@@ -4505,7 +4505,7 @@ input[type="radio"] { accent-color: var(--accent); }
   padding-bottom: 0;
 }
 
-/* Label — muted, same size as note so the eye rests on value+chip */
+/* Col 1: row label */
 .ps-row__label {
   font-size: 11px;
   color: var(--muted);
@@ -4513,22 +4513,22 @@ input[type="radio"] { accent-color: var(--accent); }
   line-height: 1.4;
 }
 
-/* Right-hand content column */
+/* Col 2: stacked value lines */
 .ps-row__right {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
-/* Value+chip line: pname | value (grows) | chip (pinned right) */
+/* Value lines — person name prefix + value, no chip here */
 .ps-val-line {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
   min-width: 0;
 }
 
-/* Person name prefix — same size as label so it doesn't dominate */
+/* Person name prefix */
 .ps-pname {
   font-size: 11px;
   font-weight: 600;
@@ -4537,23 +4537,30 @@ input[type="radio"] { accent-color: var(--accent); }
   flex-shrink: 0;
 }
 
-/* Value — slightly larger and bolder than label/note, grows to push chip right */
+/* Value text */
 .ps-val {
   font-size: 12px;
   font-weight: 600;
   color: var(--text);
-  flex: 1;
   min-width: 0;
 }
 
-/* Note — same size as label, muted, tight line-height */
+/* Col 3: chip stacked above note */
+.ps-row__verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+/* Note lives inside the verdict column, beneath the chip */
 .ps-note {
   font-size: 11px;
   color: var(--muted);
   line-height: 1.4;
 }
 
-/* Verdict chips — pinned to right edge by ps-val flex:1 push */
+/* Verdict chips — sit at top of the verdict column */
 .ps-chip {
   display: inline-flex;
   align-items: center;
@@ -4564,7 +4571,6 @@ input[type="radio"] { accent-color: var(--accent); }
   border-radius: 20px;
   white-space: nowrap;
   flex-shrink: 0;
-  margin-left: auto;
 }
 
 .ps-chip__dot {
