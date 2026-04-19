@@ -121,9 +121,9 @@
         const disclaimer = document.getElementById('det-disclaimer');
         if (disclaimer) disclaimer.classList.toggle('det-disclaimer--hidden', tab === 'outlook' || tab === 'summary');
 
-        // Hide metrics band on summary and outlook tabs
+        // Hide metrics band on outlook tab only
         const metricsBand = document.querySelector('.metrics-band');
-        if (metricsBand) metricsBand.style.display = (tab === 'summary' || tab === 'outlook') ? 'none' : '';
+        if (metricsBand) metricsBand.style.display = (tab === 'outlook') ? 'none' : '';
 
         // Hide Test my plan button on outlook tab, or permanently if MC has
         // already been run (window.RetireMCEngine tracks this via app.js state).

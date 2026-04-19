@@ -806,9 +806,7 @@
       // Land on Plan Summary tab after each projection run
       const summaryBtn = document.querySelector('.results-tab[data-results-tab="summary"]');
       if (summaryBtn) summaryBtn.click();
-      // Ensure metrics band is hidden on plan summary (guard against tabs.js restoring it)
-      const band = document.querySelector('.metrics-band');
-      if (band) band.style.display = 'none';
+      // Metrics band is shown on summary tab (same as chart tabs)
 
       // If risk has been run before, mark results as stale and hide outlook tab
       if (state.riskRun) {
@@ -1186,14 +1184,14 @@
       state.activeTab = tab;
       // Restore metrics band when leaving results tab.
       // When returning to results, check which sub-tab is active and keep
-      // the band hidden if the user was on Plan summary or Plan outlook.
+      // the band hidden if the user was on Plan outlook.
       const band = document.querySelector('.metrics-band');
       if (band) {
         if (tab !== 'results') {
           band.style.display = '';
         } else {
           const activeSubTab = document.querySelector('.results-tab--active')?.dataset?.resultsTab;
-          band.style.display = (activeSubTab === 'summary' || activeSubTab === 'outlook') ? 'none' : '';
+          band.style.display = (activeSubTab === 'outlook') ? 'none' : '';
         }
       }
       // Reapply comma formatting to currency inputs when returning to setup
@@ -1414,7 +1412,7 @@
       const band = document.querySelector('.metrics-band');
       if (!band) return;
       var t = btn.dataset.resultsTab;
-      band.style.display = (t === 'outlook' || t === 'summary') ? 'none' : '';
+      band.style.display = (t === 'outlook') ? 'none' : '';
     });
   });
 
