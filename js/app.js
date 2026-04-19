@@ -818,13 +818,14 @@
         if (outlookTab) outlookTab.classList.add('results-tab--hidden');
       }
 
-      // Show the Test my plan button only if MC has never been run.
-      // Once the user has run Test my plan, the button stays hidden permanently
-      // for the session -- they navigate to Plan outlook to see results instead.
+      // Always re-show the Test my plan button when projection is re-run,
+      // regardless of whether MC has been run before. Clears the riskRun
+      // body flag so the button is not suppressed by other listeners.
       const testPlanBtn = document.getElementById('btn-test-plan');
-      if (testPlanBtn && !state.riskRun) {
+      if (testPlanBtn) {
         testPlanBtn.style.display = '';
         testPlanBtn.classList.remove('btn-test-plan--stale');
+        delete document.body.dataset.riskRun;
       }
 
     } catch (err) {
