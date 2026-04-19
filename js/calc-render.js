@@ -121,6 +121,10 @@
         const disclaimer = document.getElementById('det-disclaimer');
         if (disclaimer) disclaimer.classList.toggle('det-disclaimer--hidden', tab === 'outlook' || tab === 'summary');
 
+        // Hide metrics band on summary and outlook tabs
+        const metricsBand = document.querySelector('.metrics-band');
+        if (metricsBand) metricsBand.style.display = (tab === 'summary' || tab === 'outlook') ? 'none' : '';
+
         // Hide Test my plan button on outlook tab
         const testPlanBtn = document.getElementById('btn-test-plan');
         if (testPlanBtn) testPlanBtn.style.display = tab === 'outlook' ? 'none' : '';
