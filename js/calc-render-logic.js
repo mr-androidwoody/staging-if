@@ -423,7 +423,7 @@
   function buildMetrics(rows, viewPerson, useReal) {
     if (!rows.length) return { totalTax: 0, lifetimeGross: 0, avgRate: 0, lastPortfolio: 0 };
 
-    const { lifetimeTax, lifetimeGross } = rows.reduce((s, r) => {
+    const { lifetimeTax, lifetimeGross, nominalTax, nominalGross } = rows.reduce((s, r) => {
       const tax   = viewPerson === 'p1'
         ? (r.p1IncomeTax ?? 0) + (r.p1CGT ?? 0) + (r.p1NI ?? 0)
         : viewPerson === 'p2'
@@ -434,10 +434,14 @@
       return {
         lifetimeTax:   s.lifetimeTax   + adj(tax,   r, useReal),
         lifetimeGross: s.lifetimeGross + adj(gross,  r, useReal),
+        nominalTax:    s.nominalTax    + tax,
+        nominalGross:  s.nominalGross  + gross,
       };
-    }, { lifetimeTax: 0, lifetimeGross: 0 });
+    }, { lifetimeTax: 0, lifetimeGross: 0, nominalTax: 0, nominalGross: 0 });
 
-    const avgRate     = lifetimeGross > 0 ? lifetimeTax / lifetimeGross : 0;
+    // avgRate is a pure ratio — compute from nominal values so it is
+    // invariant to the real/nominal display toggle.
+    const avgRate     = nominalGross > 0 ? nominalTax / nominalGross : 0;
     const last        = rows[rows.length - 1];
     const lastPortfolio = adj(last.totalPortfolio, last, useReal);
 
