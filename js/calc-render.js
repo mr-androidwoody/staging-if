@@ -7,7 +7,7 @@
   let _annotations = [];
   let _depletions  = {};
   let _viewPerson = 'both';
-  let _useReal    = false;
+  let _useReal    = true;
   let _p2enabled  = true;
   let _activeResultsTab = 'income';
   let _incomeChart     = null;
@@ -123,7 +123,7 @@
 
         // Hide metrics band on summary and outlook tabs
         const metricsBand = document.querySelector('.metrics-band');
-        if (metricsBand) metricsBand.style.display = (tab === 'outlook') ? 'none' : '';
+        if (metricsBand) metricsBand.style.display = (tab === 'summary' || tab === 'outlook') ? 'none' : '';
 
         // Hide Test my plan button on outlook tab, or permanently if MC has
         // already been run (window.RetireMCEngine tracks this via app.js state).
@@ -181,9 +181,11 @@
     const stepDownPct = parseFloat(document.getElementById('stepDownPct')?.value) || 0;
     const fmtK = n => '£' + Math.round(n).toLocaleString('en-GB');
     let incomeTargetStr;
+    let incomeTargetSub = '';
     if (stepDownPct > 0) {
       const reduced = spending * (1 - stepDownPct / 100);
-      incomeTargetStr = fmtK(spending) + ' reducing to ' + fmtK(reduced) + ' at age 75';
+      incomeTargetStr = fmtK(spending) + ' reducing to ' + fmtK(reduced);
+      incomeTargetSub = 'at age 75';
     } else {
       incomeTargetStr = fmtK(spending) + ' per year';
     }
@@ -195,6 +197,8 @@
     if (mTax)    mTax.textContent    = fmt(totalTax);
     if (mRate)   mRate.textContent   = (avgRate * 100).toFixed(1) + '%';
     if (mTarget) mTarget.textContent = incomeTargetStr;
+    const mIncomeSub = document.getElementById('m-income-sublabel');
+    if (mIncomeSub) mIncomeSub.textContent = incomeTargetSub;
     if (mPort)   mPort.textContent   = fmt(_lp);
 
     // ── MC comparison icon + tooltip ──────────────────────────────────
