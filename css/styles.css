@@ -4856,7 +4856,7 @@ input[type="radio"] { accent-color: var(--accent); }
 
 /* B&ISA max years note */
 .bni-years-note {
-  font-size: 0.78rem;
+  font-size: 0.70rem;
   line-height: 1.4;
   margin: 2px 0 8px;
   min-height: 1em;
