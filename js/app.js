@@ -601,6 +601,7 @@
       if (available <= 0) {
         // No GIA or cash — grey out section and show warning
         noteEl.textContent = 'No GIA available to fund transfers';
+        noteEl.style.fontStyle = 'italic';
         noteEl.style.color = '#a32d2d';
         if (tableEl) {
           tableEl.style.opacity       = '0.45';
@@ -631,6 +632,7 @@
       if (maxYears < 30) {
         noteEl.textContent = `GIA + cash funds up to ${maxYears} year${maxYears !== 1 ? 's' : ''} at this amount`;
         noteEl.style.color = maxYears <= 3 ? '#a32d2d' : '#854f0b';
+        noteEl.style.fontStyle = 'italic';
       } else {
         noteEl.textContent = '';
       }
