@@ -74,21 +74,39 @@
     // Clear the shared results object so the deterministic badge hides during the run
     window.RetireMCResults = null;
 
-    // Wave SVG — a sine path that animates via stroke-dashoffset
-    const waveSVG = `
-      <svg class="mc-loader-wave" viewBox="0 0 400 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path class="mc-loader-wave__path"
-          d="M0 30 C33 10, 67 10, 100 30 S167 50, 200 30 S267 10, 300 30 S367 50, 400 30 S467 10, 500 30 S567 50, 600 30"
-          fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>`;
+    // Building squares grid — 3x3, animate in sequentially, last square green
+    const squareColours = [
+      '#b8c8e8', '#8aaad4', '#5c87bf',
+      '#8aaad4', '#3460e8', '#5c87bf',
+      '#5c87bf', '#3460e8', '#16a34a',
+    ];
+    const squaresHTML = squareColours.map((colour, i) => `
+      <div class="mc-sq" style="
+        width:18px;height:18px;border-radius:3px;
+        background:${colour};
+        opacity:0;transform:scale(0.4);
+        animation:mc-sq-in 0.35s ease forwards;
+        animation-delay:${i * 0.18}s;
+      "></div>`).join('');
 
     el.innerHTML = `
+      <style>
+        @keyframes mc-sq-in { to { opacity:1; transform:scale(1); } }
+        .mc-loader-wrap {
+          display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          min-height:260px;gap:20px;
+        }
+        .mc-sq-grid { display:grid;grid-template-columns:repeat(3,18px);gap:6px; }
+        .mc-loader-msg {
+          font-size:0.85rem;color:#64748b;text-align:center;
+          opacity:0;transition:opacity 0.3s;max-width:280px;line-height:1.5;
+        }
+        .mc-loader-msg--visible { opacity:1; }
+      </style>
       <div class="mc-loader-wrap">
-        ${waveSVG}
+        <div class="mc-sq-grid">${squaresHTML}</div>
         <p class="mc-loader-msg"></p>
-        <div class="mc-loader-bar-wrap">
-          <div class="mc-loader-bar-fill" id="mc-loader-bar"></div>
-        </div>
       </div>`;
 
     // Message cycling — cross-fade every (LOADER_DURATION_MS / messages.length) ms
@@ -111,17 +129,7 @@
       showMessage(msgIdx);
     }, msgDelay);
 
-    // Progress bar — fills linearly over LOADER_DURATION_MS
-    const barEl     = document.getElementById('mc-loader-bar');
-    const tickMs    = 50;
-    const ticks     = LOADER_DURATION_MS / tickMs;
-    let   tickCount = 0;
-    _loaderInterval = setInterval(() => {
-      tickCount++;
-      const pct = Math.min((tickCount / ticks) * 100, 100);
-      if (barEl) barEl.style.width = pct + '%';
-      if (tickCount >= ticks) clearInterval(_loaderInterval);
-    }, tickMs);
+    // No progress bar — squares animation handles visual progress.
 
     // 4s reveal timer
     _loaderTimer = setTimeout(() => {
