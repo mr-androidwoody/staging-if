@@ -376,7 +376,7 @@
         <div class="mc-verdict-lower">
           <div class="mc-verdict-lower__left">
             <p class="mc-verdict-sentence">${verdictSentence}</p>
-            <div class="mc-verdict-meta">Based on ${r.simCount.toLocaleString('en-GB')} simulations · ${firstYear} – ${lastYear}</div><div class="mc-verdict-framing" style="color:rgba(255,255,255,0.75);margin-top:6px;font-size:0.82rem;line-height:1.4">The Summary tab uses your conservative planning rate as a straight-line estimate. These simulations use historically-grounded market returns and real volatility — the median path is a more realistic central estimate of how your plan could unfold.</div>
+            <div class="mc-verdict-meta">Based on ${r.simCount.toLocaleString('en-GB')} simulations · ${firstYear} – ${lastYear}</div>
           </div>
           <div class="mc-verdict-lower__right">
             ${shortfallHTML}
@@ -653,21 +653,10 @@
     // against the raw nominal totalPortfolio from the engine rows.
     window.RetireMCResults = { medianEndPortfolioNominal: r.p50Portfolio[lastIdx] };
 
-    // Midpoint age (roughly age 80 equivalent index)
-    const _midYearMatch = p1StartAge !== null
-      ? r.years.find(y => y >= firstYear + (80 - p1StartAge))
-      : null;
-    const midIdx = p1StartAge !== null
-      ? Math.min(Math.max(r.years.indexOf(_midYearMatch ?? lastYear), 0), lastIdx)
-      : Math.floor(lastIdx / 2);
-    const p50Mid = _deflate(r.p50Portfolio[Math.max(midIdx, 0)], Math.max(midIdx, 0));
-
-    const age80label = p1StartAge !== null ? `age ${Math.min(80, p1StartAge + lastIdx)}` : 'mid-retirement';
-
     let bulletItems = [];
 
     if (rate >= 0.95) {
-      // Strong — depletion timing first, then upside context
+      // Strong — depletion timing first, then upside context, then median end value
       if (p10DepletesAge !== null) {
         bulletItems.push(`In the worst 1 in 10 paths, funds run low around age ${p10DepletesAge}.`);
       } else {
@@ -677,8 +666,8 @@
         const ceil = roundToNearest(sustainableSpending, 500);
         bulletItems.push(`Your plan supports up to ${fmtB(ceil)} / yr at ${confPct}% confidence, ${fmtB(roundToNearest(headroom, 500))} above your current spending.`);
       }
-      if (p50Mid > 0) {
-        bulletItems.push(`In a typical market, your portfolio is around ${fmtB(roundToNearest(p50Mid, 10000))} at ${age80label}.`);
+      if (p50End > 0) {
+        bulletItems.push(`In a typical market, your portfolio ends at ${fmtB(roundToNearest(p50End, 10000))}.`);
       }
     } else if (rate >= 0.90) {
       // Good — depletion timing first, then ceiling and median
@@ -741,6 +730,7 @@
           </div>` : ''}
         </div>
       </div>
+      <p class="mc-bridge-note">The Plan summary tab shows your inputs and planning assumptions. These simulations test those assumptions across thousands of market scenarios with real return variability, showing how your plan holds up when markets don't behave as expected.</p>
       <p class="mc-bridge-note">Use the tabs above to explore charts and tables showing how your plan unfolds year by year under your planning assumptions.</p>`;
 
     const staleBanner = _stale
