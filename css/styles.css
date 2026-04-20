@@ -4261,6 +4261,16 @@ input[type="radio"] { accent-color: var(--accent); }
   line-height: 1.65;
 }
 
+.mc-basis-note {
+  margin: 10px 0 14px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted, #6b7280);
+  text-align: right;
+  line-height: 1.5;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    RESULTS TAB BAR — flex layout to support flush-right CTA
    ═══════════════════════════════════════════════════════════════ */
