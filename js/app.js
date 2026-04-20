@@ -564,6 +564,58 @@
       const el = safeEl(id);
       if (el) el.disabled = !enabled;
     });
+    _updateBniMaxYears();
+  }
+
+  function _updateBniMaxYears() {
+    const config = [
+      {
+        giaId:    ['p1GIAeq', 'p1GIAcash'],
+        cashId:   'p1Cash',
+        amtId:    'bniP1GIA',
+        yearsId:  'bniP1Years',
+        noteId:   'bniP1YearsNote',
+      },
+      {
+        giaId:    ['p2GIAeq', 'p2GIAcash'],
+        cashId:   'p2Cash',
+        amtId:    'bniP2GIA',
+        yearsId:  'bniP2Years',
+        noteId:   'bniP2YearsNote',
+      },
+    ];
+
+    config.forEach(({ giaId, cashId, amtId, yearsId, noteId }) => {
+      const yearsEl = safeEl(yearsId);
+      const noteEl  = safeEl(noteId);
+      if (!yearsEl || !noteEl) return;
+
+      const gia  = giaId.reduce((sum, id) => sum + (gv(id) || 0), 0);
+      const cash = gv(cashId) || 0;
+      const amt  = gv(amtId)  || 0;
+      const available = gia + cash;
+
+      if (amt <= 0 || available <= 0) {
+        yearsEl.max       = 30;
+        noteEl.textContent = '';
+        return;
+      }
+
+      const maxYears = Math.min(30, Math.floor(available / amt));
+      yearsEl.max = maxYears;
+
+      // Clamp current value if it exceeds new max
+      if (parseInt(yearsEl.value) > maxYears) {
+        yearsEl.value = maxYears;
+      }
+
+      if (maxYears < 30) {
+        noteEl.textContent = `GIA + cash funds up to ${maxYears} year${maxYears !== 1 ? 's' : ''} at this amount`;
+        noteEl.style.color = maxYears <= 3 ? '#a32d2d' : '#854f0b';
+      } else {
+        noteEl.textContent = '';
+      }
+    });
   }
 
   function applyP2State() {
@@ -1236,6 +1288,9 @@
       return;
     }
 
+    if (['bniP1GIA','bniP2GIA','bniP1Years','bniP2Years'].includes(e.target.id)) {
+      _updateBniMaxYears();
+    }
     if (e.target.name === 'bniEnabled') {
       applyBniState(e.target.value === 'true');
       return;
