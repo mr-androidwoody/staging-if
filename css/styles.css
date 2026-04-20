@@ -4389,8 +4389,7 @@ input[type="radio"] { accent-color: var(--accent); }
   padding: 3rem 3rem 2rem;
   margin: 24px auto 0;
   width: 100%;
-  max-width: 1024px;
-  background: var(--shell);
+  max-width: 1200px;
   border: 1px solid var(--shell-border);
   border-radius: var(--radius-xl);
   box-shadow: 0 6px 16px rgba(22,39,67,0.04);
@@ -4398,7 +4397,8 @@ input[type="radio"] { accent-color: var(--accent); }
 
 .splash-content {
   width: 100%;
-  max-width: 909px;
+  max-width: 1065px;
+}
 
 .splash-eyebrow {
   font-size: 11px;
@@ -4570,13 +4570,13 @@ input[type="radio"] { accent-color: var(--accent); }
   padding-left: 0;
   padding-right: 0;
   width: 100%;
-  max-width: 909px;
+  max-width: 1065px;
   box-sizing: border-box;
 }
 
 #splash-screen .app-footer-wrap {
   width: 100%;
-  max-width: 1024px;
+  max-width: 1200px;
   box-sizing: border-box;
 }
 
