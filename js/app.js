@@ -593,6 +593,15 @@
     _updateBniMaxYears();
   }
 
+  function _applySweepSurplusVisibility() {
+    const p1Sal = D.parseCurrency(safeEl('p1Salary')?.value || '') || 0;
+    const p2Sal = D.parseCurrency(safeEl('p2Salary')?.value || '') || 0;
+    const p1Row = safeEl('p1SweepRow');
+    const p2Row = safeEl('p2SweepRow');
+    if (p1Row) p1Row.style.display = p1Sal > 0 ? '' : 'none';
+    if (p2Row) p2Row.style.display = (p2Sal > 0 && state.p2enabled) ? '' : 'none';
+  }
+
   function _updateBniMaxYears() {
     const startYear = parseInt(safeEl('startYear')?.value) || new Date().getFullYear();
     const config = [
