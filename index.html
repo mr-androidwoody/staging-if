@@ -1126,10 +1126,10 @@
         <!-- Results chart tab bar -->
         <div class="results-tab-bar">
           <button class="results-tab results-tab--active" data-results-tab="summary">Plan summary</button>
-          <button class="results-tab results-tab--inactive" data-results-tab="income">Sources of income</button>
+          <button class="results-tab results-tab--inactive" data-results-tab="income">Withdrawal sources</button>
           <button class="results-tab results-tab--inactive" data-results-tab="spending">Gross vs net</button>
           <button class="results-tab results-tab--inactive" data-results-tab="tax">Tax paid</button>
-          <button class="results-tab results-tab--inactive" data-results-tab="wealth">Wealth by type</button>
+          <button class="results-tab results-tab--inactive" data-results-tab="wealth">Wealth breakdown</button>
           <button class="results-tab results-tab--inactive" data-results-tab="tables">Tables</button>
           <button class="results-tab results-tab--inactive results-tab--outlook results-tab--hidden" id="tab-btn-outlook" data-results-tab="outlook">Plan outlook</button>
         </div>
@@ -1197,7 +1197,7 @@
         </div>
         <div class="chart-canvas-area">
           <div class="chart-canvas-area__header">
-            <h2 id="income-chart-title">Sources of income</h2>
+            <h2 id="income-chart-title">Withdrawal sources: How your income is funded</h2>
             <div id="income-insight-anchor"></div>
           </div>
           <div class="chart-wrap" id="income-chart-wrap"><canvas id="incomeChart"></canvas></div>
@@ -1231,7 +1231,7 @@
           <div id="spendingLegend" class="sidebar-legend"></div>
         </div>
         <div class="chart-canvas-area">
-          <h2 id="spendingChartTitle">Gross vs net income</h2>
+          <h2 id="spendingChartTitle">Gross vs net income: Income before and after tax</h2>
           <div class="chart-wrap"><canvas id="spendingChart"></canvas></div>
           <div class="det-disclaimer">
             This projection follows a single path using your fixed return assumptions. For a fuller picture, use <strong>Test my plan</strong> to stress-test your plan across 10,000 simulated market scenarios.
@@ -1263,7 +1263,7 @@
           <div id="taxLegend" class="sidebar-legend"></div>
         </div>
         <div class="chart-canvas-area">
-          <h2 id="taxChartTitle">Tax paid &amp; effective rate</h2>
+          <h2 id="taxChartTitle">Tax you pay and your tax rate</h2>
           <div class="chart-wrap"><canvas id="taxChart"></canvas></div>
           <div class="det-disclaimer">
             This projection follows a single path using your fixed return assumptions. For a fuller picture, use <strong>Test my plan</strong> to stress-test your plan across 10,000 simulated market scenarios.
@@ -1296,7 +1296,7 @@
         </div>
         <div class="chart-canvas-area">
           <div class="chart-canvas-area__header">
-            <h2 id="wealthChartTitle">Wealth by type</h2>
+            <h2 id="wealthChartTitle">Wealth breakdown</h2>
             <div id="wealth-insight-anchor"></div>
           </div>
           <div class="chart-wrap"><canvas id="wealthChart"></canvas></div>
