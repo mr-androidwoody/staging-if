@@ -891,6 +891,18 @@ input[type="radio"] { accent-color: var(--accent); }
   color: #334155;
 }
 
+/* === Fix spacing above growth suggestion === */
+
+/* Remove the bottom border from the row ABOVE the suggestion */
+.acct-table tr:has(+ .growth-suggestion-row) td {
+  border-bottom: none;
+}
+
+/* Add spacing to the suggestion row itself */
+.growth-suggestion-row td {
+  padding-top: 12px;
+}
+
 .acct-table tr:last-child td { border-bottom: none; }
 
 .acct-table td input[type=text],
@@ -3297,16 +3309,6 @@ input[type="radio"] { accent-color: var(--accent); }
 .wiz-table tr {
   border-bottom: 1px solid var(--border);
 }
-
-/* ── Suggestion bar padding ── */
-.growth-suggestion-row {
-  border-top: 1px solid var(--border);
-}
-
-.growth-suggestion-cell {
-  padding-top: 12px;
-}
-/* ── End suggestion bar padding ── */
 
 .wiz-table tr:last-child {
   border-bottom: none;
