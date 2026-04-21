@@ -17,13 +17,12 @@
  * }
  *
  * ─── Simplifications vs deterministic engine ────────────────────────────────
- * • No interest-bearing accounts (fixed monthly draws don't compose sensibly
- *   with stochastic growth; their balances are small relative to total portfolio).
  * • No Bed-and-ISA transfers (no CGT tracking needed at this level).
  * • No annotations or depletion records.
- * • Approximate income tax only (no CGT, no NI). Tax is used solely to compute
- *   net cashflow draw and the medianTotalTax output; CGT is second-order for
- *   portfolio trajectory across 10,000 paths.
+ * • Approximate income tax only (no CGT, no NI). Tax is a REPORTING figure
+ *   only — not debited from any balance — mirroring engine.js, where income
+ *   tax is recorded per-row but balances are not adjusted for it. This keeps
+ *   MC and deterministic trajectories comparable.
  * • Tax thresholds are FROZEN (not uprated). This matches the most common real
  *   user setting and avoids needing the full threshold-uprating logic.
  * • Dividend mode: always 'payout' (conservative — dividends leave the GIA
@@ -38,10 +37,20 @@
  * simplification for a future parameter if needed.
  *
  * ─── Withdrawal logic ───────────────────────────────────────────────────────
- * Uses the same two modes ('50/50', 'tax-aware') and the same p1Order/p2Order
- * the user configured. This ensures MC and deterministic modes are measuring
- * the same strategy; using a different order would produce different tax drag
- * and make the two modes incomparable.
+ * The worker implements two withdrawal modes: '50/50' (simple split) and
+ * 'tax-aware' (PA headroom first, then residual split by headroom weight).
+ * The deterministic engine supports four strategies (balanced, isaFirst,
+ * sippFirst, taxMin); all four map to 'tax-aware' in the MC, as it is the
+ * closest available approximation. Differentiating the four strategies in MC
+ * would require porting the full withdrawal-strategy.js logic including ledger
+ * state. This is a declared simplification, not a bug.
+ *
+ * ─── Target attainment (success criterion) ───────────────────────────────────
+ * A path is counted as successful only if BOTH conditions hold every year:
+ *   (a) the portfolio never hit zero, AND
+ *   (b) total draws plus guaranteed income met the target.
+ * A portfolio that survived because it refused to spend (under-funded the
+ * household) must not count as a success.
  */
 
 'use strict';
@@ -464,23 +473,42 @@ function runPath(inputs, equityVol, inflationVol) {
       p1PAHeadroom, p2PAHeadroom,
     });
 
+    // ── Priority 3: residual interest-account sweep ───────────────────────
+    // Mirrors engine.js behaviour. The intAccts loop above respects each
+    // account's configured monthly draw (soft cap reflecting its role as a
+    // steady income source). But if wrappers deplete and shortfall remains,
+    // leaving capital stranded in a liquid interest account is wrong. Sweep
+    // the residual here. Interest for this year was already accrued above,
+    // so only capital is moved here.
+    const wrapperDrawn =
+      (p1Drawn.GIA || 0) + (p1Drawn.SIPP || 0) + (p1Drawn.ISA || 0) +
+      (p2Drawn.GIA || 0) + (p2Drawn.SIPP || 0) + (p2Drawn.ISA || 0);
+    let residualShortfall = Math.max(0, shortfall - wrapperDrawn);
+    if (residualShortfall > 0) {
+      for (const a of pathIntAccts) {
+        if (residualShortfall <= 0) break;
+        if ((a.balance || 0) <= 0) continue;
+        const extra = Math.min(a.balance, residualShortfall);
+        a.balance         -= extra;
+        residualShortfall -= extra;
+      }
+    }
+
     // ── Growth ────────────────────────────────────────────────────────────
     growBalances(p1Bal, growthY, inflationY);
     if (p2enabled) growBalances(p2Bal, growthY, inflationY);
 
-    // ── Approximate tax ────────────────────────────────────────────────────
+    // ── Approximate tax (reporting only — NOT debited from any balance) ──
+    // Target is gross, so shortfall-sized wrapper draws already account for
+    // tax implicitly. Debiting tax from cash would double-count. This mirrors
+    // engine.js, which records income tax as a reporting figure without
+    // adjusting balances. See 'Approximate income tax' note above — no CGT,
+    // no NI, no savings/dividend bands.
     const p1NonSavings = p1SP + p1SalInc + p1Drawn.sippTaxable;
     const p2NonSavings = p2enabled ? (p2SP + p2SalInc + p2Drawn.sippTaxable) : 0;
     const p1Tax = approxIncomeTax(p1NonSavings);
     const p2Tax = p2enabled ? approxIncomeTax(p2NonSavings) : 0;
     const totalTax = p1Tax + p2Tax;
-
-    // Deduct tax from cash (best effort — same as engine.js for CGT; here for income tax).
-    const taxToPay = totalTax;
-    const p1TaxPaid = Math.min(taxToPay / 2, p1Bal.Cash || 0);
-    p1Bal.Cash = Math.max(0, (p1Bal.Cash || 0) - p1TaxPaid);
-    const p2TaxPaid = Math.min(taxToPay - p1TaxPaid, p2Bal.Cash || 0);
-    if (p2enabled) p2Bal.Cash = Math.max(0, (p2Bal.Cash || 0) - p2TaxPaid);
 
     // ── Record end-of-year values ──────────────────────────────────────────
     const intAcctTotal = pathIntAccts.reduce((sum, a) => sum + (a.balance || 0), 0);
@@ -488,7 +516,13 @@ function runPath(inputs, equityVol, inflationVol) {
     portfolioByYear[yi] = portfolio;
     taxByYear[yi]       = totalTax;
 
+    // ── Success tracking ───────────────────────────────────────────────────
+    // A path is only successful if every year met target AND portfolio never
+    // hit zero. Previously success was terminal-balance-only, which counted
+    // paths that under-funded target as "survived" provided some residual
+    // balance remained.
     if (portfolio <= 0) survived = false;
+    if (residualShortfall > 0.01) survived = false;
 
     // ── Advance inflation for next year ────────────────────────────────────
     cumInfl *= (1 + inflationY);
@@ -521,9 +555,25 @@ self.onmessage = function (e) {
   // If mcGrowth is provided, override inputs.growth with the historically-grounded
   // figure from mc-assumptions.js. This allows the MC engine to use realistic
   // market return assumptions independent of the user's conservative planning rate.
-  const effectiveInputs = (mcGrowth !== undefined && mcGrowth !== null)
+  const withMcGrowth = (mcGrowth !== undefined && mcGrowth !== null)
     ? { ...inputs, growth: mcGrowth }
     : inputs;
+
+  // Map the deterministic strategy (balanced / isaFirst / sippFirst / taxMin)
+  // to the worker's withdrawal mode. The worker implements a simplified
+  // two-mode system ('50/50' and 'tax-aware'); the four deterministic strategies
+  // collapse to these as the closest available approximations:
+  //   balanced / isaFirst / taxMin / sippFirst → 'tax-aware'
+  // This is a known simplification. Differentiating the four strategies in MC
+  // would require porting the full withdrawal-strategy.js logic including
+  // ledger state — out of scope here. 'tax-aware' is the most faithful shared
+  // behaviour (PA headroom first, then split by residual headroom).
+  const effectiveInputs = {
+    ...withMcGrowth,
+    withdrawalMode: withMcGrowth.withdrawalMode
+      || withMcGrowth.strategy        // passthrough so future strategy work sees the label
+      || 'tax-aware',
+  };
 
   const numYears = effectiveInputs.endYear - effectiveInputs.startYear + 1;
 
