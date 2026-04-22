@@ -730,46 +730,73 @@
     let s2Right;
     if (isStressView) {
       // Stress scenarios don't run bisection or delay perturbations.
-      // Show what the scenario tests and what the success rate means vs baseline.
-      const baselineRate    = _results.baseline ? _results.baseline.successRate : null;
-      const baselinePct     = baselineRate !== null ? Math.round(baselineRate * 100) : null;
-      const scenarioPct     = Math.round(rate * 100);
-      const delta           = baselineRate !== null ? Math.round((rate - baselineRate) * 100) : null;
-      const deltaStr        = delta !== null
+      // Show what the scenario means and what to do, using the same lever-block
+      // visual language as the baseline panel for consistency.
+      const baselineRate = _results.baseline ? _results.baseline.successRate : null;
+      const delta        = baselineRate !== null ? Math.round((rate - baselineRate) * 100) : null;
+      const deltaStr     = delta !== null
         ? (delta >= 0 ? `+${delta}pp vs baseline` : `${delta}pp vs baseline`)
         : null;
-      const deltaClass      = delta === null ? '' : delta >= 0 ? 'mc-stress-delta--up' : 'mc-stress-delta--down';
+      const deltaClass   = delta === null ? '' : delta >= 0 ? 'mc-stress-delta--up' : 'mc-stress-delta--down';
+      const deltaBadge   = deltaStr
+        ? ` <span class="mc-stress-delta ${deltaClass}">${deltaStr}</span>`
+        : '';
 
-      const resilienceNote =
-        rate >= 0.95 ? `Your plan remains robust even under this stress scenario. This scenario does not materially change the outlook.` :
-        rate >= 0.90 ? `Your plan still holds under this scenario, but the margin is thinner. This scenario reduces the cushion without breaking the plan.` :
-        rate >= 0.80 ? `Under this scenario, your plan becomes borderline. This exposes a real weakness that the baseline view may not fully show.` :
-        `Under this scenario, your plan is at risk. This is the kind of adverse start that your baseline buffer may not be strong enough to absorb.`;
-
-      const actionNote =
+      // Block 1 — scenario verdict
+      const b1Pill =
+        rate >= 0.95 ? 'Holds up well'  :
+        rate >= 0.90 ? 'Reduced margin' :
+        rate >= 0.80 ? 'Borderline'     : 'At risk';
+      const b1PillClass =
+        rate >= 0.95 ? 'mc-lever-pill--safe'    :
+        rate >= 0.90 ? 'mc-lever-pill--neutral' :
+        rate >= 0.80 ? 'mc-lever-pill--warn'    : 'mc-lever-pill--risk';
+      const b1Outcome =
         rate >= 0.95
-          ? `No immediate change is needed. Return to the Baseline view for your main spending guidance.`
+          ? `Your plan remains robust even under this scenario${deltaBadge}. The outlook does not change materially.`
           : rate >= 0.90
-          ? `No immediate change is needed, but this scenario is worth watching. Check whether your baseline buffer is enough to absorb conditions like this if they arise early in retirement.`
+          ? `Your plan still holds, but this scenario reduces the cushion${deltaBadge}. The plan stays above the sustainability threshold, but with less room.`
+          : rate >= 0.80
+          ? `Under this scenario the plan becomes borderline${deltaBadge}. This exposes a real weakness that the baseline view may not fully show.`
+          : `Under this scenario the plan is at risk${deltaBadge}. This is the kind of adverse start that your baseline buffer may not be strong enough to absorb.`;
+
+      // Block 2 — what to do
+      const b2Pill =
+        rate >= 0.95 ? 'No action needed'     :
+        rate >= 0.90 ? 'Watch baseline buffer' :
+        rate >= 0.80 ? 'Review baseline'       : 'Act on baseline';
+      const b2PillClass =
+        rate >= 0.95 ? 'mc-lever-pill--safe'    :
+        rate >= 0.90 ? 'mc-lever-pill--neutral' :
+        rate >= 0.80 ? 'mc-lever-pill--warn'    : 'mc-lever-pill--risk';
+      const b2Outcome =
+        rate >= 0.95
+          ? `No immediate change is needed. Return to Baseline for your main spending guidance.`
+          : rate >= 0.90
+          ? `No immediate change is needed, but check whether your baseline buffer is large enough to absorb conditions like this if they arise early in retirement.`
           : rate >= 0.80
           ? `Use the Baseline recommendations as your main guide, but treat them as more urgent if early retirement conditions start to resemble this scenario.`
-          : `This scenario makes the Baseline fixes more important. Review the Baseline recommendations for spending and delay adjustments.`;
+          : `The Baseline fixes for spending and delay become more important in light of this scenario. Review them and consider whether your current plan has enough margin.`;
+
+      // Inline lever-block helper (mirrors baseline leverBlock, scoped to stress branch)
+      function stressLeverBlock(name, pill, pillClass, outcome, isPrimary) {
+        const cls = 'mc-lever' + (isPrimary ? ' mc-lever--primary' : ' mc-lever--secondary');
+        return `
+          <div class="${cls}">
+            <div class="mc-lever-top">
+              <span class="mc-lever-name">${name}</span>
+              <span class="mc-lever-pill ${pillClass}">${pill}</span>
+            </div>
+            <p class="mc-lever-outcome">${outcome}</p>
+          </div>`;
+      }
 
       s2Right = `
         <div class="mc-evidence-pane">
           <div class="mc-section-label">What this scenario shows</div>
-          <div class="mc-stress-interp">
-            <div class="mc-stress-interp__row">
-              <span class="mc-stress-interp__label">Likelihood of holding up</span>
-              <span class="mc-stress-interp__val">${scenarioPct}%${deltaStr ? ` <span class="mc-stress-delta ${deltaClass}">${deltaStr}</span>` : ''}</span>
-            </div>
-            ${baselinePct !== null ? `
-            <div class="mc-stress-interp__row">
-              <span class="mc-stress-interp__label">Baseline likelihood</span>
-              <span class="mc-stress-interp__val">${baselinePct}%</span>
-            </div>` : ''}
-            <p class="mc-stress-interp__note">${resilienceNote}</p>
-            <p class="mc-stress-interp__action">${actionNote}</p>
+          <div class="mc-lever-table">
+            ${stressLeverBlock('Scenario verdict', b1Pill, b1PillClass, b1Outcome, true)}
+            ${stressLeverBlock('What to do',       b2Pill, b2PillClass, b2Outcome, false)}
           </div>
         </div>`;
     } else {
