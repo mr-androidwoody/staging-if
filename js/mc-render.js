@@ -734,49 +734,48 @@
       // visual language as the baseline panel for consistency.
       const baselineRate = _results.baseline ? _results.baseline.successRate : null;
       const delta        = baselineRate !== null ? Math.round((rate - baselineRate) * 100) : null;
-      const deltaStr     = delta !== null
-        ? (delta >= 0 ? `+${delta}pp vs baseline` : `${delta}pp vs baseline`)
-        : null;
-      const deltaClass   = delta === null ? '' : delta >= 0 ? 'mc-stress-delta--up' : 'mc-stress-delta--down';
-      const deltaBadge   = deltaStr
-        ? ` <span class="mc-stress-delta ${deltaClass}">${deltaStr}</span>`
-        : '';
 
-      // Block 1 — scenario verdict
+      // Natural-language delta phrase — used in b1Outcome sentences
+      const absDelta   = delta !== null ? Math.abs(delta) : null;
+      const deltaPhrase = absDelta !== null && absDelta > 0
+        ? ` Its likelihood of holding up is ${absDelta} percentage point${absDelta === 1 ? '' : 's'} lower than your baseline,`
+        : null;
+
+      // Block 1 — outcome
       const b1Pill =
-        rate >= 0.95 ? 'Holds up well'  :
-        rate >= 0.90 ? 'Reduced margin' :
-        rate >= 0.80 ? 'Borderline'     : 'At risk';
+        rate >= 0.95 ? 'Still on track'  :
+        rate >= 0.90 ? 'Reduced margin'  :
+        rate >= 0.80 ? 'Borderline'      : 'At risk';
       const b1PillClass =
         rate >= 0.95 ? 'mc-lever-pill--safe'    :
         rate >= 0.90 ? 'mc-lever-pill--neutral' :
         rate >= 0.80 ? 'mc-lever-pill--warn'    : 'mc-lever-pill--risk';
       const b1Outcome =
         rate >= 0.95
-          ? `Your plan remains robust even under this scenario${deltaBadge}. The outlook does not change materially.`
+          ? `This scenario makes little difference to the overall outlook. The plan still looks robust${deltaPhrase ? ` with only a ${absDelta} percentage point drop from your baseline` : ''}.`
           : rate >= 0.90
-          ? `Your plan still holds, but this scenario reduces the cushion${deltaBadge}. The plan stays above the sustainability threshold, but with less room.`
+          ? `Your plan still holds under this scenario, but the cushion is thinner.${deltaPhrase ? ` The likelihood of holding up is ${absDelta} percentage point${absDelta === 1 ? '' : 's'} lower than your baseline, though the plan stays above the sustainability threshold.` : ''}`
           : rate >= 0.80
-          ? `Under this scenario the plan becomes borderline${deltaBadge}. This exposes a real weakness that the baseline view may not fully show.`
-          : `Under this scenario the plan is at risk${deltaBadge}. This is the kind of adverse start that your baseline buffer may not be strong enough to absorb.`;
+          ? `In this scenario the plan becomes borderline.${deltaPhrase ? `${deltaPhrase} which suggests your baseline buffer may not fully absorb a difficult start to retirement.` : ' This exposes a weakness that the baseline view may not fully show.'}`
+          : `In this scenario, the plan comes under real strain.${deltaPhrase ? `${deltaPhrase} which suggests your current buffer may not be strong enough to absorb a difficult start to retirement.` : ' The risk of running short before the end of retirement is too high to ignore.'}`;
 
-      // Block 2 — what to do
+      // Block 2 — best next move
       const b2Pill =
-        rate >= 0.95 ? 'No action needed'     :
-        rate >= 0.90 ? 'Watch baseline buffer' :
-        rate >= 0.80 ? 'Review baseline'       : 'Act on baseline';
+        rate >= 0.95 ? 'No immediate change needed' :
+        rate >= 0.90 ? 'Watch baseline buffer'      :
+        rate >= 0.80 ? 'Review baseline actions'    : 'Use your baseline actions';
       const b2PillClass =
         rate >= 0.95 ? 'mc-lever-pill--safe'    :
         rate >= 0.90 ? 'mc-lever-pill--neutral' :
         rate >= 0.80 ? 'mc-lever-pill--warn'    : 'mc-lever-pill--risk';
       const b2Outcome =
         rate >= 0.95
-          ? `No immediate change is needed. Return to Baseline for your main spending guidance.`
+          ? `No immediate change is needed on the strength of this scenario. Use the Baseline view for your main spending guidance and overall plan decisions.`
           : rate >= 0.90
           ? `No immediate change is needed, but check whether your baseline buffer is large enough to absorb conditions like this if they arise early in retirement.`
           : rate >= 0.80
-          ? `Use the Baseline recommendations as your main guide, but treat them as more urgent if early retirement conditions start to resemble this scenario.`
-          : `The Baseline fixes for spending and delay become more important in light of this scenario. Review them and consider whether your current plan has enough margin.`;
+          ? `Treat the spending and delay changes shown in your baseline plan as more urgent under this scenario. Check whether your current plan has enough margin to cope if early retirement turns out to be this difficult.`
+          : `Treat the spending and delay changes shown in your baseline plan as a priority. This scenario suggests the plan needs more margin than it currently has, and conditions like this are not implausible.`;
 
       // Inline lever-block helper (mirrors baseline leverBlock, scoped to stress branch)
       function stressLeverBlock(name, pill, pillClass, outcome, isPrimary) {
@@ -793,10 +792,10 @@
 
       s2Right = `
         <div class="mc-evidence-pane">
-          <div class="mc-section-label">What this scenario shows</div>
+          <div class="mc-section-label">What this means</div>
           <div class="mc-lever-table">
-            ${stressLeverBlock('Scenario verdict', b1Pill, b1PillClass, b1Outcome, true)}
-            ${stressLeverBlock('What to do',       b2Pill, b2PillClass, b2Outcome, false)}
+            ${stressLeverBlock('Outcome',       b1Pill, b1PillClass, b1Outcome, true)}
+            ${stressLeverBlock('Best next move', b2Pill, b2PillClass, b2Outcome, false)}
           </div>
         </div>`;
     } else {
