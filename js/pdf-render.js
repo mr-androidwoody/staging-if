@@ -647,11 +647,18 @@
     ];
 
     // ── Off-screen container ───────────────────────────────────────────────
+    // Must NOT use visibility:hidden or display:none — html2canvas will render
+    // a blank canvas. opacity:0 + position:absolute off-screen is the reliable
+    // pattern: the element is in the layout tree and renderable, just not visible.
     const container = document.createElement('div');
     container.style.cssText = `
-      position:fixed;left:-9999px;top:0;
+      position:absolute;
+      top:-${PAGE_H * 10}px;
+      left:0;
       width:${PAGE_W}px;
-      visibility:hidden;pointer-events:none;z-index:-1;
+      opacity:0;
+      pointer-events:none;
+      z-index:-1;
     `;
     container.innerHTML = pages.join('');
     document.body.appendChild(container);
@@ -665,8 +672,6 @@
     const pdfW = pdf.internal.pageSize.getWidth();
     const pdfH = pdf.internal.pageSize.getHeight();
 
-    const pageDivs = container.querySelectorAll('div[style*="' + PAGE_W + 'px"]');
-    // More reliably: select direct children
     const pageEls = Array.from(container.children);
 
     for (let i = 0; i < pageEls.length; i++) {
