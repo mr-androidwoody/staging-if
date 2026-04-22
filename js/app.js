@@ -1321,6 +1321,58 @@
   }
 
   // ─────────────────────────────
+  // MC STRESS RUN COORDINATOR
+  // Fired by mc-render.js when the user clicks an uncomputed stress button.
+  // Gathers the same inputs and assumptions as runRisk, delegates the actual
+  // simulation to RetireMCEngine.runStress, then hands the result back to
+  // RetireMCRender.setStressResult which switches the active view and renders.
+  // ─────────────────────────────
+  document.addEventListener('mc-run-stress', async function (e) {
+    const stressId = e.detail?.stressId;
+    if (!stressId) return;
+
+    const MCE = window.RetireMCEngine;
+    const MCR = window.RetireMCRender;
+    if (!MCE || !MCR) {
+      showToast('MC engine not loaded', true);
+      return;
+    }
+
+    const inputs = state.lastInputs;
+    if (!inputs) {
+      showToast('Run a projection first', true);
+      return;
+    }
+
+    MCR.showLoader();
+
+    const _mcAlloc  = window.RetireCalc.summarisePortfolio(state.portfolioAccounts).overallAllocation;
+    const _mcAssume = window.RetireMCAssumptions
+      ? window.RetireMCAssumptions.getMCAssumptions(
+          _mcAlloc.equities  || 0,
+          _mcAlloc.bonds     || 0,
+          _mcAlloc.cashlike  || 0,
+          _mcAlloc.cash      || 0,
+        )
+      : { growth: inputs.growth, equityVol: 0.16, inflationVol: 0.015 };
+
+    try {
+      const result = await MCE.runStress({
+        stressId,
+        inputs,
+        mcGrowth:     _mcAssume.growth,
+        equityVol:    _mcAssume.equityVol,
+        inflationVol: _mcAssume.inflationVol,
+      });
+      MCR.setStressResult(stressId, result);
+    } catch (err) {
+      console.error('mc-run-stress error:', err);
+      MCR.switchState('baseline');
+      showToast('Stress run failed — see console', true);
+    }
+  });
+
+  // ─────────────────────────────
   // CURRENCY FORMATTING
   // ─────────────────────────────
   document.addEventListener('focusin', (e) => {
