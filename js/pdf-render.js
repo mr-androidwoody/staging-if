@@ -1481,7 +1481,7 @@ function page8(s) {
     const pdfW = pdf.internal.pageSize.getWidth();
     const pdfH = pdf.internal.pageSize.getHeight();
 
-    const pageEls = Array.from(container.children);
+    const pageEls = Array.from(container.children).filter(el => el.tagName === 'DIV');
 
     for (let i = 0; i < pageEls.length; i++) {
       const canvas = await window.html2canvas(pageEls[i], {
