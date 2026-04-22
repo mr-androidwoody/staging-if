@@ -825,11 +825,8 @@
       const baselineRate = _results.baseline ? _results.baseline.successRate : null;
       const delta        = baselineRate !== null ? Math.round((rate - baselineRate) * 100) : null;
 
-      // Natural-language delta phrase — used in b1Outcome sentences
-      const absDelta   = delta !== null ? Math.abs(delta) : null;
-      const deltaPhrase = absDelta !== null && absDelta > 0
-        ? ` Its likelihood of holding up is ${absDelta} percentage point${absDelta === 1 ? '' : 's'} lower than your baseline,`
-        : null;
+      // Natural-language delta — used in b3 block
+      const absDelta = delta !== null ? Math.abs(delta) : null;
 
       // Block 1 — outcome
       const b1Pill =
@@ -842,12 +839,12 @@
         rate >= 0.80 ? 'mc-lever-pill--warn'    : 'mc-lever-pill--risk';
       const b1Outcome =
         rate >= 0.95
-          ? `This scenario makes little difference to the overall outlook. The plan still looks robust${deltaPhrase ? ` with only a ${absDelta} percentage point drop from your baseline` : ''}.`
+          ? `This scenario makes little difference to the overall outlook. The plan still looks robust.`
           : rate >= 0.90
-          ? `Your plan still holds under this scenario, but the cushion is thinner.${deltaPhrase ? ` The likelihood of holding up is ${absDelta} percentage point${absDelta === 1 ? '' : 's'} lower than your baseline, though the plan stays above the sustainability threshold.` : ''}`
+          ? `Your plan still holds under this scenario, but the cushion is thinner. The plan stays above the sustainability threshold, but with less room.`
           : rate >= 0.80
-          ? `In this scenario the plan becomes borderline.${deltaPhrase ? `${deltaPhrase} which suggests your baseline buffer may not fully absorb a difficult start to retirement.` : ' This exposes a weakness that the baseline view may not fully show.'}`
-          : `In this scenario, the plan comes under real strain.${deltaPhrase ? `${deltaPhrase} which suggests your current buffer may not be strong enough to absorb a difficult start to retirement.` : ' The risk of running short before the end of retirement is too high to ignore.'}`;
+          ? `In this scenario the plan becomes borderline. This exposes a weakness that the baseline view may not fully show.`
+          : `In this scenario, the plan comes under real strain. The risk of running short before the end of retirement is too high to ignore.`;
 
       // Block 2 — best next move
       const b2Pill =
@@ -867,6 +864,24 @@
           ? `Treat the spending and delay changes shown in your baseline plan as more urgent under this scenario. Check whether your current plan has enough margin to cope if early retirement turns out to be this difficult.`
           : `Treat the spending and delay changes shown in your baseline plan as a priority. This scenario suggests the plan needs more margin than it currently has, and conditions like this are not implausible.`;
 
+      // Block 3 — vs baseline (delta context)
+      const b3Pill =
+        absDelta === null || absDelta === 0 ? 'No change'         :
+        absDelta <= 5                       ? 'Marginal difference' :
+        absDelta <= 20                      ? 'Meaningful drop'   : 'Large drop';
+      const b3PillClass =
+        absDelta === null || absDelta === 0 ? 'mc-lever-pill--neutral' :
+        absDelta <= 5                       ? 'mc-lever-pill--neutral' :
+        absDelta <= 20                      ? 'mc-lever-pill--warn'    : 'mc-lever-pill--risk';
+      const b3Outcome =
+        absDelta === null || absDelta === 0
+          ? `This scenario produces results very close to your baseline plan.`
+          : absDelta <= 5
+          ? `The likelihood of holding up is ${absDelta} percentage point${absDelta === 1 ? '' : 's'} lower than your baseline — a small difference that does not materially change the picture.`
+          : absDelta <= 20
+          ? `The likelihood of holding up is ${absDelta} percentage points lower than your baseline. This is a meaningful reduction worth factoring into your planning.`
+          : `The likelihood of holding up is ${absDelta} percentage points lower than your baseline — a large drop that highlights a real sensitivity in the plan.`;
+
       // Inline lever-block helper (mirrors baseline leverBlock, scoped to stress branch)
       function stressLeverBlock(name, pill, pillClass, outcome, isPrimary) {
         const cls = 'mc-lever' + (isPrimary ? ' mc-lever--primary' : ' mc-lever--secondary');
@@ -884,8 +899,9 @@
         <div class="mc-evidence-pane">
           <div class="mc-section-label">What this means</div>
           <div class="mc-lever-table">
-            ${stressLeverBlock('Outcome',       b1Pill, b1PillClass, b1Outcome, true)}
-            ${stressLeverBlock('Best next move', b2Pill, b2PillClass, b2Outcome, false)}
+            ${stressLeverBlock('Outcome',            b1Pill, b1PillClass, b1Outcome, true)}
+            ${stressLeverBlock('Vs your baseline',   b3Pill, b3PillClass, b3Outcome, false)}
+            ${stressLeverBlock('Best next move',     b2Pill, b2PillClass, b2Outcome, false)}
           </div>
         </div>`;
     } else {
@@ -1082,7 +1098,7 @@
           <div class="mc-primary-action__body">
             <div class="mc-primary-action__left">
               <div class="mc-primary-action__label" style="color:${verdictColour.actionLabel}">What this means</div>
-              <p class="mc-primary-action__text" style="color:${verdictColour.actionText}">${stressTakeaway}</p>
+              <p class="mc-primary-action__text mc-primary-action__text--stress" style="color:${verdictColour.actionText}">${stressTakeaway}</p>
               <p class="mc-primary-action__impact" style="color:${verdictColour.actionImpact}">${stressDetail}</p>
             </div>
             <div class="mc-primary-action__right">
