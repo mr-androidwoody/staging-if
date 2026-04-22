@@ -986,11 +986,11 @@
           items.push({ name: 'Consider spending more', pill: 'Not recommended', pillClass: 'mc-lever-pill--warn',
             outcome: 'The buffer is thin. Any increase should be small and kept under close review.' });
         } else if (marginModerate) {
-          const higherSpend = roundToNearest(currentSpending + Math.round(hr * 0.85), 500);
+          const higherSpend = roundToNearest(currentSpending + Math.round(hr * 0.75), 500);
           items.push({ name: 'Consider spending more', pill: 'Use with caution', pillClass: 'mc-lever-pill--neutral',
             outcome: `You could spend somewhat more, up to around ${fmtB(higherSpend)}/yr, and still keep the plan on track, though any increase should be deliberate.` });
         } else {
-          const higherSpend = roundToNearest(currentSpending + Math.round(hr * 0.85), 500);
+          const higherSpend = roundToNearest(currentSpending + Math.round(hr * 0.75), 500);
           items.push({ name: 'Consider spending more', pill: 'Headroom available', pillClass: 'mc-lever-pill--safe',
             outcome: `There is room to spend up to around ${fmtB(higherSpend)}/yr and still keep the plan on track, though treat that as an option, not a target.` });
         }
@@ -1151,7 +1151,7 @@
         actionImpact = `Being willing to trim spending by 10 to 15% in down years is the most practical lever available.`;
       } else {
         const hrForAction = sustainableSpending !== null && !sustainableIsFloor && headroom > 0
-          ? roundToNearest(Math.round(headroom * 0.85), 500) : null;
+          ? roundToNearest(Math.round(headroom * 0.75), 500) : null;
         if (marginTight && hrForAction) {
           actionLine   = `No immediate change is needed, but keep this under annual review.`;
           actionImpact = `The buffer is thin at about ${fmtB(hrForAction)} per year. A poor run of returns early in retirement could use it up quickly.`;
