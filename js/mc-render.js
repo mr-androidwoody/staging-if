@@ -563,7 +563,6 @@
           <div class="mc-verdict-lower__left">
             <p class="mc-verdict-sentence">${verdictSentence}</p>
             <div class="mc-verdict-meta">Based on ${r.simCount.toLocaleString('en-GB')} simulations · ${firstYear} – ${lastYear}${_activeState !== 'baseline' ? ' · ' + STATE_LABELS[_activeState] + ' scenario' : ''}</div>
-            ${_buildStressBtnsHTML()}
           </div>
           <div class="mc-verdict-lower__right">
             ${shortfallHTML}
@@ -954,7 +953,13 @@
     const staleBanner = _stale
       ? `<div class="mc-stale-banner">⚠ Based on previous inputs${staleScenario}. Re-run to update.</div>`
       : '';
-    el.innerHTML = staleBanner + s1 + basisNote + s23 + s4;
+    const stressRow = `
+      <div class="mc-below-hero">
+        ${_buildStressBtnsHTML()}
+        ${basisNote}
+      </div>`;
+
+    el.innerHTML = staleBanner + s1 + stressRow + s23 + s4;
 
     // Push verdict colour onto the outlook tab button
     const outlookBtn = document.querySelector('.results-tab--outlook');
