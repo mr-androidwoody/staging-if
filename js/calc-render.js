@@ -953,9 +953,9 @@
     const stratSubtitle = `<p class="chart-title-strategy">${stratLabel} strategy</p>`;
 
     const titleEl = document.getElementById('income-chart-title');
-    if (titleEl) titleEl.innerHTML = 'Withdrawal sources: How your income is funded' + stratSubtitle;
+    if (titleEl) titleEl.innerHTML = 'How your income is funded' + stratSubtitle;
     const spendTitleEl = document.getElementById('spendingChartTitle');
-    if (spendTitleEl) spendTitleEl.innerHTML = 'Gross vs net income: Income before and after tax' + stratSubtitle;
+    if (spendTitleEl) spendTitleEl.innerHTML = 'Income before and after tax' + stratSubtitle;
     const taxTitleEl = document.getElementById('taxChartTitle');
     if (taxTitleEl) taxTitleEl.innerHTML = 'Tax you pay and your tax rate' + stratSubtitle;
     const wealthTitleEl = document.getElementById('wealthChartTitle');
