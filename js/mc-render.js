@@ -88,7 +88,7 @@
     'Preparing your outlook…',
   ];
   let _loaderTimer      = null;  // setTimeout handle for the 4s reveal
-  let _loaderInterval   = null;  // setInterval handle for progress bar
+  let _loaderInterval   = null;  // setInterval handle for message cycling (cleared by next showLoader() call)
   let _resultReady      = false; // true once worker has posted its result
   let _loaderActive     = false; // true while loader is showing
   let _narrativeRevealed = false; // true once narrative has been rendered at least once after a run
@@ -164,7 +164,8 @@
       }, 150);
     }
     showMessage(0);
-    const msgTimer = setInterval(() => {
+    // Store in _loaderInterval so a re-triggered showLoader() clears it correctly.
+    _loaderInterval = setInterval(() => {
       msgIdx = (msgIdx + 1) % LOADER_MESSAGES.length;
       showMessage(msgIdx);
     }, msgDelay);
@@ -173,8 +174,8 @@
 
     // 4s reveal timer
     _loaderTimer = setTimeout(() => {
-      clearInterval(msgTimer);
       clearInterval(_loaderInterval);
+      _loaderInterval = null;
       _loaderActive = false;
       if (_resultReady) {
         _revealNarrative(el);
@@ -429,26 +430,6 @@
     const firstYear = r.years[0];
     const lastYear  = r.years[lastIdx];
 
-    // ══════════════════ TEMPORARY DIAGNOSTIC ══════════════════
-    // Remove once nominal-vs-real question is resolved.
-    console.log('[MC DIAG]', {
-      useReal:        _useReal,
-      meanInflation:  _meanInflation,
-      firstYear,
-      lastYear,
-      lastIdx,
-      deflator:       Math.pow(1 + _meanInflation, lastIdx),
-      p10_nominal_end: r.p10Portfolio[lastIdx],
-      p10_real_end:    _deflate(r.p10Portfolio[lastIdx], lastIdx),
-      p50_nominal_end: r.p50Portfolio[lastIdx],
-      p50_real_end:    _deflate(r.p50Portfolio[lastIdx], lastIdx),
-      p90_nominal_end: r.p90Portfolio[lastIdx],
-      p90_real_end:    _deflate(r.p90Portfolio[lastIdx], lastIdx),
-      p50_nominal_start: r.p50Portfolio[0],
-      p50_real_start:    _deflate(r.p50Portfolio[0], 0),
-    });
-    // ══════════════════════════════════════════════════════════
-
     const p25 = _deflateArr(r.p25Portfolio);
     const p50 = _deflateArr(r.p50Portfolio);
     const p75 = _deflateArr(r.p75Portfolio);
@@ -543,29 +524,45 @@
     // For stress views, the sentence contextualises the result against the baseline plan.
     let verdictSentence;
     if (isStressView) {
-      // Stress verdict sentence — compares this scenario outcome to the baseline plan
+      // Derive the baseline verdict label from the actual baseline rate —
+      // never assume it is "on track".
+      const _blRate = _baselineRateForSentence;
+      const _blLabel =
+        _blRate === null    ? 'your baseline plan'        :
+        _blRate >= 0.95     ? 'Your baseline plan is on track' :
+        _blRate >= 0.90     ? 'Your baseline plan is on track, but tight' :
+        _blRate >= 0.80     ? 'Your baseline plan is borderline' :
+                              'Your baseline plan is already at risk';
+      // Short form for mid-sentence references
+      const _blShort =
+        _blRate === null ? 'The baseline plan'          :
+        _blRate >= 0.95  ? 'The baseline plan is on track' :
+        _blRate >= 0.90  ? 'The baseline plan is on track but has limited buffer' :
+        _blRate >= 0.80  ? 'The baseline plan is borderline'  :
+                           'The baseline plan is already at risk';
+
       if (rate >= 0.95) {
         verdictSentence = _stressMarginal
-          ? `Your baseline plan is on track, and this scenario makes little difference. The plan remains robust under these conditions.`
-          : `Your baseline plan is on track. This scenario does not change that, and the plan holds up well even under these conditions.`;
+          ? `${_blLabel}, and this scenario makes little difference. The plan remains robust under these conditions.`
+          : `${_blLabel}. This scenario does not change that, and the plan holds up well even under these conditions.`;
       } else if (rate >= 0.90) {
         verdictSentence = _stressMarginal
-          ? `Your baseline plan is on track. This scenario is not significantly more demanding, and the plan still holds, though with a little less room.`
+          ? `${_blLabel}. This scenario is not significantly more demanding, and the plan still holds, though with a little less room.`
           : _stressSignificant
-          ? `Your baseline plan is on track, but this scenario puts it under considerably more pressure. The margin is thinner here.`
-          : `Your baseline plan is on track, but this scenario is more demanding. The plan still works, though the buffer is reduced.`;
+          ? `${_blLabel}, but this scenario puts it under considerably more pressure. The margin is thinner here.`
+          : `${_blLabel}, but this scenario is more demanding. The plan still works, though the buffer is reduced.`;
       } else if (rate >= 0.80) {
         verdictSentence = _stressMarginal
-          ? `Your baseline plan is on track, but this scenario is not as resilient. Under these conditions, the plan becomes borderline.`
+          ? `${_blLabel}, but this scenario is not as resilient. Under these conditions, the plan becomes borderline.`
           : _stressSignificant
-          ? `Your baseline plan is on track, but this scenario puts it significantly at risk of becoming borderline. The gap compared with your baseline is substantial.`
-          : `Your baseline plan is on track, but this scenario reveals a real weakness. The plan becomes borderline under these conditions.`;
+          ? `${_blLabel}, but this scenario puts it significantly under pressure. The plan becomes borderline here.`
+          : `${_blLabel}, but this scenario reveals a real weakness. The plan becomes borderline under these conditions.`;
       } else {
         verdictSentence = _stressMarginal
-          ? `Your baseline plan is borderline, and this scenario makes it worse. Under these conditions, the plan is at risk.`
+          ? `${_blShort}, and this scenario makes it worse. Under these conditions, the plan is at risk.`
           : _stressSignificant
-          ? `Your baseline plan is on track, but this scenario puts it significantly at risk. The drop compared with your baseline is large enough to matter.`
-          : `Your baseline plan holds, but this scenario puts it at risk. The plan is considerably weaker under these conditions than in the baseline.`;
+          ? `${_blLabel}, but this scenario puts it significantly at risk. The drop compared with your baseline is large enough to matter.`
+          : `${_blLabel}, but this scenario puts it at risk. The plan is considerably weaker under these conditions.`;
       }
     } else {
       // Baseline verdict sentence — unchanged logic, "baseline plan" label added
@@ -785,8 +782,8 @@
     // Lever 2 — Delay withdrawals
     let l2Pill, l2PillClass, l2Outcome;
     if (!delayPerturbations.length) {
-      l2Pill = 'Not modelled'; l2PillClass = 'mc-lever-pill--neutral';
-      l2Outcome = 'Delay perturbations were not computed for this run.';
+      l2Pill = 'Not available'; l2PillClass = 'mc-lever-pill--neutral';
+      l2Outcome = 'Delay analysis was not run for this projection.';
     } else {
       const effective = delayPerturbations.filter(p => p.successRate >= targetConfidence);
       if (rate >= targetConfidence && effective.length) {
@@ -841,7 +838,7 @@
         rate >= 0.95
           ? `This scenario makes little difference to the overall outlook. The plan still looks robust.`
           : rate >= 0.90
-          ? `Your plan still holds under this scenario, but the cushion is thinner. The plan stays above the sustainability threshold, but with less room.`
+          ? `Your plan still holds under this scenario, but the cushion is thinner. It stays above the level needed to remain reliable, but with less room.`
           : rate >= 0.80
           ? `In this scenario the plan becomes borderline. This exposes a weakness that the baseline view may not fully show.`
           : `In this scenario, the plan comes under real strain. The risk of running short before the end of retirement is too high to ignore.`;
@@ -1023,7 +1020,6 @@
     let s4;
     if (isStressView) {
       const baselineRate  = _results.baseline ? _results.baseline.successRate : null;
-      const scenarioLabel = STATE_LABELS[_activeState];
       const absDeltaS4    = baselineRate !== null ? Math.abs(Math.round((baselineRate - rate) * 100)) : null;
       const deltaPhS4     = absDeltaS4 !== null && absDeltaS4 > 0
         ? `${absDeltaS4} percentage point${absDeltaS4 === 1 ? '' : 's'} lower`
@@ -1046,7 +1042,7 @@
       if (rate >= 0.95) {
         stressDetail = `Even under these conditions, the plan holds up well${deltaPhS4 ? `, with the likelihood of holding up only ${deltaPhS4} compared with your baseline` : ''}. No immediate change is needed on the strength of this result.`;
       } else if (rate >= 0.90) {
-        stressDetail = `The plan stays above the sustainability threshold, but this scenario reduces the cushion${deltaPhS4 ? `, with the likelihood of holding up ${deltaPhS4} compared with your baseline` : ''}. Check whether your baseline buffer is large enough to absorb this kind of pressure if it arises early in retirement.`;
+        stressDetail = `The plan stays workable, but this scenario reduces the cushion${deltaPhS4 ? `, with the likelihood of holding up ${deltaPhS4} compared with your baseline` : ''}. Check whether your baseline buffer is large enough to absorb this kind of pressure if it arises early in retirement.`;
       } else if (rate >= 0.80) {
         stressDetail = `This exposes a real weakness that the baseline view may not fully show${deltaPhS4 ? `. Compared with your baseline, the likelihood of holding up is ${deltaPhS4}, which suggests your current buffer may not cope with a difficult start to retirement` : ''}. Treat your baseline spending and delay changes as more urgent.`;
       } else {
