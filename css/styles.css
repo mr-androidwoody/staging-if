@@ -4402,7 +4402,7 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 
 .mc-primary-action__impact {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.6;
   margin: 0;
 }
@@ -4417,7 +4417,7 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 
 .mc-action-bullet {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   color: var(--text, #374151);
   padding-left: 16px;
@@ -4504,8 +4504,9 @@ input[type="radio"] { accent-color: var(--accent); }
   border-color: #3460e8;
 }
 
-/* Idle — not yet run */
+/* Idle — not yet run, dashed border */
 .mc-sc-card--idle {
+  border-style: dashed;
   border-color: #d1d5db;
   background: #fafafa;
 }
