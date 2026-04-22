@@ -1062,6 +1062,10 @@
       }
 
       _syncExportBtn();
+
+    } catch (err) {
+      resetBtn();
+      console.error('runProjection error:', err);
       showToast('Run failed — see console', true);
     }
   }
