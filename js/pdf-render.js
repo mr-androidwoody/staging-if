@@ -251,7 +251,7 @@ function page1(s) {
     <div class="p1-eyebrow">Retirement income projection</div>
     <div class="p1-title">Retirement income projection for<br>${names}</div>
     <div class="p1-statement">
-      This report is a retirement income projection based on user-entered assumptions. It is not financial advice, tax advice, investment advice, pension advice or a personal recommendation. IncomeFlow does not assess suitability. Do not make pension, investment, withdrawal, transfer, tax or retirement decisions based only on this report.
+      This report is a retirement income projection based on user-entered assumptions. It is not financial advice, tax advice, investment advice, pension advice or a personal recommendation. IncomeFlow does not assess suitability. This report is not a sufficient basis for any pension, investment, withdrawal, transfer, tax or retirement decision.
     </div>
     <div class="p1-meta">
       <div class="p1-meta-row">
@@ -1456,7 +1456,7 @@ function page8(s) {
   strip2.style.cssText = 'background:var(--bg);border-top:1px solid var(--rule);padding:8px 48px;flex-shrink:0;display:flex;gap:32px;align-items:baseline;';
   strip2.innerHTML = `
     <div style="font-size:8px;color:var(--ink-light);flex:1;line-height:1.6;"><b style="color:var(--ink-mid);">Assumptions:</b> ${s.assumptions.headline}</div>
-    <div style="font-size:7.5px;color:var(--ink-light);flex:1.2;line-height:1.6;">This report is a retirement income projection based on user-entered assumptions. It is not financial advice, tax advice, investment advice, pension advice or a personal recommendation. Projections depend on assumptions that may not reflect future conditions. Do not make pension, investment, withdrawal, transfer or retirement decisions based only on this report.</div>`;
+    <div style="font-size:7.5px;color:var(--ink-light);flex:1.2;line-height:1.6;">Illustrative projection only. Not financial advice, tax advice, investment advice, pension advice or a personal recommendation. This report is not a sufficient basis for any pension, investment, withdrawal, transfer, tax or retirement decision.</div>`;
   page.appendChild(strip2);
 
   page.appendChild(footer(8, TOTAL));
