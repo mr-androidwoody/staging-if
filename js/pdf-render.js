@@ -211,7 +211,7 @@ const LOGO_SVG = `<svg width="40" height="40" viewBox="0 0 54 54" fill="none" xm
 function footer(n, total) {
   const d = document.createElement('div');
   d.className = 'page-footer';
-  d.innerHTML = `<span>IncomeFlow – Confidential</span><span>Page ${n} of ${total}</span>`;
+  d.innerHTML = `<span>IncomeFlow | Confidential</span><span>Page ${n} of ${total}</span>`;
   return d;
 }
 
@@ -324,11 +324,11 @@ function page2(s) {
     {
       group: 'General Investment Accounts',
       rows: [
-        { label: `${p1.name} GIA — Equities`, p1: p1b.GIAeq, p2: null, rate: returns.global_equities },
-        { label: `${p1.name} GIA — Cashlike`,  p1: p1b.GIAcash, p2: null, rate: returns.cashlike },
+        { label: `${p1.name} GIA (Equities)`, p1: p1b.GIAeq, p2: null, rate: returns.global_equities },
+        { label: `${p1.name} GIA (Cashlike)`,  p1: p1b.GIAcash, p2: null, rate: returns.cashlike },
         ...(p2 && (p2b.GIAeq||p2b.GIAcash) ? [
-          { label: `${p2.name} GIA — Equities`, p1: null, p2: p2b.GIAeq,   rate: returns.global_equities },
-          { label: `${p2.name} GIA — Cashlike`,  p1: null, p2: p2b.GIAcash, rate: returns.cashlike },
+          { label: `${p2.name} GIA (Equities)`, p1: null, p2: p2b.GIAeq,   rate: returns.global_equities },
+          { label: `${p2.name} GIA (Cashlike)`,  p1: null, p2: p2b.GIAcash, rate: returns.cashlike },
         ] : []),
       ],
       subtotalLabel: 'Total GIAs',
@@ -634,19 +634,19 @@ function page4(s) {
 
   // Pensions
   tbody.appendChild(row('Pensions', null, null, {groupHeader:true}));
-  tbody.appendChild(row(`${p1.name} — SIPP / Pension`, p1b.SIPP, null, {indent:true}));
-  if (p2 && p2b.SIPP) tbody.appendChild(row(`${p2.name} — SIPP / Pension`, null, p2b.SIPP, {indent:true}));
+  tbody.appendChild(row(`${p1.name}: SIPP / Pension`, p1b.SIPP, null, {indent:true}));
+  if (p2 && p2b.SIPP) tbody.appendChild(row(`${p2.name}: SIPP / Pension`, null, p2b.SIPP, {indent:true}));
   tbody.appendChild(row('Total Pensions', p1b.SIPP||0, p2?p2b.SIPP||0:null, {subtotal:true}));
 
   // Investments
   tbody.appendChild(row('Investments', null, null, {groupHeader:true}));
-  if (p1b.ISA)    tbody.appendChild(row(`${p1.name} — ISA`, p1b.ISA, null, {indent:true}));
-  if (p1b.GIAeq)  tbody.appendChild(row(`${p1.name} — GIA (Equities)`, p1b.GIAeq, null, {indent:true}));
-  if (p1b.GIAcash)tbody.appendChild(row(`${p1.name} — GIA (Cashlike)`, p1b.GIAcash, null, {indent:true}));
+  if (p1b.ISA)    tbody.appendChild(row(`${p1.name}: ISA`, p1b.ISA, null, {indent:true}));
+  if (p1b.GIAeq)  tbody.appendChild(row(`${p1.name}: GIA (Equities)`, p1b.GIAeq, null, {indent:true}));
+  if (p1b.GIAcash)tbody.appendChild(row(`${p1.name}: GIA (Cashlike)`, p1b.GIAcash, null, {indent:true}));
   if (p2) {
-    if (p2b.ISA)    tbody.appendChild(row(`${p2.name} — ISA`, null, p2b.ISA, {indent:true}));
-    if (p2b.GIAeq)  tbody.appendChild(row(`${p2.name} — GIA (Equities)`, null, p2b.GIAeq, {indent:true}));
-    if (p2b.GIAcash)tbody.appendChild(row(`${p2.name} — GIA (Cashlike)`, null, p2b.GIAcash, {indent:true}));
+    if (p2b.ISA)    tbody.appendChild(row(`${p2.name}: ISA`, null, p2b.ISA, {indent:true}));
+    if (p2b.GIAeq)  tbody.appendChild(row(`${p2.name}: GIA (Equities)`, null, p2b.GIAeq, {indent:true}));
+    if (p2b.GIAcash)tbody.appendChild(row(`${p2.name}: GIA (Cashlike)`, null, p2b.GIAcash, {indent:true}));
   }
   const p1Inv = (p1b.ISA||0)+(p1b.GIAeq||0)+(p1b.GIAcash||0);
   const p2Inv = p2 ? (p2b.ISA||0)+(p2b.GIAeq||0)+(p2b.GIAcash||0) : null;
@@ -672,8 +672,8 @@ function page4(s) {
 
   // Cash
   tbody.appendChild(row('Cash', null, null, {groupHeader:true}));
-  if (p1b.Cash) tbody.appendChild(row(`${p1.name} — Cash`, p1b.Cash, null, {indent:true}));
-  if (p2 && p2b.Cash) tbody.appendChild(row(`${p2.name} — Cash`, null, p2b.Cash, {indent:true}));
+  if (p1b.Cash) tbody.appendChild(row(`${p1.name}: Cash`, p1b.Cash, null, {indent:true}));
+  if (p2 && p2b.Cash) tbody.appendChild(row(`${p2.name}: Cash`, null, p2b.Cash, {indent:true}));
   tbody.appendChild(row('Total Cash', p1b.Cash||0, p2?p2b.Cash||0:null, {subtotal:true}));
 
   // Total assets
@@ -720,7 +720,7 @@ function page5(s) {
 
   const hdr = el('div','p2-header');
   hdr.style.background = '#1a3ab5';
-  hdr.innerHTML = `<div class="p2-header-title">Asset Projection</div><div class="p2-header-sub">Real terms (today's money, ${s.meta.plan_start_year} prices) · every other year · deterministic projection</div>`;
+  hdr.innerHTML = `<div class="p2-header-title">Asset Projection</div><div class="p2-header-sub">Real terms (today's money, ${s.meta.plan_start_year} prices), every other year, deterministic projection</div>`;
   page.appendChild(hdr);
 
   const body = el('div','page-body');
@@ -728,11 +728,11 @@ function page5(s) {
 
   // ── Table ──────────────────────────────────────────────────────────
   const tbl = document.createElement('table');
-  tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5px;table-layout:fixed;';
+  tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:7.5px;table-layout:fixed;';
 
   // Column widths: first col wider (label), rest equal
   const colCount = rows.length + 1;
-  const labelW = 90;
+  const labelW = 82;
   const dataW = Math.floor((1123 - 64 - labelW) / rows.length); // 1123 page - 64 padding - label
 
   let colgroupHtml = `<col style="width:${labelW}px;">`;
@@ -744,17 +744,17 @@ function page5(s) {
 
   // Year row
   const yearRow = document.createElement('tr');
-  yearRow.innerHTML = `<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--ink);font-size:8px;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Year</th>`;
+  yearRow.innerHTML = `<th style="text-align:left;padding:4px 6px;border-bottom:2px solid var(--ink);font-size:7.5px;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Year</th>`;
   rows.forEach(r => {
-    yearRow.innerHTML += `<th style="text-align:right;padding:5px 4px;border-bottom:2px solid var(--ink);font-size:8.5px;font-weight:700;color:var(--ink);">${r.year}</th>`;
+    yearRow.innerHTML += `<th style="text-align:right;padding:4px 3px;border-bottom:2px solid var(--ink);font-size:7.5px;font-weight:700;color:var(--ink);">${r.year}</th>`;
   });
   thead.appendChild(yearRow);
 
   // Age row
   const ageRow = document.createElement('tr');
-  ageRow.innerHTML = `<td style="padding:3px 6px 6px;font-size:7.5px;color:var(--ink-light);">Age ${plan.p1.name} | ${plan.p2?.name||''}</td>`;
+  ageRow.innerHTML = `<td style="padding:2px 6px 5px;font-size:7px;color:var(--ink-light);">Age ${plan.p1.name} | ${plan.p2?.name||''}</td>`;
   rows.forEach(r => {
-    ageRow.innerHTML += `<td style="text-align:right;padding:3px 4px 6px;font-size:7.5px;color:var(--ink-light);">${r.p1_age}|${r.p2_age}</td>`;
+    ageRow.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;color:var(--ink-light);">${r.p1_age}|${r.p2_age}</td>`;
   });
   thead.appendChild(ageRow);
   tbl.appendChild(thead);
@@ -765,7 +765,7 @@ function page5(s) {
   function dataRow(label, values, opts={}) {
     const tr = document.createElement('tr');
     if (opts.groupHeader) {
-      tr.innerHTML = `<td colspan="${colCount}" style="padding:8px 6px 3px;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-light);background:var(--bg);border-top:1px solid var(--rule);">${label}</td>`;
+      tr.innerHTML = `<td colspan="${colCount}" style="padding:6px 6px 2px;font-size:6.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-light);background:var(--bg);border-top:1px solid var(--rule);">${label}</td>`;
       return tr;
     }
     const isTotal   = opts.total;
@@ -773,14 +773,14 @@ function page5(s) {
     const bgStyle   = isTotal   ? 'background:#e8eef8;' : isSubtot ? 'background:var(--bg-mid);' : '';
     const fwStyle   = isTotal   ? 'font-weight:800;' : isSubtot ? 'font-weight:700;' : '';
     const borderTop = isTotal   ? 'border-top:2px solid var(--ink);' : '';
-    const labelStyle = `padding:5px 6px;color:${isTotal?'var(--ink)':'var(--ink-mid)'};${fwStyle}${bgStyle}${borderTop}`;
+    const labelStyle = `padding:4px 6px;color:${isTotal?'var(--ink)':'var(--ink-mid)'};${fwStyle}${bgStyle}${borderTop}`;
 
     tr.innerHTML = `<td style="${labelStyle}">${label}</td>`;
     values.forEach((v, i) => {
       const even = i % 2 === 0;
       const cellBg = isTotal ? '#e8eef8' : isSubtot ? 'var(--bg-mid)' : even ? 'var(--white)' : '#fafbfd';
       const color  = opts.color || (isTotal ? 'var(--ink)' : 'var(--ink-mid)');
-      tr.innerHTML += `<td style="text-align:right;padding:5px 4px;${fwStyle}background:${cellBg};color:${color};${borderTop}">${v != null && v > 0.5 ? fmtK(v) : '—'}</td>`;
+      tr.innerHTML += `<td style="text-align:right;padding:4px 3px;${fwStyle}background:${cellBg};color:${color};${borderTop}">${v != null && v > 0.5 ? fmtK(v) : '—'}</td>`;
     });
     return tr;
   }
@@ -826,11 +826,11 @@ function page5(s) {
   tbody.appendChild(dataRow('Total Cash', rows.map(r => real(r, (r.snap.p1_cash||0)+(r.snap.p2_cash||0))), {subtotal:true}));
 
   // ── Total ──────────────────────────────────────────────────────────
-  tbody.appendChild(dataRow('Projected total (today\'s money)', rows.map(r => real(r, r.total_portfolio)), {total:true}));
+  tbody.appendChild(dataRow('Projected total', rows.map(r => real(r, r.total_portfolio)), {total:true}));
 
   // ── Simulated returns ──────────────────────────────────────────────
-  tbody.appendChild(dataRow('Simulated returns: median outcome', rows.map(r => real(r, r.mc_p50)), {color:'var(--blue)'}));
-  tbody.appendChild(dataRow('Simulated returns: weaker (1-in-10)', rows.map(r => real(r, r.mc_p10)), {color:'var(--amber)'}));
+  tbody.appendChild(dataRow('Simulated: median outcome', rows.map(r => real(r, r.mc_p50)), {color:'var(--blue)'}));
+  tbody.appendChild(dataRow('Simulated: weaker (1-in-10)', rows.map(r => real(r, r.mc_p10)), {color:'var(--amber)'}));
 
   tbl.appendChild(tbody);
   body.appendChild(tbl);
@@ -952,7 +952,7 @@ function page6(s) {
   const dataW = Math.floor((1123 - 64 - labelW) / rows.length);
 
   const tbl = document.createElement('table');
-  tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5px;table-layout:fixed;';
+  tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:7.5px;table-layout:fixed;';
 
   let colgroupHtml = `<col style="width:${labelW}px;">`;
   rows.forEach(() => { colgroupHtml += `<col style="width:${dataW}px;">`; });
@@ -962,17 +962,17 @@ function page6(s) {
 
   // Year row
   const yearRow = document.createElement('tr');
-  yearRow.innerHTML = `<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--ink);font-size:8px;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Year</th>`;
+  yearRow.innerHTML = `<th style="text-align:left;padding:4px 6px;border-bottom:2px solid var(--ink);font-size:7.5px;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Year</th>`;
   rows.forEach(r => {
-    yearRow.innerHTML += `<th style="text-align:right;padding:5px 4px;border-bottom:2px solid var(--ink);font-size:8.5px;font-weight:700;color:var(--ink);">${r.year}</th>`;
+    yearRow.innerHTML += `<th style="text-align:right;padding:4px 3px;border-bottom:2px solid var(--ink);font-size:7.5px;font-weight:700;color:var(--ink);">${r.year}</th>`;
   });
   thead.appendChild(yearRow);
 
   // Age row
   const ageRow = document.createElement('tr');
-  ageRow.innerHTML = `<td style="padding:3px 6px 6px;font-size:7.5px;color:var(--ink-light);">Age ${plan.p1.name} | ${plan.p2?.name||''}</td>`;
+  ageRow.innerHTML = `<td style="padding:2px 6px 5px;font-size:7px;color:var(--ink-light);">Age ${plan.p1.name} | ${plan.p2?.name||''}</td>`;
   rows.forEach(r => {
-    ageRow.innerHTML += `<td style="text-align:right;padding:3px 4px 6px;font-size:7.5px;color:var(--ink-light);">${r.p1_age}|${r.p2_age}</td>`;
+    ageRow.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;color:var(--ink-light);">${r.p1_age}|${r.p2_age}</td>`;
   });
   thead.appendChild(ageRow);
   tbl.appendChild(thead);
@@ -996,7 +996,7 @@ function page6(s) {
     values.forEach((v, i) => {
       const cellBg = isTotal ? '#e8eef8' : isSub ? 'var(--bg-mid)' : i%2===0 ? 'var(--white)' : '#fafbfd';
       const disp = v > 0.5 ? fmt(v) : '—';
-      tr.innerHTML += `<td style="text-align:right;padding:5px 4px;${fw}background:${cellBg};color:${col};${bt}">${disp}</td>`;
+      tr.innerHTML += `<td style="text-align:right;padding:4px 3px;${fw}background:${cellBg};color:${col};${bt}">${disp}</td>`;
     });
     return tr;
   }
@@ -1116,7 +1116,7 @@ function page7(s) {
   const dataW   = Math.floor((1123 - 64 - labelW) / rows.length);
 
   const tbl = document.createElement('table');
-  tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5px;table-layout:fixed;';
+  tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:7.5px;table-layout:fixed;';
 
   let cg = `<col style="width:${labelW}px;">`;
   rows.forEach(() => { cg += `<col style="width:${dataW}px;">`; });
@@ -1126,14 +1126,14 @@ function page7(s) {
   const yearRow = document.createElement('tr');
   yearRow.innerHTML = `<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--ink);font-size:8px;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Source</th>`;
   rows.forEach(r => {
-    yearRow.innerHTML += `<th style="text-align:right;padding:5px 4px;border-bottom:2px solid var(--ink);font-size:8.5px;font-weight:700;color:var(--ink);">${r.year}</th>`;
+    yearRow.innerHTML += `<th style="text-align:right;padding:4px 3px;border-bottom:2px solid var(--ink);font-size:7.5px;font-weight:700;color:var(--ink);">${r.year}</th>`;
   });
   thead.appendChild(yearRow);
 
   const ageRow = document.createElement('tr');
-  ageRow.innerHTML = `<td style="padding:3px 6px 6px;font-size:7.5px;color:var(--ink-light);">Age ${plan.p1.name} | ${plan.p2?.name||''}</td>`;
+  ageRow.innerHTML = `<td style="padding:2px 6px 5px;font-size:7px;color:var(--ink-light);">Age ${plan.p1.name} | ${plan.p2?.name||''}</td>`;
   rows.forEach(r => {
-    ageRow.innerHTML += `<td style="text-align:right;padding:3px 4px 6px;font-size:7.5px;color:var(--ink-light);">${r.p1_age}|${r.p2_age}</td>`;
+    ageRow.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;color:var(--ink-light);">${r.p1_age}|${r.p2_age}</td>`;
   });
   thead.appendChild(ageRow);
   tbl.appendChild(thead);
@@ -1156,17 +1156,17 @@ function page7(s) {
     values.forEach((v, i) => {
       const cellBg = isTotal ? '#e8eef8' : isSub ? 'var(--bg-mid)' : i%2===0 ? 'var(--white)' : '#fafbfd';
       const disp   = v > 0.5 ? fmt(v) : (opts.showZero ? '£0' : '—');
-      tr.innerHTML += `<td style="text-align:right;padding:5px 4px;${fw}background:${cellBg};color:${col};${bt}">${disp}</td>`;
+      tr.innerHTML += `<td style="text-align:right;padding:4px 3px;${fw}background:${cellBg};color:${col};${bt}">${disp}</td>`;
     });
     return tr;
   }
 
   // ── Guaranteed income ──────────────────────────────────────────────
   tbody.appendChild(cfRow('Guaranteed income', [], {groupHeader:true}));
-  tbody.appendChild(cfRow('State Pension — ' + plan.p1.name,  rows.map(r => r.p1_sp * def(r))));
-  if (plan.p2) tbody.appendChild(cfRow('State Pension — ' + plan.p2.name, rows.map(r => r.p2_sp * def(r))));
-  tbody.appendChild(cfRow('Salary — ' + plan.p1.name, rows.map(r => r.p1_salary * def(r))));
-  if (plan.p2) tbody.appendChild(cfRow('Salary — ' + plan.p2.name, rows.map(r => r.p2_salary * def(r))));
+  tbody.appendChild(cfRow('State Pension: ' + plan.p1.name,  rows.map(r => r.p1_sp * def(r))));
+  if (plan.p2) tbody.appendChild(cfRow('State Pension: ' + plan.p2.name, rows.map(r => r.p2_sp * def(r))));
+  tbody.appendChild(cfRow('Salary: ' + plan.p1.name, rows.map(r => r.p1_salary * def(r))));
+  if (plan.p2) tbody.appendChild(cfRow('Salary: ' + plan.p2.name, rows.map(r => r.p2_salary * def(r))));
   tbody.appendChild(cfRow('Interest account draw', rows.map(r => (r.p1_int_draw + r.p2_int_draw) * def(r))));
   const totGuaranteed = r => (r.p1_sp + r.p2_sp + r.p1_salary + r.p2_salary + r.p1_int_draw + r.p2_int_draw) * def(r);
   tbody.appendChild(cfRow('Total guaranteed', rows.map(r => totGuaranteed(r)), {subtotal:true}));
@@ -1256,7 +1256,7 @@ function page8(s) {
   // ══ LEFT: decade bars + pressure + action ════════════════════════
   const leftCol = el('div','');
   leftCol.style.cssText = 'padding:18px 28px;display:flex;flex-direction:column;border-right:1px solid var(--rule);overflow:hidden;';
-  leftCol.appendChild(el('div','section-label','Likelihood of plan holding up – by decade'));
+  leftCol.appendChild(el('div','section-label','Likelihood of projection holding up, by decade'));
 
   (r.survival_by_decade||[]).forEach(d => {
     const pct = (d.survival_rate*100);
@@ -1282,7 +1282,7 @@ function page8(s) {
   const actionLine = strip(n.action_line || '');
   const actionImpact = strip(n.action_impact || '');
   const sorrCaveat = sorrIsHigh
-    ? `That said, the projection shows meaningful sensitivity to a sharp early market fall. In this scenario, the model shows lower sensitivity where accessible cash is available to cover near-term withdrawals — a 6–12 month cash buffer can reduce forced sales at the worst moment.`
+    ? `That said, the projection shows meaningful sensitivity to a sharp early market fall. In this scenario, the model shows lower sensitivity where accessible cash is available to cover near-term withdrawals. A 6–12 month cash buffer can reduce forced sales at the worst moment.`
     : '';
 
   const ah = el('div','');
@@ -1312,7 +1312,7 @@ function page8(s) {
     'A 6–12 month cash buffer can be modelled to reduce forced withdrawals in weaker-return years, lowering sensitivity to a difficult start.',
     'The projection is based on fixed assumptions. Results may be worth reviewing after significant market movements or changes in personal circumstances.',
     'A 10–15% lower spending assumption in weaker-return years materially improves the modelled outcome across simulated paths.',
-    'Both State Pensions are inflation-linked in the model — they provide a rising income floor from age 67 that reduces portfolio draw pressure.',
+    'Both State Pensions are inflation-linked in the model, providing a rising income floor from age 67, reducing portfolio draw pressure.',
   ].forEach(b => {
     const row = el('div',''); row.style.cssText='display:flex;gap:9px;margin-bottom:7px;align-items:flex-start;';
     const dot = el('div',''); dot.style.cssText='width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px;';
@@ -1358,7 +1358,7 @@ function page8(s) {
         if (sc.impact_level === 'high') {
           const depStr = dep ? `, with the first depletion occurring around ${dep}` : '';
           const p50Str = p50 > 0 ? `finishes with ${fmt(p50)}` : `depletes before the end of the projection`;
-          return `This scenario has the largest effect on the modelled outcome. Under these conditions, the modelled success rate falls to ${scen} — a meaningful reduction from the baseline. In a typical path under this stress, the portfolio ${p50Str}${depStr}. A 6–12 month cash buffer can reduce the sensitivity to this scenario by avoiding forced sales at depressed prices in the early years.`;
+          return `This scenario has the largest effect on the modelled outcome. Under these conditions, the modelled success rate falls to ${scen}, a meaningful reduction from the baseline. In a typical path under this stress, the portfolio ${p50Str}${depStr}. A 6–12 month cash buffer can reduce the sensitivity to this scenario by avoiding forced sales at depressed prices in the early years.`;
         } else if (deltaMinor(sc)) {
           return `The projection shows good resilience to an early downturn. Under these conditions the modelled success rate stays high at ${scen}, barely changed from the baseline. This resilience comes partly from diversified income sources in the early years, which reduce reliance on investment returns during the critical sequence-risk window.`;
         } else {
@@ -1375,7 +1375,7 @@ function page8(s) {
         const p50  = sc.terminal_portfolio_p50;
         const p50Str = p50 > 0 ? ` In a typical path, the portfolio finishes with ${fmt(p50)} in today's money.` : '';
         if (deltaSmall(sc)) {
-          return `The projection shows strong resilience to elevated inflation. Under these conditions the modelled success rate stays very high at ${scen} — effectively unchanged. Both State Pensions are inflation-linked and begin from age 67, providing a rising income floor just as portfolio draws typically increase.${p50Str}`;
+          return `The projection shows strong resilience to elevated inflation. Under these conditions the modelled success rate stays very high at ${scen}, effectively unchanged. Both State Pensions are inflation-linked and begin from age 67, providing a rising income floor just as portfolio draws typically increase.${p50Str}`;
         } else if (deltaMinor(sc)) {
           return `The projection handles elevated inflation well. The modelled success rate remains high at ${scen}. State Pension indexing provides meaningful protection from the mid-2030s onwards, reducing the real-terms drag on the portfolio.${p50Str}`;
         } else {
@@ -1392,11 +1392,11 @@ function page8(s) {
         const p50  = sc.terminal_portfolio_p50;
         const p50Str = p50 > 0 ? ` A typical path still finishes with ${fmt(p50)}.` : '';
         if (deltaSmall(sc)) {
-          return `The projection is resilient to a low-growth decade. The modelled success rate stays very high at ${scen} — effectively unchanged. The combination of lower-tax withdrawals and State Pension income from the mid-2030s means the portfolio is not solely reliant on growth to cover income draws.${p50Str}`;
+          return `The projection is resilient to a low-growth decade. The modelled success rate stays very high at ${scen}, effectively unchanged. The combination of lower-tax withdrawals and State Pension income from the mid-2030s means the portfolio is not solely reliant on growth to cover income draws.${p50Str}`;
         } else if (deltaMinor(sc)) {
           return `The projection holds up well through a period of low growth. The modelled success rate remains high at ${scen}. State Pension income from the mid-2030s reduces portfolio dependency at the point when sustained low returns are most damaging.${p50Str}`;
         } else {
-          return `Sustained low growth puts meaningful pressure on the projection, reducing the modelled success rate to ${scen}. The projection is most sensitive to the spending assumption in this scenario — a lower-spending assumption in weaker-return years reduces the rate of portfolio erosion.${p50Str}`;
+          return `Sustained low growth puts meaningful pressure on the projection, reducing the modelled success rate to ${scen}. The projection is most sensitive to the spending assumption in this scenario: a lower-spending assumption in weaker-return years reduces the rate of portfolio erosion.${p50Str}`;
         }
       },
     },
