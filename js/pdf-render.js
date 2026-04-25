@@ -236,7 +236,7 @@ function page1(s) {
     ${LOGO_SVG}
     <div>
       <div class="p1-brand-name">IncomeFlow</div>
-      <div class="p1-brand-tag">Model and optimise how money flows from pensions, ISAs, and investments to fund your retirement.</div>
+      <div class="p1-brand-tag">Model how different assumptions affect retirement income, tax and portfolio longevity.</div>
     </div>`;
 
   // Decorative background grid (CSS-only)
@@ -248,10 +248,10 @@ function page1(s) {
   // Main content
   const content = el('div','p1-content');
   content.innerHTML = `
-    <div class="p1-eyebrow">Personal retirement plan</div>
-    <div class="p1-title">Financial Plan for<br>${names}</div>
+    <div class="p1-eyebrow">Retirement income projection</div>
+    <div class="p1-title">Retirement income projection for<br>${names}</div>
     <div class="p1-statement">
-      This report summarises your current financial position and gives you a view of how your finances could change throughout retirement. It is produced by IncomeFlow and is for illustrative purposes only.
+      This report is a retirement income projection based on user-entered assumptions. It is not financial advice, tax advice, investment advice, pension advice or a personal recommendation. IncomeFlow does not assess suitability. Do not make pension, investment, withdrawal, transfer, tax or retirement decisions based only on this report.
     </div>
     <div class="p1-meta">
       <div class="p1-meta-row">
@@ -259,7 +259,7 @@ function page1(s) {
         <span class="p1-meta-value">${fmtDate(s.generated_at)}</span>
       </div>
       <div class="p1-meta-row">
-        <span class="p1-meta-label">Plan period</span>
+        <span class="p1-meta-label">Projection period</span>
         <span class="p1-meta-value">${plan.start_year} – ${plan.end_year} (${plan.end_year - plan.start_year} years)</span>
       </div>
       <div class="p1-meta-row">
@@ -267,7 +267,7 @@ function page1(s) {
         <span class="p1-meta-value">${s.meta.persons.map(p => `${p.name} (born ${p.dob_year})`).join(' · ')}</span>
       </div>
       <div class="p1-meta-row">
-        <span class="p1-meta-label">Withdrawal strategy</span>
+        <span class="p1-meta-label">Withdrawal scenario</span>
         <span class="p1-meta-value">${plan.strategy_label || plan.strategy}</span>
       </div>
     </div>`;
@@ -1059,7 +1059,7 @@ function page6(s) {
   // ── Tax efficiency note ────────────────────────────────────────────
   const note = el('div','');
   note.style.cssText = 'margin-top:12px;background:var(--blue-light,#eaeffd);border:1px solid rgba(45,85,232,.2);border-radius:6px;padding:10px 14px;';
-  note.innerHTML = `<div class="section-label" style="color:var(--blue);margin-bottom:4px;">Tax efficiency note</div><p style="font-size:9px;color:var(--ink-mid);line-height:1.65;">The Allowance Maximiser strategy draws income up to each person's tax-free thresholds before using taxable sources, keeping tax minimal in the early years of retirement. Tax rises from the mid-2030s as State Pension and larger pension draws push taxable income above the Personal Allowance. CGT and NI are shown separately where applicable.</p>`;
+  note.innerHTML = `<div class="section-label" style="color:var(--blue);margin-bottom:4px;">Tax modelling note</div><p style="font-size:9px;color:var(--ink-mid);line-height:1.65;">The Allowance-led scenario draws income up to each person's tax-free thresholds before using taxable sources, reducing modelled tax in the early years of retirement. Modelled tax rises from the mid-2030s as State Pension and larger pension draws push taxable income above the Personal Allowance. CGT and NI are shown separately where applicable.</p>`;
   body.appendChild(note);
 
   page.appendChild(body);
@@ -1227,7 +1227,7 @@ function page8(s) {
   function scBg(rate)   { return rate>=.95?'#C0DD97':rate>=.90?'#D3D1C7':rate>=.80?'#FAC775':'#F7C1C1'; }
   function scText(rate) { return rate>=.95?'#27500A':rate>=.90?'#5F5E5A':rate>=.80?'#633806':'#791F1F'; }
   function scBorder(rate){ return rate>=.95?'#3B6D11':rate>=.90?'#7a90a8':rate>=.80?'#BA7517':'#A32D2D'; }
-  function scLabel(rate) { return rate>=.95?'Still on track':rate>=.90?'Reduced margin':rate>=.80?'Borderline':'At risk'; }
+  function scLabel(rate) { return rate>=.95?'Still holds':rate>=.90?'Reduced headroom':rate>=.80?'Close to lower limit':'Falls short'; }
   const v = vcol(rate);
   const fmtPctV = r => r == null ? '—' : (r >= 0.995 ? '99%+' : Math.round(r*100)+'%');
 
@@ -1282,13 +1282,13 @@ function page8(s) {
   const actionLine = strip(n.action_line || '');
   const actionImpact = strip(n.action_impact || '');
   const sorrCaveat = sorrIsHigh
-    ? `That said, your plan shows meaningful sensitivity to a sharp early market fall. The most important practical step is maintaining a cash buffer of 6–12 months' spending – not as a sign of weakness in the plan, but as the standard protection against this specific risk.`
+    ? `That said, the projection shows meaningful sensitivity to a sharp early market fall. In this scenario, the model shows lower sensitivity where accessible cash is available to cover near-term withdrawals — a 6–12 month cash buffer can reduce forced sales at the worst moment.`
     : '';
 
   const ah = el('div','');
   ah.style.cssText = `background:${v.ab};border-left:4px solid ${v.ac};border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:12px;`;
   ah.innerHTML = `
-    <div style="font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${v.ac};margin-bottom:6px;">Recommended action</div>
+    <div style="font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${v.ac};margin-bottom:6px;">Key assumption to review</div>
     <div style="font-family:'Helvetica Neue',sans-serif;font-size:13px;font-weight:800;color:var(--ink);margin-bottom:7px;line-height:1.3;">${actionLine}</div>
     <div style="font-size:9.5px;color:var(--ink-mid);line-height:1.6;">${actionImpact}${sorrCaveat ? ' ' + sorrCaveat : ''}</div>`;
   leftCol.appendChild(ah);
@@ -1307,12 +1307,12 @@ function page8(s) {
   leftCol.appendChild(el('div','divider-blue'));
 
   // Good practice — in left column so it always shows
-  leftCol.appendChild(el('div','section-label','Good practice'));
+  leftCol.appendChild(el('div','section-label','Modelling notes'));
   [
-    'Keep 6–12 months of spending in accessible cash. This is the single most practical defence against sequence risk – it means you can avoid selling investments when markets are down.',
-    'Review this plan annually, or after any significant market movement or change in personal circumstances.',
-    'A willingness to trim spending by 10–15% in weaker years materially improves long-term resilience.',
-    'Both State Pensions are inflation-linked – they provide a rising guaranteed income floor from age 67.',
+    'A 6–12 month cash buffer can be modelled to reduce forced withdrawals in weaker-return years, lowering sensitivity to a difficult start.',
+    'The projection is based on fixed assumptions. Results may be worth reviewing after significant market movements or changes in personal circumstances.',
+    'A 10–15% lower spending assumption in weaker-return years materially improves the modelled outcome across simulated paths.',
+    'Both State Pensions are inflation-linked in the model — they provide a rising income floor from age 67 that reduces portfolio draw pressure.',
   ].forEach(b => {
     const row = el('div',''); row.style.cssText='display:flex;gap:9px;margin-bottom:7px;align-items:flex-start;';
     const dot = el('div',''); dot.style.cssText='width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px;';
@@ -1329,8 +1329,8 @@ function page8(s) {
   const allScenLow = st && ['sorr','inflation','lostDecade'].every(id => !st[id]?.run || st[id]?.impact_level === 'low');
   const hasHighImpact = st && ['sorr','inflation','lostDecade'].some(id => st[id]?.run && st[id]?.impact_level === 'high');
   const connectText = hasHighImpact
-    ? `Your plan is on track under normal assumptions. The tests below show where it is resilient and where it is most sensitive. Understanding this helps you focus on the right levers if circumstances change.`
-    : `Your plan holds up well under every scenario we tested. These results are not presented to alarm – they are here to give you confidence that the plan has been properly challenged.`;
+    ? `The projection is on track under the central assumptions. The tests below show where it is resilient and where it is most sensitive to adverse conditions.`
+    : `The projection holds up well under every scenario tested. These results are presented to show how the assumptions have been challenged, not to suggest any particular course of action.`;
   const connectEl = el('p','');
   connectEl.style.cssText = 'font-size:9px;color:var(--ink-mid);line-height:1.65;margin-bottom:12px;padding-left:10px;border-left:3px solid var(--rule);';
   connectEl.textContent = connectText;
@@ -1349,37 +1349,37 @@ function page8(s) {
   const scenarioMeta = {
     sorr: {
       title:   'Early market downturn',
-      what:    'Markets fall sharply in the first few years of retirement, before your portfolio has had time to recover.',
-      why:     'This is the most powerful adverse scenario for retirement plans. A poor sequence of returns in the early years permanently reduces the base from which your money compounds, and you are still drawing income throughout.',
+      what:    'Markets fall sharply in the first few years of retirement, before the portfolio has had time to recover.',
+      why:     'This is the most impactful adverse scenario for retirement projections. A poor sequence of returns in the early years permanently reduces the base from which the portfolio compounds, while income draws continue throughout.',
       forYou: (sc, baseRate) => {
         const scen  = fmtRate(sc.success_rate);
         const dep   = sc.earliest_depletion_year;
         const p50   = sc.terminal_portfolio_p50;
         if (sc.impact_level === 'high') {
           const depStr = dep ? `, with the first depletion occurring around ${dep}` : '';
-          const p50Str = p50 > 0 ? `finishes with ${fmt(p50)}` : `depletes before the end of the plan`;
-          return `This is the scenario to watch most closely for your plan. Under these conditions, the likelihood falls to ${scen} – a meaningful reduction from the baseline. In a typical path under this stress, the portfolio ${p50Str}${depStr}. The most practical protection is a cash buffer of 6–12 months' spending, which lets you avoid selling investments at depressed prices in the early years.`;
+          const p50Str = p50 > 0 ? `finishes with ${fmt(p50)}` : `depletes before the end of the projection`;
+          return `This scenario has the largest effect on the modelled outcome. Under these conditions, the modelled success rate falls to ${scen} — a meaningful reduction from the baseline. In a typical path under this stress, the portfolio ${p50Str}${depStr}. A 6–12 month cash buffer can reduce the sensitivity to this scenario by avoiding forced sales at depressed prices in the early years.`;
         } else if (deltaMinor(sc)) {
-          return `Your plan is well-placed against an early downturn. Under these conditions the likelihood stays high at ${scen}, barely changed from the baseline. This resilience comes partly from diversified income sources (interest accounts and ISA draws – which reduce reliance on investment returns in the critical early years).`;
+          return `The projection shows good resilience to an early downturn. Under these conditions the modelled success rate stays high at ${scen}, barely changed from the baseline. This resilience comes partly from diversified income sources in the early years, which reduce reliance on investment returns during the critical sequence-risk window.`;
         } else {
-          return `Your plan shows good resilience to an early downturn. Under these conditions the likelihood remains at ${scen}, a modest step down from the baseline. Diversified income sources in early retirement reduce the impact of a poor sequence of returns.`;
+          return `The projection shows reasonable resilience to an early downturn. Under these conditions the modelled success rate remains at ${scen}, a modest step down from the baseline. Diversified income sources in early retirement reduce the impact of a poor sequence of returns.`;
         }
       },
     },
     inflation: {
       title:   'High inflation',
-      what:    'A prolonged period of elevated inflation in the early years squeezes the real value of your withdrawals.',
-      why:     'Inflation is a slow erosion rather than a shock. It reduces what your money buys over time. The key protection is income sources that rise with prices, principally the State Pension.',
+      what:    'A prolonged period of elevated inflation in the early years squeezes the real value of withdrawals.',
+      why:     'Inflation is a slow erosion rather than a shock. It reduces what money buys over time. The key modelled protection is income sources that rise with prices, principally the State Pension.',
       forYou: (sc, baseRate) => {
         const scen = fmtRate(sc.success_rate);
         const p50  = sc.terminal_portfolio_p50;
-        const p50Str = p50 > 0 ? ` In a typical path, the plan finishes with ${fmt(p50)} in today's money.` : '';
+        const p50Str = p50 > 0 ? ` In a typical path, the portfolio finishes with ${fmt(p50)} in today's money.` : '';
         if (deltaSmall(sc)) {
-          return `Your plan is well-protected against inflation. Under these conditions the likelihood stays very high at ${scen} – effectively unchanged. Both State Pensions are inflation-linked and begin from age 67, providing a rising guaranteed income floor just as portfolio draws typically increase.${p50Str}`;
+          return `The projection shows strong resilience to elevated inflation. Under these conditions the modelled success rate stays very high at ${scen} — effectively unchanged. Both State Pensions are inflation-linked and begin from age 67, providing a rising income floor just as portfolio draws typically increase.${p50Str}`;
         } else if (deltaMinor(sc)) {
-          return `Your plan handles elevated inflation well. The likelihood remains high at ${scen}. State Pension indexing provides meaningful protection from the mid-2030s onwards, reducing the real-terms drag on the portfolio.${p50Str}`;
+          return `The projection handles elevated inflation well. The modelled success rate remains high at ${scen}. State Pension indexing provides meaningful protection from the mid-2030s onwards, reducing the real-terms drag on the portfolio.${p50Str}`;
         } else {
-          return `Inflation has a noticeable effect on this plan. The likelihood moves to ${scen}. The State Pension provides partial protection once it begins, but the early years carry more exposure. Keeping a meaningful cash buffer helps absorb the erosion before State Pension income starts.${p50Str}`;
+          return `Inflation has a noticeable effect on the projection. The modelled success rate moves to ${scen}. The State Pension provides partial protection once it begins, but the early years carry more exposure. A cash buffer assumption can help absorb the erosion before State Pension income starts.${p50Str}`;
         }
       },
     },
@@ -1392,11 +1392,11 @@ function page8(s) {
         const p50  = sc.terminal_portfolio_p50;
         const p50Str = p50 > 0 ? ` A typical path still finishes with ${fmt(p50)}.` : '';
         if (deltaSmall(sc)) {
-          return `Your plan manages a low-growth decade comfortably. The likelihood stays very high at ${scen} – effectively unchanged. The combination of tax-efficient withdrawals and State Pension income from the mid-2030s means the portfolio is not solely reliant on growth to sustain income.${p50Str}`;
+          return `The projection is resilient to a low-growth decade. The modelled success rate stays very high at ${scen} — effectively unchanged. The combination of lower-tax withdrawals and State Pension income from the mid-2030s means the portfolio is not solely reliant on growth to cover income draws.${p50Str}`;
         } else if (deltaMinor(sc)) {
-          return `Your plan holds up well through a period of low growth. The likelihood remains high at ${scen}. State Pension income from the mid-2030s reduces portfolio dependency at the point when sustained low returns are most damaging.${p50Str}`;
+          return `The projection holds up well through a period of low growth. The modelled success rate remains high at ${scen}. State Pension income from the mid-2030s reduces portfolio dependency at the point when sustained low returns are most damaging.${p50Str}`;
         } else {
-          return `Sustained low growth puts meaningful pressure on this plan, reducing the likelihood to ${scen}. The most effective response is spending flexibility – being willing to trim withdrawals in weaker years prevents the portfolio base from eroding too quickly.${p50Str}`;
+          return `Sustained low growth puts meaningful pressure on the projection, reducing the modelled success rate to ${scen}. The projection is most sensitive to the spending assumption in this scenario — a lower-spending assumption in weaker-return years reduces the rate of portfolio erosion.${p50Str}`;
         }
       },
     },
@@ -1440,7 +1440,7 @@ function page8(s) {
           </div>
         </div>
         <p style="font-size:8.5px;color:var(--ink-light);font-style:italic;line-height:1.5;margin:0 0 5px;border-top:1px solid var(--rule);padding-top:5px;">${meta.why}</p>
-        <p style="font-size:9px;color:var(--ink-mid);line-height:1.6;margin:0;"><b style="color:var(--ink);">For your plan:</b> ${meta.forYou(sc, r.success_rate)}</p>`;
+        <p style="font-size:9px;color:var(--ink-mid);line-height:1.6;margin:0;"><b style="color:var(--ink);">Modelled result:</b> ${meta.forYou(sc, r.success_rate)}</p>`;
     }
     rightCol.appendChild(card);
   });
@@ -1456,7 +1456,7 @@ function page8(s) {
   strip2.style.cssText = 'background:var(--bg);border-top:1px solid var(--rule);padding:8px 48px;flex-shrink:0;display:flex;gap:32px;align-items:baseline;';
   strip2.innerHTML = `
     <div style="font-size:8px;color:var(--ink-light);flex:1;line-height:1.6;"><b style="color:var(--ink-mid);">Assumptions:</b> ${s.assumptions.headline}</div>
-    <div style="font-size:7.5px;color:var(--ink-light);flex:1.2;line-height:1.6;">This report is produced by IncomeFlow for illustrative purposes only. It does not constitute financial advice. Projections depend on assumptions that may not reflect future conditions. Consult a qualified financial adviser before making retirement decisions.</div>`;
+    <div style="font-size:7.5px;color:var(--ink-light);flex:1.2;line-height:1.6;">This report is a retirement income projection based on user-entered assumptions. It is not financial advice, tax advice, investment advice, pension advice or a personal recommendation. Projections depend on assumptions that may not reflect future conditions. Do not make pension, investment, withdrawal, transfer or retirement decisions based only on this report.</div>`;
   page.appendChild(strip2);
 
   page.appendChild(footer(8, TOTAL));
@@ -1498,19 +1498,19 @@ function page8(s) {
     // Intro paragraph
     const intro = el('p', '');
     intro.style.cssText = 'font-size:10px;color:var(--ink-mid);line-height:1.75;margin:0 0 18px;border-left:3px solid var(--blue);padding-left:14px;';
-    intro.textContent = 'This section sets out how the numbers in this report are produced. The projection and risk analysis use different approaches that serve different purposes: the projection gives you a clear, single-path view of your plan under your chosen assumptions, while the risk analysis tests that plan across thousands of possible futures. The stress scenarios then go further, deliberately applying adverse conditions to show where your plan is most resilient and where it carries most sensitivity. Understanding how each element works helps you interpret the results with the right level of confidence.';
+    intro.textContent = 'This section sets out how the numbers in this report are produced. The projection and risk analysis use different approaches that serve different purposes: the projection gives a clear, single-path view of the assumptions entered, while the risk analysis tests those assumptions across thousands of possible futures. The stress scenarios then go further, deliberately applying adverse conditions to show where the projection is most resilient and where it carries most sensitivity. Understanding how each element works helps interpret the results with the right level of confidence.';
     body.appendChild(intro);
 
     body.appendChild(section(
       'How the Projection Works',
-      'The projection runs a single, year-by-year simulation of your retirement using fixed assumptions throughout: the growth rate, inflation rate, and spending target you have set. Unlike the risk analysis, which samples thousands of random paths, the projection follows one deterministic path and shows you exactly how your portfolio, income, and tax position evolve under those assumptions. Each year the engine calculates income from all sources (salary, State Pension, and portfolio withdrawals), applies your chosen withdrawal strategy to draw from the right wrappers in the most tax-efficient order, computes income tax, capital gains tax, and National Insurance for each person, and carries the resulting balances forward into the next year. The charts and tables in this report all flow from this single projection run. Because it uses fixed assumptions, the projection is best understood as your central planning case: a clear, auditable baseline that shows where your plan is headed if the future broadly resembles your expectations. The risk analysis then sits alongside it, stress-testing that baseline across thousands of alternative futures to give you a sense of how much margin your plan carries.'
+      'The projection runs a single, year-by-year simulation of your retirement using fixed assumptions throughout: the growth rate, inflation rate, and spending target you have set. Unlike the risk analysis, which samples thousands of random paths, the projection follows one deterministic path and shows you exactly how your portfolio, income, and tax position evolve under those assumptions. Each year the engine calculates income from all sources (salary, State Pension, and portfolio withdrawals), applies the selected withdrawal order and estimates the resulting tax position for each person, computes income tax, capital gains tax, and National Insurance for each person, and carries the resulting balances forward into the next year. The charts and tables in this report all flow from this single projection run. Because it uses fixed assumptions, the projection is best understood as your central projection case: a clear, auditable baseline that shows where the assumptions point if the future broadly resembles the inputs. The risk analysis then sits alongside it, stress-testing that baseline across thousands of alternative futures to give you a sense of how much headroom the projection carries.'
     ));
 
     body.appendChild(el('div', 'divider-blue'));
 
     body.appendChild(section(
       'How the Risk Analysis Works',
-      'The risk analysis runs 10,000 independent simulations of your retirement, each one a possible version of how markets and inflation might behave over your lifetime. In every simulation, annual returns and inflation are sampled randomly from realistic distributions based on your portfolio\'s actual asset allocation, using long-run assumptions drawn from Vanguard and BlackRock capital market estimates. Because each simulation is independent, the 10,000 paths collectively paint a picture of the range of outcomes your plan might face: some paths are kind, some are brutal, most fall somewhere in between. The plan strength figure shown is simply the proportion of those 10,000 simulations in which your portfolio survived to the end of the projection without running out of money. The stress scenarios below repeat this process under deliberately adverse conditions, so you can see how your plan holds up when markets behave at their worst.'
+      'The risk analysis runs 10,000 independent simulations of the retirement period, each one a possible version of how markets and inflation might behave over the projection horizon. In every simulation, annual returns and inflation are sampled randomly from realistic distributions based on the portfolio\'s asset allocation, using long-run assumptions drawn from Vanguard and BlackRock capital market estimates. Because each simulation is independent, the 10,000 paths collectively paint a picture of the range of outcomes the assumptions might face: some paths are kind, some are brutal, most fall somewhere in between. The modelled success rate shown is simply the proportion of those 10,000 simulations in which the portfolio survived to the end of the projection without running out of money. The stress scenarios below repeat this process under deliberately adverse conditions, showing how the projection holds up when markets behave at their worst.'
     ));
 
     body.appendChild(el('div', 'divider-blue'));
@@ -1522,7 +1522,7 @@ function page8(s) {
 
     const stressIntro = el('p', '');
     stressIntro.style.cssText = 'font-size:9.5px;color:var(--ink-mid);line-height:1.75;margin:0 0 14px;';
-    stressIntro.textContent = 'The three stress scenarios test your plan against adverse but historically plausible conditions. Each scenario alters the market assumptions for a defined period only; outside that window, normal baseline assumptions apply.';
+    stressIntro.textContent = 'The three stress scenarios test the projection against adverse but historically plausible conditions. Each scenario alters the market assumptions for a defined period only; outside that window, normal baseline assumptions apply.';
     body.appendChild(stressIntro);
 
     const scenGrid = el('div', '');
@@ -1535,7 +1535,7 @@ function page8(s) {
       },
       {
         title: 'High Inflation',
-        body:  'For the first ten years of retirement, the inflation rate is drawn from a distribution centred on 7.5% per year (standard deviation 2%), regardless of your planning assumption. This means individual years might range from roughly 3.5% to 11.5%. The practical effect is that your real spending target grows significantly faster than anticipated, eroding the purchasing power of each pound withdrawn. The scenario is broadly consistent with the UK inflationary experience of the late 1970s and mid-1980s, when CPI regularly exceeded 7-8% for sustained periods.',
+        body:  'For the first ten years of retirement, the inflation rate is drawn from a distribution centred on 7.5% per year (standard deviation 2%), regardless of the baseline inflation assumption. This means individual years might range from roughly 3.5% to 11.5%. The practical effect is that the real spending target grows significantly faster than assumed, eroding the purchasing power of each pound withdrawn. The scenario is broadly consistent with the UK inflationary experience of the late 1970s and mid-1980s, when CPI regularly exceeded 7–8% for sustained periods.',
       },
       {
         title: 'Lost Decade',

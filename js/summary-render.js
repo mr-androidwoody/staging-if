@@ -210,8 +210,8 @@
     var eqNote = equityPct < 60
       ? equityPct + '% in equities may not generate enough long-run growth to support a multi-decade retirement. Even moving to 70% would meaningfully improve expected outcomes, with sequence risk managed through a cash buffer.'
       : equityPct <= 90
-        ? equityPct + '% in equities is well-suited to a long retirement horizon. The portfolio should generate real growth over time while the remaining allocation provides some cushion in down markets.'
-        : equityPct + '% in equities is high. The portfolio will grow faster in good markets but is exposed to large drawdowns in the early years of retirement, which is when sequence risk does the most damage. A modest reduction in equity weighting now would reduce this exposure.';
+        ? equityPct + '% in equities gives the model higher long-term growth exposure, with greater sensitivity to market falls. The remaining allocation provides some cushion in weaker-return years.'
+        : equityPct + '% in equities is high. The model will grow faster in good markets but is exposed to large drawdowns in the early years of retirement, which is when sequence risk does the most damage. A lower equity weighting would reduce this sensitivity in the model.';
 
     var giaPct = totalPort > 0 ? (giaTotal / totalPort) * 100 : 0;
     var giaV   = giaPct < 20 ? ['green','Low'] : giaPct < 40 ? ['amber','High'] : ['red','Very high'];
@@ -232,10 +232,10 @@
     var p2EndAge = dual ? (inputs.endYear - inputs.p2DOB) : null;
     var endV = p1EndAge >= 90 ? ['green','Prudent'] : p1EndAge >= 85 ? ['amber','Moderate'] : ['red','Short horizon'];
     var endNote = p1EndAge >= 90
-      ? 'Planning to ' + p1EndAge + ' covers the realistic upper end of life expectancy for someone retiring now. The plan should not run short unless returns are very poor for an extended period.'
+      ? 'Planning to ' + p1EndAge + ' covers the realistic upper end of life expectancy for someone retiring now. Under the central assumptions, the projection does not show a shortfall before this age unless weaker-return scenarios occur.'
       : p1EndAge >= 85
-        ? 'Planning to ' + p1EndAge + ' covers average life expectancy with some headroom. There is a reasonable chance of living longer, so extending to age 90 would give the plan a more robust longevity buffer.'
-        : 'Planning to only age ' + p1EndAge + ' is a short horizon for a retirement that could last 35 or more years. Extending the end year significantly reduces the risk of outliving the plan.';
+        ? 'Planning to ' + p1EndAge + ' covers average life expectancy with some headroom. There is a reasonable chance of living longer, so extending to age 90 would give the projection a more robust longevity buffer.'
+        : 'Planning to only age ' + p1EndAge + ' is a short horizon for a retirement that could last 35 or more years. Extending the end year significantly reduces the modelled shortfall risk.';
 
     var FULL_SP = 12547;
     function spVFn(amt) {
@@ -261,16 +261,16 @@
     }
 
     var stratLabels = {
-      balanced:     'Tax Band Optimiser',
-      isaFirst:     'Pension Preservation',
-      sippFirst:    'Pension Front-Loading',
-      taxMin:       'Allowance Maximiser',
+      balanced:     'Tax band-led scenario',
+      isaFirst:     'Pension-later scenario',
+      sippFirst:    'Pension-earlier scenario',
+      taxMin:       'Allowance-led scenario',
     };
     var stratNotes  = {
-      balanced:  'Each year the engine draws from whichever wrapper keeps tax lowest, blending GIA, SIPP, and ISA withdrawals to stay within efficient tax bands. Best for most two-wrapper or three-wrapper portfolios.',
-      isaFirst:  'Prioritises ISA and GIA withdrawals, deferring pension access. Keeps the pension invested longer for tax advantages and potential inheritance benefits.',
-      sippFirst: 'Draws heavily from the pension early, maximising lower tax bands before State Pension kicks in. Surplus income is reinvested into ISAs for long-term efficiency.',
-      taxMin:    'Uses all available tax-free allowances each year, keeping taxable income low. Defers additional withdrawals where possible to avoid higher-rate tax exposure.',
+      balanced:  'Each year the model draws from wrappers in an order designed to reduce modelled tax, blending GIA, SIPP, and ISA withdrawals to stay within lower tax bands. Suited to comparing scenarios across two or three wrappers.',
+      isaFirst:  'Prioritises ISA and GIA withdrawals, deferring pension access. Models the pension remaining invested longer for potential tax and inheritance advantages.',
+      sippFirst: 'Draws heavily from the pension early, modelling lower tax bands before State Pension. Surplus income is reinvested into ISAs in the projection.',
+      taxMin:    'Uses all available tax-free allowances each year, keeping modelled taxable income low. Defers additional withdrawals where possible to reduce modelled tax exposure.',
     };
 
     var divNote = inputs.dividendMode === 'reinvest'
