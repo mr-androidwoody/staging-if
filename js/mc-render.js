@@ -1109,7 +1109,7 @@
 
       // Bullet 3 — cash buffer note only when impact is significant enough to warrant it
       if (_stressSignificant) {
-        stressBullets.push(`This scenario shows why accessible cash covering 6–12 months of spending can reduce sensitivity to a difficult start — it avoids forced sales at the worst moment.`);
+        stressBullets.push(`This scenario shows why accessible cash covering 6–12 months of spending can reduce sensitivity to a difficult start - it avoids forced sales at the worst moment.`);
       } else {
         stressBullets.push(`Refer to the baseline scenario for the main spending and portfolio analysis.`);
       }
