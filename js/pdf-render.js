@@ -124,9 +124,9 @@ tbody tr:last-child td { border-bottom: none; }
 .p1-eyebrow { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-light); margin-bottom: 14px; }
 .p1-title { font-size: 42px; font-weight: 800; color: var(--ink); line-height: 1.05; letter-spacing: -.03em; margin-bottom: 24px; }
 .p1-statement {
-  font-size: 13.5px; color: var(--ink-mid); line-height: 1.7;
-  max-width: 640px; border-left: 3px solid var(--blue);
-  padding-left: 18px; margin-bottom: 36px;
+  font-size: 9px; color: var(--ink-light); line-height: 1.65;
+  max-width: 580px; border-left: 2px solid var(--rule);
+  padding-left: 12px; margin-bottom: 32px;
 }
 .p1-meta { display: flex; flex-direction: column; gap: 6px; }
 .p1-meta-row { display: flex; align-items: baseline; gap: 10px; font-size: 10.5px; }
@@ -840,9 +840,12 @@ function page5(s) {
   const p2Name = plan.p2?.name || '';
 
   // Collect all events, classify by person
+  // Exclude routine cash-parking surplus entries — not useful in this context
+  const SUPPRESS = ['surplus', 'parked in cash', 'above target'];
   const allEvents = [
     ...(s.annotations||[])
       .filter(a => a.event !== 'depletion')
+      .filter(a => !SUPPRESS.some(term => a.message.toLowerCase().includes(term)))
       .map(a => ({ year: a.year, label: a.message, person: a.person, type: 'life' })),
     ...Object.entries(s.depletions||{})
       .map(([key, d]) => ({
@@ -865,7 +868,7 @@ function page5(s) {
 
   function eventEntry(e) {
     const col = e.type === 'depletion' ? '#BA7517' : '#2d55e8';
-    return `<span style="margin-right:18px;white-space:nowrap;">
+    return `<span style="display:inline-block;margin-right:14px;margin-bottom:2px;">
       <span style="font-weight:700;color:${col};">${e.year}</span>
       <span style="color:${e.type==='depletion'?'#BA7517':'var(--ink-mid)'}"> ${shortLabel(e.label)}</span>
     </span>`;
@@ -879,15 +882,15 @@ function page5(s) {
 
   function eventRow(name, events, isLast) {
     const d = el('div','');
-    d.style.cssText = `display:flex;align-items:baseline;gap:0;padding:6px 12px;${isLast?'':'border-bottom:1px solid var(--rule);'}`;
+    d.style.cssText = `display:flex;align-items:flex-start;gap:0;padding:6px 12px;${isLast?'':'border-bottom:1px solid var(--rule);'}`;
     const nameEl = el('div','');
-    nameEl.style.cssText = 'font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-light);width:52px;flex-shrink:0;padding-top:1px;';
+    nameEl.style.cssText = 'font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-light);width:52px;flex-shrink:0;padding-top:3px;';
     nameEl.textContent = name;
     const entriesEl = el('div','');
-    entriesEl.style.cssText = 'font-size:8.5px;line-height:1.8;flex:1;';
+    entriesEl.style.cssText = 'font-size:8.5px;line-height:1.8;flex:1;overflow:hidden;flex-wrap:wrap;display:flex;align-items:baseline;';
     entriesEl.innerHTML = events.length
       ? events.map(eventEntry).join('')
-      : `<span style="color:var(--ink-light);font-style:italic;">No events</span>`;
+      : `<span style="color:var(--ink-light);font-style:italic;">No events recorded</span>`;
     d.appendChild(nameEl);
     d.appendChild(entriesEl);
     return d;
