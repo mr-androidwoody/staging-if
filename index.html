@@ -106,7 +106,7 @@
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#2d5bff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 L5 8 L8 10 L11 5 L14 7"/><path d="M14 4 L14 7 L11 7"/></svg>
             </div>
             <p class="splash-card-title">Year-by-year projection</p>
-            <p class="splash-card-body">Each year the engine calculates how much to draw from each account to hit your income target, accounting for growth and inflation.</p>
+            <p class="splash-card-body">Each year IncomeFlow calculates how much to draw from each account to hit your income target, accounting for growth and inflation.</p>
           </div>
 
           <div class="splash-card">
@@ -642,7 +642,7 @@
             <p class="wiz-col-intro">Set the gross annual household income you want the projection to fund.</p>
             <table class="wiz-table">
               <tr>
-                <td class="wiz-label"><span class="assump-tooltip-anchor">Annual income (£)<span class="assump-tooltip">The gross household income you need each year, before tax. The engine works backwards from this to determine how much to withdraw from each wrapper.</span></span></td>
+                <td class="wiz-label"><span class="assump-tooltip-anchor">Annual income (£)<span class="assump-tooltip">The gross household income you need each year, before tax. IncomeFlow works backwards from this to determine how much to withdraw from each wrapper.</span></span></td>
                 <td class="wiz-val" style="text-align:right">
                   <div class="currency-stepper" >
                     <input type="text" id="spending" class="currency-input" placeholder="e.g. 45,000">
@@ -878,7 +878,7 @@
           <!-- Bed & ISA -->
           <div class="wiz-col">
             <div class="wiz-col-heading">Bed &amp; ISA</div>
-            <p class="wiz-body-text">Bed & ISA is a technique where you sell assets held in a General Investment Account (GIA) and immediately repurchase them inside an ISA. Once inside the ISA, all future growth, dividends, and gains are completely tax-free.<br><br>It's particularly valuable if you hold a large GIA. Each year you can shelter up to £20,000 per person from future CGT and dividend tax. The sale crystallises any gain in the year of transfer, so the engine models the CGT cost of each transfer against the long-term tax saving.</p>
+            <p class="wiz-body-text">Bed & ISA is a technique where you sell assets held in a General Investment Account (GIA) and immediately repurchase them inside an ISA. Once inside the ISA, all future growth, dividends, and gains are completely tax-free.<br><br>It's particularly valuable if you hold a large GIA. Each year you can shelter up to £20,000 per person from future CGT and dividend tax. The sale crystallises any gain in the year of transfer, so IncomeFlow models the CGT cost of each transfer against the long-term tax saving.</p>
             <table class="wiz-table" style="margin-bottom:10px">
               <tr>
                 <td class="wiz-label">Use Bed & ISA</td>
@@ -1471,7 +1471,7 @@ The account type or tax wrapper this holding sits in. ISA (Individual Savings Ac
         <div class="chart-insight-group">
           <div class="chart-insight-group__heading">Value (£)</div>
           <div class="chart-insight-summary">
-            The current market value of this account. This is the starting balance the engine uses - enter what it's worth right now.
+            The current market value of this account. This is the starting balance IncomeFlow uses - enter what it's worth right now.
           </div>
         </div>
     
@@ -1492,14 +1492,14 @@ The account type or tax wrapper this holding sits in. ISA (Individual Savings Ac
         <div class="chart-insight-group">
           <div class="chart-insight-group__heading">Rate % AER</div>
           <div class="chart-insight-summary">
-            For interest-bearing holdings such as savings or cashlike assets. Sets the annual rate the engine uses to calculate income. Leave blank for purely invested accounts.
+            For interest-bearing holdings such as savings or cashlike assets. Sets the annual rate IncomeFlow uses to calculate income. Leave blank for purely invested accounts.
           </div>
         </div>
     
         <div class="chart-insight-group">
           <div class="chart-insight-group__heading">Draw £/mo</div>
           <div class="chart-insight-summary">
-            A fixed monthly amount drawn from this account before other wrappers are touched. Useful for modelling a regular income stream from a cash or cashlike pot. Leave blank to let the engine manage withdrawals automatically.
+            A fixed monthly amount drawn from this account before other wrappers are touched. Useful for modelling a regular income stream from a cash or cashlike pot. Leave blank to let IncomeFlow manage withdrawals automatically.
           </div>
         </div>
     
