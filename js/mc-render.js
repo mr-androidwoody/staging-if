@@ -66,6 +66,7 @@
   let _staleStates   = { baseline: false, sorr: false, inflation: false, lostDecade: false };
   let _activeState   = 'baseline';
   let _narrativeSnapshot = null; // stashed by _renderNarrative for export.js
+  let _baselineActionSnapshot = { actionLine: null, actionImpact: null, bulletItems: [] }; // baseline-only, never overwritten by stress renders
 
   function _getResult() { return _results[_activeState]; }
   function _getStale()  { return _staleStates[_activeState]; }
@@ -1143,28 +1144,30 @@
       if (hasGap) {
         const gap = roundedGap;
         const newTarget = roundToNearest(currentSpending - gap, 500);
-        actionLine   = `A lower spending assumption of around ${fmtB(newTarget)}/yr has the largest effect on the projection.`;
-        actionImpact = `A reduction of ${fmtB(gap)}/yr moves the projection above the lower limit in most simulated paths.`;
+        actionLine   = `The spending assumption is the most sensitive variable in this projection. Reducing it to around ${fmtB(newTarget)}/yr moves the projection above the lower limit.`;
+        actionImpact = `A reduction of ${fmtB(gap)}/yr is enough to cross the lower limit threshold in most simulated scenarios. This is the most direct lever in the model.`;
       } else if (rate < targetConfidence && delayEffective) {
-        actionLine   = `A delay scenario of ${delayMin.yearsDelay} year${delayMin.yearsDelay > 1 ? 's' : ''} moves the projection above the lower limit.`;
-        actionImpact = `Postponing portfolio withdrawals allows the portfolio to compound without draws and is the strongest non-spending lever in the model.`;
+        actionLine   = `Delaying portfolio withdrawals by ${delayMin.yearsDelay} year${delayMin.yearsDelay > 1 ? 's' : ''} moves this projection above the lower limit.`;
+        actionImpact = `A delay gives the portfolio more time to compound before draws begin. In this projection, that has a larger modelled effect than reducing spending.`;
       } else if (rate < targetConfidence && iqrWide) {
-        actionLine   = `A flexible spending assumption has a meaningful effect on the projection.`;
-        actionImpact = `A 10–15% lower spending assumption in weaker-return years is the most effective lever available in this scenario.`;
+        actionLine   = `The range of outcomes in this projection is wide. A flexible spending assumption has a meaningful effect on the modelled result.`;
+        actionImpact = `Spending 10–15% less in weaker-return years substantially improves the modelled outcome. The projection is more sensitive to spending flexibility than to the assumed growth rate.`;
       } else {
         const hrForAction = sustainableSpending !== null && !sustainableIsFloor && headroom > 0
           ? roundToNearest(Math.round(headroom * 0.75), 500) : null;
         if (marginTight && hrForAction) {
-          actionLine   = `The projection is on track, though the headroom is modest. Worth reviewing periodically as assumptions change.`;
-          actionImpact = `The modelled headroom is around ${fmtB(hrForAction)} per year. A poor run of returns early in retirement could reduce this.`;
+          actionLine   = `The projection is on track, though the modelled headroom is modest.`;
+          actionImpact = `There is around ${fmtB(hrForAction)}/yr of headroom under current assumptions. A poor sequence of returns in the early years could reduce this materially. Worth revisiting if circumstances or market conditions change.`;
         } else if (marginModerate && hrForAction) {
-          actionLine   = `The projection is on track under these assumptions.`;
-          actionImpact = `A higher spending scenario of around ${fmtB(hrForAction)} more per year still holds in this projection. Treat that as an option to model, not a target.`;
+          actionLine   = `The projection is on track under these assumptions, with some modelled headroom.`;
+          actionImpact = `A higher spending assumption of around ${fmtB(hrForAction)} more per year holds in this projection. That scenario can be modelled explicitly to see how it behaves under stress.`;
         } else {
           actionLine   = hrForAction
-            ? `The projection is on track under these assumptions. A higher spending scenario of around ${fmtB(hrForAction)}/yr still holds in the model.`
+            ? `The projection is on track. A higher spending assumption of around ${fmtB(hrForAction)}/yr also holds in this model.`
             : `The projection is on track under these assumptions.`;
-          actionImpact = `Any higher spending scenario should be tested deliberately. The modelled headroom remains above the lower limit.`;
+          actionImpact = hrForAction
+            ? `Any higher spending scenario is worth testing explicitly. The current projection carries enough headroom that alternative scenarios are meaningful to explore.`
+            : `Any higher spending scenario should be tested explicitly in the model rather than assumed. The current projection has headroom, but the headroom in stress scenarios is narrower.`;
         }
       }
 
@@ -1263,10 +1266,19 @@
         ${basisNote}`;
     }
 
+    // Preserve baseline action fields so they survive stress tab switches.
+    if (!isStressView) {
+      _baselineActionSnapshot = {
+        actionLine:  actionLine,
+        actionImpact: actionImpact,
+        bulletItems:  bulletItems.slice(),
+      };
+    }
+
     // Stash snapshot on every render regardless of active state, so PDF export
     // always reflects the currently-visible view (baseline or stress scenario).
     // Baseline-only fields (actionLine, actionImpact, bulletItems) are null/[]
-    // when rendering a stress view.
+    // when rendering a stress view — but we always write the baseline values.
     _narrativeSnapshot = {
       verdictWord,
       verdictSentence,
@@ -1278,9 +1290,9 @@
       l2Outcome,
       l3Pill,
       l3Outcome,
-      actionLine,
-      actionImpact,
-      bulletItems: bulletItems.slice(),
+      actionLine:   _baselineActionSnapshot.actionLine,
+      actionImpact:  _baselineActionSnapshot.actionImpact,
+      bulletItems:   _baselineActionSnapshot.bulletItems.slice(),
     };
 
     // Always expose the nominal median end value for the deterministic metrics badge.

@@ -1298,7 +1298,9 @@ function page8(s) {
 
   // Key points
   if ((n.bullet_items||[]).length) {
-    leftCol.appendChild(el('div','section-label','Key points'));
+    const kpLabel = el('div','section-label','Key points');
+    kpLabel.style.marginTop = '18px';
+    leftCol.appendChild(kpLabel);
     (n.bullet_items||[]).forEach(b => {
       const row = el('div',''); row.style.cssText='display:flex;gap:9px;margin-bottom:7px;align-items:flex-start;';
       const dot = el('div',''); dot.style.cssText=`width:5px;height:5px;border-radius:50%;background:${v.ac};flex-shrink:0;margin-top:4px;`;
@@ -1309,8 +1311,10 @@ function page8(s) {
 
   leftCol.appendChild(el('div','divider-blue'));
 
-  // Good practice — in left column so it always shows
-  leftCol.appendChild(el('div','section-label','Modelling notes'));
+  // Good practice — fills remaining space, centred vertically
+  const notesWrap = el('div','');
+  notesWrap.style.cssText = 'flex:1;display:flex;flex-direction:column;justify-content:center;padding-top:8px;';
+  notesWrap.appendChild(el('div','section-label','Modelling notes'));
   [
     'A 6–12 month cash buffer can be modelled to reduce forced withdrawals in weaker-return years, lowering sensitivity to a difficult start.',
     'The projection is based on fixed assumptions. Results may be worth reviewing after significant market movements or changes in personal circumstances.',
@@ -1320,8 +1324,9 @@ function page8(s) {
     const row = el('div',''); row.style.cssText='display:flex;gap:9px;margin-bottom:7px;align-items:flex-start;';
     const dot = el('div',''); dot.style.cssText='width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px;';
     const txt = el('div',''); txt.style.cssText='font-size:9px;color:var(--ink-mid);line-height:1.6;'; txt.textContent=b;
-    row.appendChild(dot); row.appendChild(txt); leftCol.appendChild(row);
+    row.appendChild(dot); row.appendChild(txt); notesWrap.appendChild(row);
   });
+  leftCol.appendChild(notesWrap);
 
   // ══ RIGHT: scenario testing + good practice ══════════════════════
   const rightCol = el('div','');
@@ -1335,7 +1340,7 @@ function page8(s) {
     ? `The projection is on track under the central assumptions. The tests below show where it is resilient and where it is most sensitive to adverse conditions.`
     : `The projection holds up well under every scenario tested. These results are presented to show how the assumptions have been challenged, not to suggest any particular course of action.`;
   const connectEl = el('p','');
-  connectEl.style.cssText = 'font-size:9px;color:var(--ink-mid);line-height:1.65;margin-bottom:12px;padding-left:10px;border-left:3px solid var(--rule);';
+  connectEl.style.cssText = 'font-size:9px;color:var(--ink-mid);line-height:1.65;margin-bottom:22px;padding-left:10px;border-left:3px solid var(--rule);';
   connectEl.textContent = connectText;
   rightCol.appendChild(connectEl);
 
@@ -1454,13 +1459,7 @@ function page8(s) {
   body.appendChild(rightCol);
   page.appendChild(body);
 
-  // ── BOTTOM STRIP — assumptions + disclaimer ────────────────────────
-  const strip2 = el('div','');
-  strip2.style.cssText = 'background:var(--bg);border-top:1px solid var(--rule);padding:8px 48px;flex-shrink:0;display:flex;gap:32px;align-items:baseline;';
-  strip2.innerHTML = `
-    <div style="font-size:8px;color:var(--ink-light);flex:1;line-height:1.6;"><b style="color:var(--ink-mid);">Assumptions:</b> ${s.assumptions.headline}</div>
-    <div style="font-size:7.5px;color:var(--ink-light);flex:1.2;line-height:1.6;">Illustrative projection only. Not financial advice, tax advice, investment advice, pension advice or a personal recommendation. This report is not a sufficient basis for any pension, investment, withdrawal, transfer, tax or retirement decision.</div>`;
-  page.appendChild(strip2);
+  // Bottom strip removed — disclaimer on page 1 and every footer; assumptions on page 3
 
   page.appendChild(footer(8, TOTAL));
   return page;
