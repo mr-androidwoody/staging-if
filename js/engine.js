@@ -266,8 +266,18 @@
       if (totalSalInc > 0 && preIntGuaranteed > target) {
         const p1SalShare = totalSalInc > 0 ? p1SalInc / totalSalInc : 0.5;
         const p2SalShare = 1 - p1SalShare;
-        const p1SalSurplus = Math.max(0, p1SalInc - target * p1SalShare);
-        const p2SalSurplus = Math.max(0, p2SalInc - target * p2SalShare);
+
+        // Pension contributions take priority over the surplus sweep.
+        // The net annual cost (what actually leaves the person's bank account)
+        // reduces the surplus available to sweep to GIA. Floor at zero — if the
+        // pension cost exceeds the surplus there is simply nothing left to sweep.
+        const p1PensionNetCost = (p1PensionMonthlyNet > 0 && (!p1PensionStopAge || p1Age <= p1PensionStopAge))
+          ? p1PensionMonthlyNet * 12 * cumInfl : 0;
+        const p2PensionNetCost = (p2PensionMonthlyNet > 0 && (!p2PensionStopAge || p2Age <= p2PensionStopAge))
+          ? p2PensionMonthlyNet * 12 * cumInfl : 0;
+
+        const p1SalSurplus = Math.max(0, p1SalInc - target * p1SalShare - p1PensionNetCost);
+        const p2SalSurplus = Math.max(0, p2SalInc - target * p2SalShare - p2PensionNetCost);
 
         if (p1SweepSurplus && p1SalSurplus > 0) {
           p1Bal.GIA = (p1Bal.GIA || 0) + p1SalSurplus;
