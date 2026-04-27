@@ -1102,7 +1102,8 @@
             <div id="windfalls-container">
               <!-- Windfall 1 (permanent) -->
               <div class="windfall-slot" data-slot="1">
-                <div class="wiz-col-heading wiz-col-heading--sub">Windfall 1</div>
+                <div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer"><span class="wf-chevron">&#x25bc;</span> Windfall 1</div>
+                <div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.4rem 1.4rem"></div>
                 <table class="wiz-table">
                   <tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>
                   <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>
@@ -1156,37 +1157,109 @@
 
           <script>
             let _wfCount = 1;
+
+            // ── Windfall accordion helpers ────────────────────────────────────
+            function _wfSummary(slot) {
+              const name    = slot.querySelector('.wf-name')?.value?.trim();
+              const year    = slot.querySelector('.wf-year')?.value?.trim();
+              const amount  = slot.querySelector('.wf-amount')?.value?.trim();
+              const person  = slot.querySelector('.wf-person')?.value || 'p1';
+              const wrapper = slot.querySelector('.wf-wrapper')?.value || 'GIA';
+              const parts   = [];
+              if (year)    parts.push(year);
+              if (person)  parts.push(person.toUpperCase());
+              if (wrapper) parts.push(wrapper);
+              if (amount)  parts.push('\u00a3' + amount);
+              const label = name || 'Windfall';
+              return label + (parts.length ? ' \u2014 ' + parts.join(' \u00b7 ') : '');
+            }
+
+            function _wfCollapse(slot) {
+              const table   = slot.querySelector('.wiz-table');
+              const summary = slot.querySelector('.wf-summary');
+              const chevron = slot.querySelector('.wf-chevron');
+              if (table)   table.style.display   = 'none';
+              if (summary) summary.textContent    = _wfSummary(slot);
+              if (summary) summary.style.display  = '';
+              if (chevron) chevron.textContent     = '\u25b6';
+            }
+
+            function _wfExpand(slot) {
+              const table   = slot.querySelector('.wiz-table');
+              const summary = slot.querySelector('.wf-summary');
+              const chevron = slot.querySelector('.wf-chevron');
+              if (table)   table.style.display   = '';
+              if (summary) summary.style.display  = 'none';
+              if (chevron) chevron.textContent     = '\u25bc';
+            }
+
+            function _wfCollapseAll() {
+              document.querySelectorAll('#windfalls-container .windfall-slot').forEach(_wfCollapse);
+            }
+
+            function wizToggleWindfall(headerEl) {
+              const slot  = headerEl.closest('.windfall-slot');
+              const table = slot.querySelector('.wiz-table');
+              if (table && table.style.display === 'none') {
+                // expanding — collapse all others first
+                _wfCollapseAll();
+                _wfExpand(slot);
+              } else {
+                _wfCollapse(slot);
+              }
+            }
+
+            function _wfHeader(n, isFirst) {
+              return '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer">' +
+                '<span class="wf-chevron">\u25bc</span> Windfall ' + n +
+                (isFirst ? '' : ' <button type="button" class="wiz-remove-btn" onclick="event.stopPropagation();wizRemoveWindfall(this)">&#x2715; Remove</button>') +
+                '</div>' +
+                '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.4rem 1.4rem"></div>';
+            }
+
+            function _wfTable(placeholder_year, placeholder_amount) {
+              return '<table class="wiz-table">' +
+                '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>' +
+                '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="' + (placeholder_year||'e.g. 2032') + '" min="2025" max="2060"></td></tr>' +
+                '<tr><td class="wiz-label">Amount (\u00a3)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="' + (placeholder_amount||'e.g. 400,000') + '"></td></tr>' +
+                '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
+                '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+                '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
+                '</table>';
+            }
+
             function wizAddWindfall() {
               _wfCount++;
               const n = _wfCount;
               const container = document.getElementById('windfalls-container');
+              // Collapse all existing slots first
+              _wfCollapseAll();
               const div = document.createElement('div');
               div.className = 'windfall-slot';
               div.dataset.slot = n;
               div.innerHTML =
                 '<div class="wiz-section-divider"></div>' +
-                '<div class="wiz-col-heading wiz-col-heading--sub">Windfall ' + n +
-                ' <button type="button" class="wiz-remove-btn" onclick="wizRemoveWindfall(this)">&#x2715; Remove</button></div>' +
-                '<table class="wiz-table">' +
-                '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Property sale"></td></tr>' +
-                '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2038" min="2025" max="2060"></td></tr>' +
-                '<tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 200,000"></td></tr>' +
-                '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
-                '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
-                '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
-                '</table>';
+                _wfHeader(n, false) +
+                _wfTable('e.g. 2038', 'e.g. 200,000');
               container.appendChild(div);
-              // Apply currency formatting to the new amount input
               if (window.RetireRender && RetireRender.applyCurrencyFormattingToInput) {
                 div.querySelectorAll('.currency-input').forEach(RetireRender.applyCurrencyFormattingToInput);
               }
             }
+
             function wizRemoveWindfall(btn) {
               const slot = btn.closest('.windfall-slot');
-              if (slot) slot.remove();
+              if (slot) {
+                slot.remove();
+                // Expand the last remaining slot
+                const remaining = document.querySelectorAll('#windfalls-container .windfall-slot');
+                if (remaining.length > 0) _wfExpand(remaining[remaining.length - 1]);
+              }
             }
+
             function wizWfWrapperChange(sel) {
-              const row = sel.closest('.windfall-slot').querySelector('.wf-equity-row');
+              const slot = sel.closest('.windfall-slot');
+              const row  = slot.querySelector('.wf-equity-row');
               if (row) row.style.display = sel.value === 'GIA' ? '' : 'none';
             }
             function wizAddSlot(addBtnId, slotIds) {
