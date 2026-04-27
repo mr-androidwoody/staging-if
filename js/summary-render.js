@@ -491,6 +491,44 @@
         );
     }
 
+    // ── Pension sweep ─────────────────────────────────────────────────────────
+    var p1Sweep = inputs.p1PensionSweep;
+    var p2Sweep = dual ? inputs.p2PensionSweep : null;
+    var p1PensionActive = p1Sweep && p1Sweep.monthlyNet > 0;
+    var p2PensionActive = p2Sweep && p2Sweep.monthlyNet > 0;
+    var pensionContent  = '';
+
+    if (p1PensionActive || p2PensionActive) {
+      function _pensionLine(sweep, name) {
+        if (!sweep || !sweep.monthlyNet) return vline('Not configured', name);
+        var gross    = Math.round((sweep.monthlyNet * 12) / 0.8);
+        var stopText = sweep.stopAge ? ', stops at age ' + sweep.stopAge : '';
+        return vline(
+          D.formatMoney(sweep.monthlyNet) + '/mo net → ' +
+          D.formatMoney(gross) + '/yr gross' + stopText,
+          name
+        );
+      }
+
+      var pensionNote = 'Net monthly amount you contribute to your pension. '
+        + 'Basic rate tax relief (20%) is added automatically, so each pound you pay in becomes £1.25 in your SIPP. '
+        + 'The gross contribution is capped at the lower of £60,000 and your annual salary. '
+        + (p1PensionActive && inputs.p1SweepSurplus || p2PensionActive && inputs.p2SweepSurplus
+            ? 'The net contribution cost is deducted from any salary surplus before the GIA sweep fires. '
+            : '')
+        + 'Contributions are uprated with inflation each year.';
+
+      pensionContent = subheading('Pension contributions') +
+        row(
+          'Monthly contribution',
+          dual
+            ? _pensionLine(p1Sweep, p1) + _pensionLine(p2Sweep, p2)
+            : _pensionLine(p1Sweep, null),
+          chip('green', 'Active'),
+          pensionNote
+        );
+    }
+
     var c4 = card(
       heading('Strategy') +
 
@@ -506,7 +544,9 @@
         divNote
       ) +
 
-      bniContent
+      bniContent +
+
+      pensionContent
     , false, 'ps-card-strategy');
 
     return '<div class="ps-grid">' + c1 + c2 + c3 + c4 + '</div>';
