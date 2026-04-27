@@ -3346,6 +3346,25 @@ input[type="radio"] { accent-color: var(--accent); }
   border-bottom: none;
 }
 
+/* Year count row — no border, tight spacing, sits under End year stepper */
+.wiz-table tr.year-count-row {
+  border-bottom: none;
+}
+.wiz-table tr:has(+ tr.year-count-row) {
+  border-bottom: none;
+}
+.wiz-table tr.year-count-row td {
+  padding-top: 3px;
+  padding-bottom: 8px;
+}
+
+#sp-yearCount {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .wiz-table td {
   padding: 10px 0;
   vertical-align: middle;
