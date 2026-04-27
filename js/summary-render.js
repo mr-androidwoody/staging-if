@@ -554,9 +554,14 @@
     var wfRows = '';
     if (windfalls.length > 0) {
       windfalls.forEach(function(wf) {
+        var splitLabel = '';
+        if (wf.wrapper === 'GIA') {
+          var ep = wf.equityPct != null ? Number(wf.equityPct) : 70;
+          splitLabel = ' • ' + ep + '% eq / ' + (100 - ep) + '% cash';
+        }
         wfRows +=
           row(wf.name || 'Windfall',
-            vline(wf.year + ' • ' + wf.person.toUpperCase() + ' ' + wf.wrapper),
+            vline(wf.year + ' • ' + wf.person.toUpperCase() + ' ' + wf.wrapper + splitLabel),
             chip('green', 'Included'),
             '£' + Number(wf.amount).toLocaleString('en-GB') + ' today’s money'
           );

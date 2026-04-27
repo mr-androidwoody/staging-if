@@ -161,12 +161,16 @@
       if (inputs.windfalls && inputs.windfalls.length > 0) {
         inputs.windfalls.forEach(function(wf) {
           if (wf.year !== year) return;
-          const nominal = wf.amount * cumInfl;
-          const bal     = wf.person === 'p2' ? p2Bal : p1Bal;
+          const nominal   = wf.amount * cumInfl;
+          const bal       = wf.person === 'p2' ? p2Bal : p1Bal;
           if (wf.wrapper === 'GIA') {
-            bal.GIA  = (bal.GIA  || 0) + nominal;
-            // keep GIAeq in sync so growth/dividends apply correctly
-            bal.GIAeq = (bal.GIAeq || 0) + nominal;
+            const eqPct   = (wf.equityPct ?? 70) / 100;
+            const eqShare = nominal * eqPct;
+            const caShare = nominal * (1 - eqPct);
+            bal.GIA   = (bal.GIA   || 0) + nominal;
+            bal.GIAeq = (bal.GIAeq || 0) + eqShare;
+            // GIAcash is tracked separately; add cash share for interest account logic
+            bal.GIAcash = (bal.GIAcash || 0) + caShare;
           } else {
             bal[wf.wrapper] = (bal[wf.wrapper] || 0) + nominal;
           }

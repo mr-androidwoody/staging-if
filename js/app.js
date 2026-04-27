@@ -230,11 +230,12 @@
         var out = [];
         document.querySelectorAll('#windfalls-container .windfall-slot').forEach(function(slot) {
           out.push({
-            name:    slot.querySelector('.wf-name')?.value?.trim() || '',
-            year:    slot.querySelector('.wf-year')?.value || '',
-            amount:  slot.querySelector('.wf-amount')?.value || '',
-            person:  slot.querySelector('.wf-person')?.value || 'p1',
-            wrapper: slot.querySelector('.wf-wrapper')?.value || 'GIA',
+            name:      slot.querySelector('.wf-name')?.value?.trim() || '',
+            year:      slot.querySelector('.wf-year')?.value || '',
+            amount:    slot.querySelector('.wf-amount')?.value || '',
+            person:    slot.querySelector('.wf-person')?.value || 'p1',
+            wrapper:   slot.querySelector('.wf-wrapper')?.value || 'GIA',
+            equityPct: slot.querySelector('.wf-equity')?.value || '70',
           });
         });
         return out;
@@ -387,6 +388,11 @@
           if (amountEl)  amountEl.value  = wf.amount  || '';
           if (personEl)  personEl.value  = wf.person  || 'p1';
           if (wrapperEl) wrapperEl.value = wf.wrapper || 'GIA';
+          const equityEl  = slot.querySelector('.wf-equity');
+          if (equityEl)  equityEl.value  = wf.equityPct != null ? String(wf.equityPct) : '70';
+          // Show/hide equity row based on restored wrapper
+          const eqRow = slot.querySelector('.wf-equity-row');
+          if (eqRow) eqRow.style.display = (wf.wrapper === 'GIA' || !wf.wrapper) ? '' : 'none';
           if (amountEl && window.RetireRender) RetireRender.applyCurrencyFormattingToInput(amountEl);
         });
       }
@@ -1102,11 +1108,12 @@
           var amount = D.parseCurrency(slot.querySelector('.wf-amount')?.value || '');
           if (!year || !amount) return;
           out.push({
-            name:    slot.querySelector('.wf-name')?.value?.trim() || 'Windfall',
+            name:     slot.querySelector('.wf-name')?.value?.trim() || 'Windfall',
             year,
             amount,
-            person:  slot.querySelector('.wf-person')?.value || 'p1',
-            wrapper: slot.querySelector('.wf-wrapper')?.value || 'GIA',
+            person:   slot.querySelector('.wf-person')?.value || 'p1',
+            wrapper:  slot.querySelector('.wf-wrapper')?.value || 'GIA',
+            equityPct: parseInt(slot.querySelector('.wf-equity')?.value ?? '70', 10),
           });
         });
         return out;
