@@ -275,7 +275,7 @@ function page1(s) {
   page.appendChild(brand);
   page.appendChild(content);
   page.appendChild(deco);
-  page.appendChild(footer(1, 9));
+  page.appendChild(footer(1, 10));
   return page;
 }
 
@@ -451,7 +451,7 @@ function page2(s) {
   body.appendChild(leftCol);
   body.appendChild(rightCol);
   page.appendChild(body);
-  page.appendChild(footer(2, 9));
+  page.appendChild(footer(2, 10));
   return page;
 }
 
@@ -587,7 +587,7 @@ function page3(s) {
   body.appendChild(col2);
   body.appendChild(col3);
   page.appendChild(body);
-  page.appendChild(footer(3, 9));
+  page.appendChild(footer(3, 10));
   return page;
 }
 
@@ -702,7 +702,7 @@ function page4(s) {
   body.appendChild(note);
 
   page.appendChild(body);
-  page.appendChild(footer(4, 9));
+  page.appendChild(footer(4, 10));
   return page;
 }
 
@@ -713,9 +713,7 @@ function page5(s) {
   const page = el('div','page');
   const allRows = s.results.annual_rows;
   const plan = s.plan;
-  const TOTAL = 9;
-
-  // Every other year: 2026, 2028, 2030 ... 2060
+  const TOTAL = 10;
   const rows = allRows.filter(r => (r.year - s.meta.plan_start_year) % 2 === 0);
 
   const hdr = el('div','p2-header');
@@ -915,7 +913,7 @@ function page6(s) {
   const page = el('div','page');
   const allRows = s.results.annual_rows;
   const plan = s.plan;
-  const TOTAL = 9;
+  const TOTAL = 10;
 
   // Every other year matching asset projection
   const rows = allRows.filter(r => (r.year - s.meta.plan_start_year) % 2 === 0);
@@ -1078,7 +1076,7 @@ function page7(s) {
   const page = el('div','page');
   const allRows = s.results.annual_rows;
   const plan = s.plan;
-  const TOTAL = 9;
+  const TOTAL = 10;
 
   // Every other year
   const rows = allRows.filter(r => (r.year - s.meta.plan_start_year) % 2 === 0);
@@ -1206,14 +1204,302 @@ function page7(s) {
 
 
 // ══════════════════════════════════════════════════════
-// PAGE 8 — PLAN SUMMARY (final page)
+// PAGE 8 — SIMULATION RISK DASHBOARD
 // ══════════════════════════════════════════════════════
-function page8(s) {
+function page8risk(s) {
+  const page = el('div', 'page');
+  const plan = s.plan;
+  const r    = s.results;
+  const TOTAL = 10;
+
+  // ── Pull MC arrays directly from results (worker output, always present) ──
+  const mcYears      = r.years          || [];          // [startYear, startYear+1, ...]
+  const p10Arr       = r.p10Portfolio   || [];          // nominal, per year
+  const p50Arr       = r.p50Portfolio   || [];
+  const p90Arr       = r.p90Portfolio   || [];
+  const survArr      = r.survivalByYear || [];          // count of solvent paths per year
+  const simCount     = r.simCount       || 10000;
+  const allDetRows   = s.results.annual_rows || [];     // deterministic rows (for deflator & ages)
+
+  // Build a lookup: calendar year -> deterministic row (for real_deflator, p1_age, p2_age)
+  const detByYear = {};
+  allDetRows.forEach(row => { detByYear[row.year] = row; });
+
+  // ── Every-other-year filter (same cadence as pages 5/6/7) ────────────────
+  const startYear = s.meta.plan_start_year;
+  const displayYears = mcYears.filter(y => (y - startYear) % 2 === 0);
+
+  // Helper: index in mcYears array for a given calendar year
+  const yi = y => mcYears.indexOf(y);
+
+  // Real conversion using deterministic deflator (approximation for MC values)
+  const realV = (y, nomVal) => {
+    const det = detByYear[y];
+    const defl = det ? (det.real_deflator || 1) : 1;
+    return nomVal * defl;
+  };
+
+  // Survival rate for a year (0–1)
+  const survRate = y => {
+    const i = yi(y);
+    return i >= 0 && survArr[i] != null ? survArr[i] / simCount : null;
+  };
+
+  // ── Stat card computations ────────────────────────────────────────────────
+  const lastYear  = mcYears[mcYears.length - 1];
+  const lastIdx   = mcYears.length - 1;
+
+  // Deflator for last year
+  const lastDet   = detByYear[lastYear] || {};
+  const lastDefl  = lastDet.real_deflator || 1;
+
+  // Card 1: First year survival drops below 95%
+  let firstVulnerableYear = null;
+  let firstVulnerableAge  = null;
+  for (let i = 0; i < mcYears.length; i++) {
+    const rate = survArr[i] != null ? survArr[i] / simCount : 1;
+    if (rate < 0.95) {
+      firstVulnerableYear = mcYears[i];
+      const det = detByYear[firstVulnerableYear];
+      firstVulnerableAge = det ? det.p1_age : null;
+      break;
+    }
+  }
+
+  // Card 2: Median terminal portfolio (real)
+  const p50End = p50Arr[lastIdx] != null ? p50Arr[lastIdx] * lastDefl : null;
+
+  // Card 3: Worst-decile terminal portfolio (real)
+  const p10End = p10Arr[lastIdx] != null ? p10Arr[lastIdx] * lastDefl : null;
+
+  // Card 4: Years with survival rate above 90%
+  const yearsAbove90 = mcYears.filter((y, i) => survArr[i] != null && survArr[i] / simCount >= 0.90).length;
+
+  // ── Colour helpers ────────────────────────────────────────────────────────
+  function survColour(rate) {
+    if (rate == null)  return 'var(--ink-light)';
+    if (rate >= 0.99)  return '#3B6D11';
+    if (rate >= 0.95)  return '#5A9E1A';
+    if (rate >= 0.90)  return '#8FA832';
+    if (rate >= 0.80)  return '#BA7517';
+    if (rate >= 0.70)  return '#C4513A';
+    return '#A32D2D';
+  }
+  function survLabel(rate) {
+    if (rate == null)  return '';
+    if (rate >= 0.99)  return 'Resilient';
+    if (rate >= 0.95)  return 'Solid';
+    if (rate >= 0.90)  return 'Adequate';
+    if (rate >= 0.80)  return 'Thin';
+    if (rate >= 0.70)  return 'Fragile';
+    return 'Vulnerable';
+  }
+  function fmtSurv(rate) {
+    if (rate == null) return '—';
+    if (rate >= 0.995) return '99%+';
+    return Math.round(rate * 100) + '%';
+  }
+  function fmtK(n) {
+    if (n == null || n < 0) return n != null && n < 0 ? '—' : '—';
+    if (n >= 1000000) return '£' + (n / 1000000).toFixed(2) + 'M';
+    if (n >= 1000)    return '£' + Math.round(n / 1000) + 'k';
+    return '£' + Math.round(n);
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  const hdr = el('div', 'p2-header');
+  hdr.style.background = '#1a3ab5';
+  hdr.innerHTML = `<div class="p2-header-title">Simulation Risk</div><div class="p2-header-sub">Probability of staying solvent and portfolio spread · real terms (today's money, ${startYear} prices) · ${simCount.toLocaleString('en-GB')} simulated paths · every other year</div>`;
+  page.appendChild(hdr);
+
+  const body = el('div', 'page-body');
+  body.style.cssText = 'padding:16px 32px 14px;display:flex;flex-direction:column;overflow:hidden;';
+
+  // ── Stat cards ─────────────────────────────────────────────────────────────
+  const cards = el('div', '');
+  cards.style.cssText = 'display:flex;gap:10px;margin-bottom:14px;';
+
+  const cardData = [
+    {
+      l: 'First vulnerable year',
+      v: firstVulnerableYear
+        ? `${firstVulnerableYear}${firstVulnerableAge ? ' (age ' + firstVulnerableAge + ')' : ''}`
+        : 'None in projection',
+      s: firstVulnerableYear ? 'first year survival drops below 95%' : 'survival stays above 95% throughout',
+      vCol: firstVulnerableYear ? '#BA7517' : '#3B6D11',
+    },
+    {
+      l: 'Median terminal portfolio',
+      v: p50End != null ? fmtK(p50End) : '—',
+      s: `real terms at ${lastYear} · 1-in-2 outcome`,
+      vCol: p50End > 0 ? '#3B6D11' : '#A32D2D',
+    },
+    {
+      l: 'Worst-decile terminal portfolio',
+      v: p10End != null ? fmtK(Math.max(0, p10End)) : '—',
+      s: `real terms at ${lastYear} · 1-in-10 outcome`,
+      vCol: p10End > 0 ? '#BA7517' : '#A32D2D',
+    },
+    {
+      l: 'Years above 90% survival',
+      v: `${yearsAbove90} of ${mcYears.length}`,
+      s: 'years where 9 in 10 paths remain solvent',
+      vCol: yearsAbove90 >= mcYears.length * 0.9 ? '#3B6D11' : yearsAbove90 >= mcYears.length * 0.7 ? '#BA7517' : '#A32D2D',
+    },
+  ];
+
+  cardData.forEach(c => {
+    const card = el('div', '');
+    card.style.cssText = 'flex:1;background:var(--bg);border:1px solid var(--rule);border-radius:6px;padding:9px 11px;';
+    card.innerHTML = `
+      <div style="font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-light);margin-bottom:3px;">${c.l}</div>
+      <div style="font-family:'Helvetica Neue',sans-serif;font-size:15px;font-weight:800;color:${c.vCol};line-height:1;">${c.v}</div>
+      <div style="font-size:7.5px;color:var(--ink-light);margin-top:2px;">${c.s}</div>`;
+    cards.appendChild(card);
+  });
+  body.appendChild(cards);
+
+  // ── Table ─────────────────────────────────────────────────────────────────
+  const labelW  = 158;
+  const colCount = displayYears.length + 1;
+  const dataW   = Math.floor((1123 - 64 - labelW) / displayYears.length);
+
+  const tbl = document.createElement('table');
+  tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:7.5px;table-layout:fixed;';
+
+  let cg = `<col style="width:${labelW}px;">`;
+  displayYears.forEach(() => { cg += `<col style="width:${dataW}px;">`; });
+  tbl.innerHTML = `<colgroup>${cg}</colgroup>`;
+
+  // Header: year row
+  const thead = document.createElement('thead');
+  const yearRow = document.createElement('tr');
+  yearRow.innerHTML = `<th style="text-align:left;padding:4px 6px;border-bottom:2px solid var(--ink);font-size:7.5px;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Year</th>`;
+  displayYears.forEach(y => {
+    yearRow.innerHTML += `<th style="text-align:right;padding:4px 3px;border-bottom:2px solid var(--ink);font-size:7.5px;font-weight:700;color:var(--ink);">${y}</th>`;
+  });
+  thead.appendChild(yearRow);
+
+  // Age row
+  const ageRow = document.createElement('tr');
+  ageRow.innerHTML = `<td style="padding:2px 6px 5px;font-size:7px;color:var(--ink-light);">Age ${plan.p1.name}${plan.p2 ? ' | ' + plan.p2.name : ''}</td>`;
+  displayYears.forEach(y => {
+    const det = detByYear[y] || {};
+    const ages = det.p1_age != null
+      ? det.p1_age + (plan.p2 && det.p2_age != null ? '|' + det.p2_age : '')
+      : '—';
+    ageRow.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;color:var(--ink-light);">${ages}</td>`;
+  });
+  thead.appendChild(ageRow);
+  tbl.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  // Generic row builder
+  function riskRow(label, values, opts = {}) {
+    const tr = document.createElement('tr');
+    if (opts.groupHeader) {
+      tr.innerHTML = `<td colspan="${colCount}" style="padding:7px 6px 3px;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-light);background:var(--bg);border-top:1px solid var(--rule);">${label}</td>`;
+      return tr;
+    }
+    const isTotal = opts.total;
+    const isSub   = opts.subtotal;
+    const bg      = isTotal ? 'background:#e8eef8;' : isSub ? 'background:var(--bg-mid);' : '';
+    const fw      = isTotal || isSub ? 'font-weight:700;' : '';
+    const bt      = isTotal ? 'border-top:2px solid var(--ink);' : '';
+    tr.innerHTML  = `<td style="padding:5px 6px;${fw}${bg}${bt}color:${isTotal ? 'var(--ink)' : 'var(--ink-mid)'};">${label}</td>`;
+    values.forEach((v, i) => {
+      const cellBg = isTotal ? '#e8eef8' : isSub ? 'var(--bg-mid)' : i % 2 === 0 ? 'var(--white)' : '#fafbfd';
+      const content = opts.raw ? v : (v > 0.5 ? fmtK(v) : '—');
+      const color   = opts.color || (isTotal ? 'var(--ink)' : 'var(--ink-mid)');
+      tr.innerHTML += `<td style="text-align:right;padding:4px 3px;${fw}background:${cellBg};color:${color};${bt}">${content}</td>`;
+    });
+    return tr;
+  }
+
+  // ── SECTION 1: Survival probability ──────────────────────────────────────
+  tbody.appendChild(riskRow('Survival probability', [], { groupHeader: true }));
+
+  // Survival rate row with colour-coded cells
+  const survTr = document.createElement('tr');
+  survTr.innerHTML = `<td style="padding:5px 6px;color:var(--ink-mid);">Probability of remaining solvent</td>`;
+  displayYears.forEach((y, i) => {
+    const rate    = survRate(y);
+    const col     = survColour(rate);
+    const label   = fmtSurv(rate);
+    const cellBg  = i % 2 === 0 ? 'var(--white)' : '#fafbfd';
+    survTr.innerHTML += `<td style="text-align:right;padding:4px 3px;background:${cellBg};font-weight:700;color:${col};">${label}</td>`;
+  });
+  tbody.appendChild(survTr);
+
+  // Qualitative label row
+  const qualTr = document.createElement('tr');
+  qualTr.innerHTML = `<td style="padding:3px 6px 5px;font-style:italic;color:var(--ink-light);font-size:7px;"></td>`;
+  displayYears.forEach((y, i) => {
+    const rate   = survRate(y);
+    const col    = survColour(rate);
+    const label  = survLabel(rate);
+    const cellBg = i % 2 === 0 ? 'var(--white)' : '#fafbfd';
+    qualTr.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;background:${cellBg};color:${col};font-style:italic;">${label}</td>`;
+  });
+  tbody.appendChild(qualTr);
+
+  // ── SECTION 2: Portfolio fan (real terms) ─────────────────────────────────
+  tbody.appendChild(riskRow('Simulated portfolio (today\'s money)', [], { groupHeader: true }));
+
+  tbody.appendChild(riskRow('Strong outcome (9 in 10 do better)', displayYears.map(y => {
+    const i = yi(y);
+    return i >= 0 && p10Arr[i] != null ? realV(y, p10Arr[i]) : null;
+  }), { color: 'var(--amber)' }));
+
+  tbody.appendChild(riskRow('Typical outcome (median)', displayYears.map(y => {
+    const i = yi(y);
+    return i >= 0 && p50Arr[i] != null ? realV(y, p50Arr[i]) : null;
+  }), { color: 'var(--blue)', subtotal: true }));
+
+  tbody.appendChild(riskRow('Favourable outcome (9 in 10 do worse)', displayYears.map(y => {
+    const i = yi(y);
+    return i >= 0 && p90Arr[i] != null ? realV(y, p90Arr[i]) : null;
+  }), { color: '#3B6D11' }));
+
+  // ── SECTION 3: Spread ─────────────────────────────────────────────────────
+  tbody.appendChild(riskRow('Outcome spread (today\'s money)', [], { groupHeader: true }));
+
+  tbody.appendChild(riskRow('Range (favourable minus weak)', displayYears.map(y => {
+    const i = yi(y);
+    if (i < 0 || p90Arr[i] == null || p10Arr[i] == null) return null;
+    return realV(y, p90Arr[i] - p10Arr[i]);
+  }), { color: 'var(--ink-mid)' }));
+
+  tbl.appendChild(tbody);
+  body.appendChild(tbl);
+
+  // ── Interpretive note ─────────────────────────────────────────────────────
+  const note = el('div', '');
+  note.style.cssText = 'margin-top:10px;background:var(--blue-light,#eaeffd);border:1px solid rgba(45,85,232,.2);border-radius:6px;padding:9px 14px;';
+  note.innerHTML = `
+    <div class="section-label" style="color:var(--blue);margin-bottom:4px;">How to read this table</div>
+    <p style="font-size:8.5px;color:var(--ink-mid);line-height:1.65;">
+      <b>Survival probability</b> is the share of ${simCount.toLocaleString('en-GB')} simulated paths in which the portfolio has not yet run out of money in that year. A rate above 95% is considered solid.
+      <b>Simulated portfolio values</b> are shown in today's money using the deterministic inflation path as a deflator. The weak outcome (p10) is the value exceeded by 90% of paths in that year. The median (p50) is the midpoint outcome. The favourable outcome (p90) is the value exceeded by only 10% of paths.
+      The spread row shows the gap between favourable and weak outcomes: a widening spread over time reflects the compounding uncertainty of longer projection horizons.
+    </p>`;
+  body.appendChild(note);
+
+  page.appendChild(body);
+  page.appendChild(footer(8, TOTAL));
+  return page;
+}
+
+// ══════════════════════════════════════════════════════
+// PAGE 9 — PLAN VERDICT
+// ══════════════════════════════════════════════════════
+function page9(s) {
   const page = el('div','page');
   const r = s.results, n = s.narrative, st = s.stress_tests || {};
   const plan = s.plan;
   const rate = r.success_rate;
-  const TOTAL = 9;
+  const TOTAL = 10;
 
   function vcol(rate) {
     if (rate == null) return { bg:'#2d55e8', ab:'#eaeffd', ac:'#2d55e8' };
@@ -1461,7 +1747,7 @@ function page8(s) {
 
   // Bottom strip removed — disclaimer on page 1 and every footer; assumptions on page 3
 
-  page.appendChild(footer(8, TOTAL));
+  page.appendChild(footer(9, TOTAL));
   return page;
 }
 
@@ -1470,11 +1756,11 @@ function page8(s) {
 // ══════════════════════════════════════════════════════
 
   // ══════════════════════════════════════════════════════
-  // PAGE 9 — HOW THE ANALYSIS WORKS
+  // PAGE 10 — HOW THE ANALYSIS WORKS
   // ══════════════════════════════════════════════════════
-  function page9(s) {
+  function page10(s) {
     const page = el('div', 'page');
-    const TOTAL = 9;
+    const TOTAL = 10;
 
     const hdr = el('div', 'p3-header');
     hdr.innerHTML = `<div class="p3-header-title">How the Analysis Works</div><div class="p3-header-sub">Methodology, assumptions, and stress scenario design</div>`;
@@ -1561,7 +1847,7 @@ function page8(s) {
 
     body.appendChild(scenGrid);
     page.appendChild(body);
-    page.appendChild(footer(9, TOTAL));
+    page.appendChild(footer(10, TOTAL));
     return page;
   }
 
@@ -1581,8 +1867,9 @@ function page8(s) {
       page5(snapshot),
       page6(snapshot),
       page7(snapshot),
-      page8(snapshot),
+      page8risk(snapshot),
       page9(snapshot),
+      page10(snapshot),
     ];
 
     // ── Off-screen container ───────────────────────────────────────────────
