@@ -769,7 +769,7 @@
       },
     ];
 
-    config.forEach(({ giaIds, cashId, amtId, yearsId, noteId, tableId, personKey }) => {
+    config.forEach(({ giaIds, cashId, amtId, yearsId, noteId, tableId, personKey }, cfgIdx) => {
       const yearsEl = safeEl(yearsId);
       const noteEl  = safeEl(noteId);
       if (!yearsEl || !noteEl) return;
@@ -781,14 +781,38 @@
       const tableEl   = tableId ? safeEl(tableId) : null;
 
       if (available <= 0) {
-        noteEl.textContent = 'No GIA available to fund transfers';
-        noteEl.style.fontStyle = 'italic';
-        noteEl.style.color = '#a32d2d';
-        if (tableEl) {
-          tableEl.style.opacity       = '0.45';
-          tableEl.style.pointerEvents = 'none';
+        // Check whether any windfall targets this person's GIA — if so show
+        // a softer message rather than a hard "No GIA" warning, because the
+        // engine will automatically apply BnI from the windfall landing year.
+        const personVal = cfgIdx === 0 ? 'p1' : 'p2';
+        const hasGIAWindfall = Array.from(
+          document.querySelectorAll('#windfalls-container .windfall-slot')
+        ).some(function(slot) {
+          return slot.querySelector('.wf-wrapper')?.value === 'GIA' &&
+                 slot.querySelector('.wf-person')?.value  === personVal &&
+                 slot.querySelector('.wf-year')?.value    !== '' &&
+                 slot.querySelector('.wf-amount')?.value  !== '';
+        });
+
+        if (hasGIAWindfall) {
+          noteEl.textContent = 'No opening GIA balance — Bed & ISA will apply automatically from the windfall landing year if configured above.';
+          noteEl.style.fontStyle = 'italic';
+          noteEl.style.color = '#64748b';
+          if (tableEl) {
+            tableEl.style.opacity       = '';
+            tableEl.style.pointerEvents = '';
+          }
+          yearsEl.max = 100;
+        } else {
+          noteEl.textContent = 'No GIA available to fund transfers';
+          noteEl.style.fontStyle = 'italic';
+          noteEl.style.color = '#a32d2d';
+          if (tableEl) {
+            tableEl.style.opacity       = '0.45';
+            tableEl.style.pointerEvents = 'none';
+          }
+          yearsEl.max = 1;
         }
-        yearsEl.max = 1;
         return;
       }
 
