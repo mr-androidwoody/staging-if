@@ -1102,8 +1102,8 @@
             <div id="windfalls-container">
               <!-- Windfall 1 (permanent) -->
               <div class="windfall-slot" data-slot="1">
-                <div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer"><span class="wf-chevron">&#x25bc;</span> Windfall 1</div>
-                <div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.4rem 1.4rem"></div>
+                <div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span><span class="wf-chevron">&#x25bc;</span> <span class="wf-label-n">Windfall 1</span></span><span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="display:none;font-size:0.75rem;font-weight:500;color:var(--muted,#94a3b8);cursor:pointer;letter-spacing:0.02em;padding:0.1rem 0.4rem;border:1px solid var(--border,#334155);border-radius:3px">&#x2715; Remove</span></div>
+                <div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.5rem 1.4rem"></div>
                 <table class="wiz-table">
                   <tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>
                   <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>
@@ -1156,9 +1156,8 @@
           </script>
 
           <script>
-            let _wfCount = 1;
-
             // ── Windfall accordion helpers ────────────────────────────────────
+
             function _wfSummary(slot) {
               const name    = slot.querySelector('.wf-name')?.value?.trim();
               const year    = slot.querySelector('.wf-year')?.value?.trim();
@@ -1178,10 +1177,9 @@
               const table   = slot.querySelector('.wiz-table');
               const summary = slot.querySelector('.wf-summary');
               const chevron = slot.querySelector('.wf-chevron');
-              if (table)   table.style.display   = 'none';
-              if (summary) summary.textContent    = _wfSummary(slot);
-              if (summary) summary.style.display  = '';
-              if (chevron) chevron.textContent     = '\u25b6';
+              if (table)   table.style.display  = 'none';
+              if (summary) { summary.textContent = _wfSummary(slot); summary.style.display = ''; }
+              if (chevron) chevron.textContent   = '\u25b6';
             }
 
             function _wfExpand(slot) {
@@ -1190,18 +1188,33 @@
               const chevron = slot.querySelector('.wf-chevron');
               if (table)   table.style.display   = '';
               if (summary) summary.style.display  = 'none';
-              if (chevron) chevron.textContent     = '\u25bc';
+              if (chevron) chevron.textContent    = '\u25bc';
             }
 
             function _wfCollapseAll() {
               document.querySelectorAll('#windfalls-container .windfall-slot').forEach(_wfCollapse);
             }
 
+            // Renumber all slot headings from DOM order (1, 2, 3...)
+            // and update the remove link visibility (slot 1 never has remove)
+            function _wfRenumber() {
+              document.querySelectorAll('#windfalls-container .windfall-slot').forEach(function(slot, idx) {
+                const n = idx + 1;
+                const label = slot.querySelector('.wf-label-n');
+                if (label) label.textContent = 'Windfall ' + n;
+                // Show/hide remove link
+                const rem = slot.querySelector('.wf-remove-link');
+                if (rem) rem.style.display = n === 1 ? 'none' : '';
+                // Remove divider on slot 1, ensure present on others
+                const div = slot.querySelector('.wiz-section-divider');
+                if (div) div.style.display = n === 1 ? 'none' : '';
+              });
+            }
+
             function wizToggleWindfall(headerEl) {
               const slot  = headerEl.closest('.windfall-slot');
               const table = slot.querySelector('.wiz-table');
               if (table && table.style.display === 'none') {
-                // expanding — collapse all others first
                 _wfCollapseAll();
                 _wfExpand(slot);
               } else {
@@ -1209,12 +1222,14 @@
               }
             }
 
-            function _wfHeader(n, isFirst) {
-              return '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer">' +
-                '<span class="wf-chevron">\u25bc</span> Windfall ' + n +
-                (isFirst ? '' : ' <span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="font-size:0.75rem;font-weight:400;color:var(--muted,#64748b);cursor:pointer;margin-left:0.4rem">&#x2715; remove</span>') +
+            function _wfHeader(isFirst) {
+              // .wf-label-n updated by _wfRenumber(); remove link always rendered,
+              // hidden on slot 1 via _wfRenumber()
+              return '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">' +
+                '<span><span class="wf-chevron">\u25bc</span> <span class="wf-label-n">Windfall</span></span>' +
+                '<span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="font-size:0.75rem;font-weight:500;color:var(--muted,#94a3b8);cursor:pointer;letter-spacing:0.02em;padding:0.1rem 0.4rem;border:1px solid var(--border,#334155);border-radius:3px' + (isFirst ? ';display:none' : '') + '">&#x2715; Remove</span>' +
                 '</div>' +
-                '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.4rem 1.4rem"></div>';
+                '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.5rem 1.4rem"></div>';
             }
 
             function _wfTable(placeholder_year, placeholder_amount) {
@@ -1229,19 +1244,16 @@
             }
 
             function wizAddWindfall() {
-              _wfCount++;
-              const n = _wfCount;
               const container = document.getElementById('windfalls-container');
-              // Collapse all existing slots first
               _wfCollapseAll();
               const div = document.createElement('div');
               div.className = 'windfall-slot';
-              div.dataset.slot = n;
               div.innerHTML =
                 '<div class="wiz-section-divider"></div>' +
-                _wfHeader(n, false) +
+                _wfHeader(false) +
                 _wfTable('e.g. 2038', 'e.g. 200,000');
               container.appendChild(div);
+              _wfRenumber();
               if (window.RetireRender && RetireRender.applyCurrencyFormattingToInput) {
                 div.querySelectorAll('.currency-input').forEach(RetireRender.applyCurrencyFormattingToInput);
               }
@@ -1251,7 +1263,7 @@
               const slot = btn.closest('.windfall-slot');
               if (slot) {
                 slot.remove();
-                // Expand the last remaining slot
+                _wfRenumber();
                 const remaining = document.querySelectorAll('#windfalls-container .windfall-slot');
                 if (remaining.length > 0) _wfExpand(remaining[remaining.length - 1]);
               }
@@ -1262,10 +1274,13 @@
               const row  = slot.querySelector('.wf-equity-row');
               if (row) row.style.display = sel.value === 'GIA' ? '' : 'none';
             }
-            // On page load, ensure slot 1 is expanded (table visible, chevron down)
+
+            // On page load: init slot 1 header structure and expand it
             document.addEventListener('DOMContentLoaded', function() {
+              // Patch the static slot 1 heading to match the dynamic structure
+              // so _wfRenumber works uniformly across all slots
               const first = document.querySelector('#windfalls-container .windfall-slot');
-              if (first && typeof _wfExpand === 'function') _wfExpand(first);
+              if (first) { _wfRenumber(); _wfExpand(first); }
             });
 
             function wizAddSlot(addBtnId, slotIds) {
