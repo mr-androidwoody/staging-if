@@ -1108,7 +1108,8 @@
                   <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>
                   <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>
                   <tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>
-                  <tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>
+                  <tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>
+                  <tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>
                 </table>
               </div>
             </div>
@@ -1171,7 +1172,8 @@
                 '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2038" min="2025" max="2060"></td></tr>' +
                 '<tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 200,000"></td></tr>' +
                 '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
-                '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+                '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+                '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
                 '</table>';
               container.appendChild(div);
               // Apply currency formatting to the new amount input
@@ -1182,6 +1184,10 @@
             function wizRemoveWindfall(btn) {
               const slot = btn.closest('.windfall-slot');
               if (slot) slot.remove();
+            }
+            function wizWfWrapperChange(sel) {
+              const row = sel.closest('.windfall-slot').querySelector('.wf-equity-row');
+              if (row) row.style.display = sel.value === 'GIA' ? '' : 'none';
             }
             function wizAddSlot(addBtnId, slotIds) {
               for (const id of slotIds) {
