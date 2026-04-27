@@ -21,6 +21,36 @@
 
   <link href="css/home-btn.css" rel="stylesheet"/>
 
+<style>
+  .pension-sweep-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding: 7px 10px;
+    border: 1px solid var(--border, #dde3ed);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface-raised, #f8fafc);
+    transition: background 0.15s;
+  }
+  .pension-sweep-toggle:hover {
+    background: var(--surface-hover, #eef2f8);
+  }
+  .pension-sweep-toggle__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text, #1a2236);
+  }
+  .pension-sweep-toggle__chevron {
+    font-size: 10px;
+    color: var(--muted, #6b7a99);
+  }
+  .pension-sweep-fields {
+    margin-top: 8px;
+  }
+</style>
 </head>
 
 <body>
@@ -622,6 +652,37 @@
                 <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
               </table>
               <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
+
+              <!-- Pension contribution toggle -->
+              <div class="pension-sweep-toggle" id="p1-pension-toggle" onclick="wizTogglePension('p1')">
+                <span class="pension-sweep-toggle__label">Make pension contributions</span>
+                <span class="pension-sweep-toggle__chevron" id="p1-pension-chevron">▶</span>
+              </div>
+              <div class="pension-sweep-fields" id="p1-pension-fields" style="display:none">
+                <table class="wiz-table">
+                  <tr>
+                    <td class="wiz-label">Monthly contribution (£/mo)</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="currency-stepper">
+                        <input type="text" id="p1PensionMonthly" class="currency-input" placeholder="e.g. 500">
+                        <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="wiz-label">Stop age</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="stepper-input">
+                        <input type="number" id="p1PensionStopAge" placeholder="e.g. 57" min="18" max="75">
+                        <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
+              </div>
             </div>
 
             <!-- P2 balances -->
@@ -636,6 +697,38 @@
               <div class="wiz-total-row">
                 <span class="wiz-total-label">Total investments</span>
                 <span class="wiz-total-val" id="ai-total">–</span>
+              </div>
+              <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
+
+              <!-- Pension contribution toggle -->
+              <div class="pension-sweep-toggle" id="p2-pension-toggle" onclick="wizTogglePension('p2')">
+                <span class="pension-sweep-toggle__label">Make pension contributions</span>
+                <span class="pension-sweep-toggle__chevron" id="p2-pension-chevron">▶</span>
+              </div>
+              <div class="pension-sweep-fields" id="p2-pension-fields" style="display:none">
+                <table class="wiz-table">
+                  <tr>
+                    <td class="wiz-label">Monthly contribution (£/mo)</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="currency-stepper">
+                        <input type="text" id="p2PensionMonthly" class="currency-input" placeholder="e.g. 500">
+                        <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="wiz-label">Stop age</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="stepper-input">
+                        <input type="number" id="p2PensionStopAge" placeholder="e.g. 57" min="18" max="75">
+                        <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
               </div>
             </div>
           </div>
@@ -1053,6 +1146,16 @@
 
             <button type="button" id="purchases-add-btn" class="wiz-add-btn" onclick="wizAddSlot('purchases-add-btn',['purchase2-slot'])">+ Add another purchase</button>
           </div>
+
+          <script>
+            function wizTogglePension(person) {
+              const fields  = document.getElementById(person + '-pension-fields');
+              const chevron = document.getElementById(person + '-pension-chevron');
+              const open    = fields.style.display !== 'none';
+              fields.style.display = open ? 'none' : '';
+              chevron.textContent  = open ? '▶' : '▼';
+            }
+          </script>
 
           <script>
             function wizAddSlot(addBtnId, slotIds) {
