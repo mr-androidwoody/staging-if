@@ -268,6 +268,7 @@
     }
     refreshSetupSummary();
     refreshPortfolioUI();
+    refreshYearCount();
 
     // Ensure all currency-input fields in the setup panel are correctly formatted
     // after load — catches cases where values were saved as raw numbers
@@ -314,6 +315,7 @@
     _applySweepSurplusVisibility();
     const _summary = C.summarisePortfolio(state.portfolioAccounts);
     refreshDrawdownRates(_summary.total);
+    refreshYearCount();
   }
 
   // ─────────────────────────────
@@ -559,6 +561,14 @@
     elLifetime.textContent = fmt(lifetimeRate);
     elLifetime.className   = rateClass(lifetimeRate);
     if (elPostSub) elPostSub.textContent = stepDownPct + '% step-down applied';
+  }
+
+  function refreshYearCount() {
+    const el    = safeEl('sp-yearCount');
+    if (!el) return;
+    const start = parseInt(safeValue('sp-startYear'));
+    const end   = parseInt(safeValue('sp-endYear'));
+    el.textContent = (start && end && end > start) ? (end - start) + ' years' : '';
   }
 
   // ─────────────────────────────
@@ -1534,6 +1544,12 @@
     }
   });
 
+  // Year count display — updates live as start/end year steppers change
+  ['sp-startYear','sp-endYear'].forEach(id => {
+    safeEl(id)?.addEventListener('input',  refreshYearCount);
+    safeEl(id)?.addEventListener('change', refreshYearCount);
+  });
+
   // Show/hide sweep surplus toggle based on salary value
   ['p1Salary','p2Salary'].forEach(id => {
     safeEl(id)?.addEventListener('input', _applySweepSurplusVisibility);
@@ -1816,6 +1832,7 @@
   // INIT
   // ─────────────────────────────
   refreshSetupSummary();
+  refreshYearCount();
   R.initialiseCurrencyInputs();
   applyBniState(false);
   RetireTabs.init();
