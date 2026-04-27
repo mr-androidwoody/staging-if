@@ -583,10 +583,11 @@
     }
 
     // ── Step 6: GIA (basic-rate CGT band preferred, higher-rate CGT fallback) ─
-    // Draw GIA proportionally by band headroom where possible (18% CGT).
-    // If band headroom is exhausted but GIA remains and a shortfall persists,
-    // draw it anyway weighted equally — a shortfall is always worse than
-    // paying higher-rate CGT on the gain portion.
+    // Draw GIA to cover remaining shortfall. Prefer to weight by band headroom
+    // (18% CGT) but do not waste one person's allocation if the other has no GIA:
+    // redirect any undrawn share to the person who does have GIA balance.
+    // If both bands are exhausted, weight by GIA balance — a shortfall is always
+    // worse than paying higher-rate CGT on the gain portion.
     if (rem > 0) {
       const p1GIA = p1Bal.GIA || 0;
       const p2GIA = p2Bal.GIA || 0;
@@ -594,18 +595,24 @@
       const draw     = Math.min(totalGIA, rem);
 
       if (draw > 0 && totalGIA > 0) {
-        const p1Band = p1Ledger.basicBandRemaining;
-        const p2Band = p2Ledger.basicBandRemaining;
+        const p1Band    = p1Ledger.basicBandRemaining;
+        const p2Band    = p2Ledger.basicBandRemaining;
         const totalBand = p1Band + p2Band;
 
-        // Weight by band headroom where available; fall back to GIA balance weight.
-        const p1Weight = totalBand > 0 ? (p1Band / totalBand) : (p1GIA / totalGIA);
-        const p2Weight = totalBand > 0 ? (p2Band / totalBand) : (p2GIA / totalGIA);
-        const p1Share  = Math.min(draw * p1Weight, p1GIA);
-        const p2Share  = Math.min(draw * p2Weight, p2GIA);
+        // Initial proportional split: by band headroom if available, else by GIA balance
+        const p1Weight  = totalBand > 0 ? (p1Band / totalBand) : (p1GIA / totalGIA);
+        const p2Weight  = totalBand > 0 ? (p2Band / totalBand) : (p2GIA / totalGIA);
+        let p1Share     = Math.min(draw * p1Weight, p1GIA);
+        let p2Share     = Math.min(draw * p2Weight, p2GIA);
 
-        p1Bal.GIA -= p1Share;
-        p2Bal.GIA -= p2Share;
+        // Redirect any undrawn share to the other person if they have GIA remaining
+        const p1Undrawn = draw * p1Weight - p1Share;
+        const p2Undrawn = draw * p2Weight - p2Share;
+        if (p2Undrawn > 0) p1Share = Math.min(p1Share + p2Undrawn, p1GIA);
+        if (p1Undrawn > 0) p2Share = Math.min(p2Share + p1Undrawn, p2GIA);
+
+        p1Bal.GIA   -= p1Share;
+        p2Bal.GIA   -= p2Share;
         p1Drawn.GIA += p1Share;
         p2Drawn.GIA += p2Share;
 
