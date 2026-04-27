@@ -50,6 +50,9 @@
   .pension-sweep-fields {
     margin-top: 8px;
   }
+  .drawdown-rate-card__value--neutral {
+    color: var(--ink, #1a2233);
+  }
 </style>
 </head>
 
@@ -769,28 +772,28 @@
             </table>
             <div class="wiz-section-divider"></div>
             <div class="drawdown-rate-panel">
-              <p class="drawdown-rate-panel__intro">How much of your portfolio you spend each year, as a percentage.</p>
+              <p class="drawdown-rate-panel__intro">How much of your spending target is covered by guaranteed income sources.</p>
               <div class="drawdown-rate-cards">
                 <div class="drawdown-rate-card">
-                  <p class="drawdown-rate-card__label">Drawdown rate</p>
-                  <p class="drawdown-rate-card__value" id="dwr-initial">&#8211;</p>
-                  <p class="drawdown-rate-card__sub">Before <span data-p1>Person 1</span> turns 75</p>
+                  <p class="drawdown-rate-card__label">Guaranteed income</p>
+                  <p class="drawdown-rate-card__value drawdown-rate-card__value--neutral" id="cgr-guaranteed">&#8211;</p>
+                  <p class="drawdown-rate-card__sub">Salary, State Pension &amp; interest</p>
                 </div>
                 <div class="drawdown-rate-card">
-                  <p class="drawdown-rate-card__label">Rate after 75</p>
-                  <p class="drawdown-rate-card__value" id="dwr-post">&#8211;</p>
-                  <p class="drawdown-rate-card__sub" id="dwr-post-sub">15% step-down applied</p>
+                  <p class="drawdown-rate-card__label">Portfolio must fund</p>
+                  <p class="drawdown-rate-card__value" id="cgr-gap">&#8211;</p>
+                  <p class="drawdown-rate-card__sub" id="cgr-gap-sub">gap per year</p>
                 </div>
                 <div class="drawdown-rate-card">
-                  <p class="drawdown-rate-card__label">Lifetime rate</p>
-                  <p class="drawdown-rate-card__value" id="dwr-lifetime">&#8211;</p>
-                  <p class="drawdown-rate-card__sub">Blended across plan</p>
+                  <p class="drawdown-rate-card__label">Coverage</p>
+                  <p class="drawdown-rate-card__value" id="cgr-pct">&#8211;</p>
+                  <p class="drawdown-rate-card__sub">of target from guaranteed sources</p>
                 </div>
               </div>
               <div class="drawdown-rate-legend">
-                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--ok">Below 4%: lower withdrawal pressure in the model</span>
-                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--warn">4&#8211;5%: moderate withdrawal pressure in the model</span>
-                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--err">Above 5%: higher withdrawal pressure in the model</span>
+                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--ok">Above 50%: portfolio funds less than half your target</span>
+                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--warn">25&#8211;50%: portfolio funds the majority of your target</span>
+                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--err">Below 25%: portfolio funds almost all of your target</span>
               </div>
             </div>
             <div id="int-accts-section" style="display:none">
