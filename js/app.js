@@ -218,6 +218,10 @@
       bniEnabled:        document.querySelector('input[name="bniEnabled"]:checked')?.value === 'true',
       bniP1GIA:          safeValue('bniP1GIA'),
       bniP2GIA:          safeValue('bniP2GIA'),
+      p1PensionMonthly:  safeValue('p1PensionMonthly'),
+      p1PensionStopAge:  safeValue('p1PensionStopAge'),
+      p2PensionMonthly:  safeValue('p2PensionMonthly'),
+      p2PensionStopAge:  safeValue('p2PensionStopAge'),
       dividendYield:     safeValue('dividendYield'),
       dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'payout',
       startYear:         safeValue('sp-startYear'),
@@ -306,6 +310,24 @@
     const bniRadio = document.querySelector(`input[name="bniEnabled"][value="${a.bniEnabled ? 'true' : 'false'}"]`);
     if (bniRadio) bniRadio.checked = true;
     applyBniState(!!a.bniEnabled);
+
+    // Pension sweep — restore values and open the toggle if a monthly amount was saved
+    if (a.p1PensionMonthly) {
+      sv('p1PensionMonthly', a.p1PensionMonthly);
+      const f = safeEl('p1-pension-fields');
+      const c = safeEl('p1-pension-chevron');
+      if (f) f.style.display = '';
+      if (c) c.textContent = '▼';
+    }
+    if (a.p1PensionStopAge) sv('p1PensionStopAge', a.p1PensionStopAge);
+    if (a.p2PensionMonthly) {
+      sv('p2PensionMonthly', a.p2PensionMonthly);
+      const f = safeEl('p2-pension-fields');
+      const c = safeEl('p2-pension-chevron');
+      if (f) f.style.display = '';
+      if (c) c.textContent = '▼';
+    }
+    if (a.p2PensionStopAge) sv('p2PensionStopAge', a.p2PensionStopAge);
 
     if (a.startYear) { const el = safeEl('sp-startYear'); if (el) el.value = a.startYear; }
     if (a.endYear)   { const el = safeEl('sp-endYear');   if (el) el.value = a.endYear;   }
@@ -976,6 +998,14 @@
       bniP1Years:        bniEnabled ? gvi('bniP1Years') : 0,
       bniP2GIA:          (bniEnabled && state.p2enabled) ? gv('bniP2GIA') : 0,
       bniP2Years:        (bniEnabled && state.p2enabled) ? gvi('bniP2Years') : 0,
+      p1PensionSweep: {
+        monthlyNet: gv('p1PensionMonthly'),
+        stopAge:    gvi('p1PensionStopAge'),
+      },
+      p2PensionSweep: state.p2enabled ? {
+        monthlyNet: gv('p2PensionMonthly'),
+        stopAge:    gvi('p2PensionStopAge'),
+      } : { monthlyNet: 0, stopAge: 0 },
       dividendYield:     (parseFloat(safeEl('dividendYield')?.value) || 1.5) / 100,
       dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'payout',
       strategy:          document.querySelector('input[name="withdrawalStrategy"]:checked')?.value || 'balanced',
