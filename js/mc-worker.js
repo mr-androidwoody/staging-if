@@ -79,7 +79,7 @@ const TAX_BANDS = [
  * Equivalent to C.growBalances in calculator.js.
  */
 function growBalances(bal, equityRate, inflationRate) {
-  bal.Cash    = (bal.Cash    || 0) * (1 + equityRate);   // Cash grows at equity rate (small, swept to GIA)
+  bal.Cash    = (bal.Cash    || 0) * (1 + inflationRate); // Cash grows at inflation rate (capital-preserved, no equity vol)
   bal.GIAeq   = (bal.GIAeq   || 0) * (1 + equityRate);  // Equity portion of GIA
   bal.GIAcash = (bal.GIAcash || 0) * (1 + inflationRate); // Cashlike portion — inflation rate, no vol
   bal.ISA     = (bal.ISA     || 0) * (1 + equityRate);
