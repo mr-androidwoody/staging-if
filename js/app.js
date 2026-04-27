@@ -363,8 +363,8 @@
             div.className = 'windfall-slot';
             div.dataset.slot = '1';
             div.innerHTML =
-              '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer"><span class="wf-chevron">&#x25bc;</span> Windfall 1</div>' +
-              '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.4rem 1.4rem"></div>' +
+              '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span><span class="wf-chevron">&#x25bc;</span> <span class="wf-label-n">Windfall 1</span></span><span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="display:none;font-size:0.75rem;font-weight:500;color:var(--muted,#94a3b8);cursor:pointer;letter-spacing:0.02em;padding:0.1rem 0.4rem;border:1px solid var(--border,#334155);border-radius:3px">&#x2715; Remove</span></div>' +
+              '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.5rem 1.4rem"></div>' +
               '<table class="wiz-table">' +
               '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>' +
               '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>' +
