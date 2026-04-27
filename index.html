@@ -1212,7 +1212,7 @@
             function _wfHeader(n, isFirst) {
               return '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer">' +
                 '<span class="wf-chevron">\u25bc</span> Windfall ' + n +
-                (isFirst ? '' : ' <button type="button" class="wiz-remove-btn" onclick="event.stopPropagation();wizRemoveWindfall(this)">&#x2715; Remove</button>') +
+                (isFirst ? '' : ' <span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="font-size:0.75rem;font-weight:400;color:var(--muted,#64748b);cursor:pointer;margin-left:0.4rem">&#x2715; remove</span>') +
                 '</div>' +
                 '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.4rem 1.4rem"></div>';
             }
@@ -1262,6 +1262,12 @@
               const row  = slot.querySelector('.wf-equity-row');
               if (row) row.style.display = sel.value === 'GIA' ? '' : 'none';
             }
+            // On page load, ensure slot 1 is expanded (table visible, chevron down)
+            document.addEventListener('DOMContentLoaded', function() {
+              const first = document.querySelector('#windfalls-container .windfall-slot');
+              if (first && typeof _wfExpand === 'function') _wfExpand(first);
+            });
+
             function wizAddSlot(addBtnId, slotIds) {
               for (const id of slotIds) {
                 const el = document.getElementById(id);
