@@ -891,6 +891,32 @@
       <div class="wiz-panel" id="wiz-panel-3">
         <div class="wiz-grid wiz-grid--3">
 
+          <!-- Windfall -->
+          <div class="wiz-col">
+            <div class="wiz-col-heading">Windfall</div>
+            <p class="wiz-col-intro">Model one-off lump-sum inflows — for example, an expected inheritance or property sale proceeds.<br><br>Each amount is entered in today's money and uprated by inflation to the year it lands.</p>
+
+            <!-- Windfall slots container -->
+            <div id="windfalls-container">
+              <!-- Windfall 1 (permanent) -->
+              <div class="windfall-slot" data-slot="1">
+                <div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span><span class="wf-chevron">&#x25bc;</span> <span class="wf-label-n">Windfall 1</span></span><span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="display:none;font-size:0.75rem;font-weight:500;color:var(--muted,#94a3b8);cursor:pointer;letter-spacing:0.02em;padding:0.1rem 0.4rem;border:1px solid var(--border,#334155);border-radius:3px">&#x2715; Remove</span></div>
+                <div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.5rem 1.4rem"></div>
+                <table class="wiz-table">
+                  <tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>
+                  <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>
+                  <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>
+                  <tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>
+                  <tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>
+                  <tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>
+                  <tr class="wf-wrapper-hint-row" style="display:none"><td colspan="2" class="wf-wrapper-hint">Cash earns 0% growth in projections. For a capital-preserved low-volatility holding, use GIA with the “100% Cash” split instead.</td></tr>
+                </table>
+              </div>
+            </div>
+
+            <button type="button" id="windfalls-add-btn" class="wiz-add-btn" onclick="wizAddWindfall()">+ Add another windfall</button>
+          </div>
+
           <!-- Gift planning -->
           <div class="wiz-col">
             <div class="wiz-col-heading">Gift planning <span class="wiz-badge-soon">coming soon</span></div>
@@ -927,32 +953,6 @@
             </div>
 
             <button type="button" id="gifts-add-btn" class="wiz-add-btn" onclick="wizAddSlot('gifts-add-btn',['gift2-slot','gift3-slot'])">+ Add another gift</button>
-          </div>
-
-          <!-- Windfall -->
-          <div class="wiz-col">
-            <div class="wiz-col-heading">Windfall</div>
-            <p class="wiz-col-intro">Model one-off lump-sum inflows — for example, an expected inheritance or property sale proceeds.<br><br>Each amount is entered in today's money and uprated by inflation to the year it lands.</p>
-
-            <!-- Windfall slots container -->
-            <div id="windfalls-container">
-              <!-- Windfall 1 (permanent) -->
-              <div class="windfall-slot" data-slot="1">
-                <div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span><span class="wf-chevron">&#x25bc;</span> <span class="wf-label-n">Windfall 1</span></span><span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="display:none;font-size:0.75rem;font-weight:500;color:var(--muted,#94a3b8);cursor:pointer;letter-spacing:0.02em;padding:0.1rem 0.4rem;border:1px solid var(--border,#334155);border-radius:3px">&#x2715; Remove</span></div>
-                <div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.5rem 1.4rem"></div>
-                <table class="wiz-table">
-                  <tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>
-                  <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>
-                  <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>
-                  <tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>
-                  <tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>
-                  <tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>
-                  <tr class="wf-wrapper-hint-row" style="display:none"><td colspan="2" class="wf-wrapper-hint">Cash earns 0% growth in projections. For a capital-preserved low-volatility holding, use GIA with the “100% Cash” split instead.</td></tr>
-                </table>
-              </div>
-            </div>
-
-            <button type="button" id="windfalls-add-btn" class="wiz-add-btn" onclick="wizAddWindfall()">+ Add another windfall</button>
           </div>
 
           <!-- One-off purchase -->
@@ -999,15 +999,18 @@
               const name    = slot.querySelector('.wf-name')?.value?.trim();
               const year    = slot.querySelector('.wf-year')?.value?.trim();
               const amount  = slot.querySelector('.wf-amount')?.value?.trim();
-              const person  = slot.querySelector('.wf-person')?.value || 'p1';
+              const personSel = slot.querySelector('.wf-person');
+              const personName = personSel?.options[personSel.selectedIndex]?.text || personSel?.value || 'P1';
               const wrapper = slot.querySelector('.wf-wrapper')?.value || 'GIA';
-              const parts   = [];
-              if (year)    parts.push(year);
-              if (person)  parts.push(person.toUpperCase());
-              if (wrapper) parts.push(wrapper);
-              if (amount)  parts.push('\u00a3' + amount);
-              const label = name || 'Windfall';
-              return label + (parts.length ? ' \u2014 ' + parts.join(' \u00b7 ') : '');
+              const label   = name || 'Windfall';
+              const titleParts = [label];
+              if (year) titleParts.push(year);
+              const title = '<strong>' + titleParts.join(', ') + '</strong>';
+              const metaParts = [];
+              if (personName) metaParts.push(personName);
+              if (wrapper)    metaParts.push(wrapper);
+              if (amount)     metaParts.push('\u00a3' + amount);
+              return title + (metaParts.length ? ' ' + metaParts.join(' · ') : '');
             }
 
             function _wfCollapse(slot) {
@@ -1015,7 +1018,7 @@
               const summary = slot.querySelector('.wf-summary');
               const chevron = slot.querySelector('.wf-chevron');
               if (table)   table.style.display  = 'none';
-              if (summary) { summary.textContent = _wfSummary(slot); summary.style.display = ''; }
+              if (summary) { summary.innerHTML = _wfSummary(slot); summary.style.display = ''; }
               if (chevron) chevron.textContent   = '\u25b6';
             }
 
