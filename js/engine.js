@@ -156,6 +156,26 @@
         }
       }
 
+      // ── Windfall injections ──────────────────────────────────────────────────
+      // Amounts are entered in today's money; uprated by cumInfl to the landing year.
+      if (inputs.windfalls && inputs.windfalls.length > 0) {
+        inputs.windfalls.forEach(function(wf) {
+          if (wf.year !== year) return;
+          const nominal = wf.amount * cumInfl;
+          const bal     = wf.person === 'p2' ? p2Bal : p1Bal;
+          if (wf.wrapper === 'GIA') {
+            bal.GIA  = (bal.GIA  || 0) + nominal;
+            // keep GIAeq in sync so growth/dividends apply correctly
+            bal.GIAeq = (bal.GIAeq || 0) + nominal;
+          } else {
+            bal[wf.wrapper] = (bal[wf.wrapper] || 0) + nominal;
+          }
+          const personName = wf.person === 'p2' ? p2name : p1name;
+          annotations.push({ year, person: wf.person, event: 'windfall',
+            message: wf.name + ' (£' + Math.round(nominal).toLocaleString('en-GB') + ' nominal) added to ' + personName + '\'s ' + wf.wrapper });
+        });
+      }
+
       // Annotations: one-off lifecycle events
       if (p1Age === p1SPAge && p1SPAmt > 0)
         annotations.push({ year, person: 'p1', event: 'sp_starts',

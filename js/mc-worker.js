@@ -360,7 +360,17 @@ function runPath(inputs, equityVol, inflationVol, stressMode, stressParams) {
     p2enabled,
     deferYears,
     intAccts,
+    p1PensionSweep,
+    p2PensionSweep,
   } = inputs;
+
+  // Pension sweep constants — mirrors engine.js logic exactly.
+  // No annotations in the worker (reporting only); balance mutation is identical.
+  const p1PensionMonthlyNet = p1PensionSweep?.monthlyNet || 0;
+  const p1PensionStopAge    = p1PensionSweep?.stopAge    || 0;
+  const p2PensionMonthlyNet = p2PensionSweep?.monthlyNet || 0;
+  const p2PensionStopAge    = p2PensionSweep?.stopAge    || 0;
+  const PENSION_AA          = 60000;
 
   const numYears = endYear - startYear + 1;
 
@@ -430,6 +440,42 @@ function runPath(inputs, equityVol, inflationVol, stressMode, stressParams) {
     const p1SalInc = (p1SalaryStop && p1Age <= p1SalaryStop) ? p1Salary * cumInfl : 0;
     const p2SalInc = (p2enabled && p2SalaryStop && p2Age <= p2SalaryStop)
       ? p2Salary * cumInfl : 0;
+
+    // ── Pension sweep contributions ──────────────────────────────────────────
+    // Mirrors engine.js: gross-up by /0.8, cap at lower of salary and £60k AA,
+    // uprate by cumInfl. Applied before spending target so the enlarged SIPP
+    // balance is immediately available for drawdown in this and future years.
+    if (p1PensionMonthlyNet > 0 && (!p1PensionStopAge || p1Age <= p1PensionStopAge)) {
+      const p1NetAnnual   = p1PensionMonthlyNet * 12 * cumInfl;
+      const p1GrossTarget = p1NetAnnual / 0.8;
+      const p1SalaryCap   = p1SalInc > 0 ? p1SalInc : 0;
+      const p1Capped      = Math.min(p1GrossTarget, PENSION_AA, p1SalaryCap > 0 ? p1SalaryCap : PENSION_AA);
+      if (p1Capped > 0) p1Bal.SIPP = (p1Bal.SIPP || 0) + p1Capped;
+    }
+    if (p2enabled && p2PensionMonthlyNet > 0 && (!p2PensionStopAge || p2Age <= p2PensionStopAge)) {
+      const p2NetAnnual   = p2PensionMonthlyNet * 12 * cumInfl;
+      const p2GrossTarget = p2NetAnnual / 0.8;
+      const p2SalaryCap   = p2SalInc > 0 ? p2SalInc : 0;
+      const p2Capped      = Math.min(p2GrossTarget, PENSION_AA, p2SalaryCap > 0 ? p2SalaryCap : PENSION_AA);
+      if (p2Capped > 0) p2Bal.SIPP = (p2Bal.SIPP || 0) + p2Capped;
+    }
+
+    // ── Windfall injections ───────────────────────────────────────────────────
+    // Mirrors engine.js: amount * cumInfl at the landing year, per-person, per-wrapper.
+    // No annotations in the worker.
+    if (inputs.windfalls && inputs.windfalls.length > 0) {
+      inputs.windfalls.forEach(function(wf) {
+        if (wf.year !== year) return;
+        const nominal = wf.amount * cumInfl;
+        const bal     = wf.person === 'p2' ? p2Bal : p1Bal;
+        if (wf.wrapper === 'GIA') {
+          bal.GIA   = (bal.GIA   || 0) + nominal;
+          bal.GIAeq = (bal.GIAeq || 0) + nominal;
+        } else {
+          bal[wf.wrapper] = (bal[wf.wrapper] || 0) + nominal;
+        }
+      });
+    }
 
     // ── GIA dividends (payout mode — equity GIA only; cashlike GIA is income-generating
     //    but modelled via low-vol growth rather than dividend yield) ──────────────────

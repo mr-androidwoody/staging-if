@@ -226,6 +226,19 @@
       dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'payout',
       startYear:         safeValue('sp-startYear'),
       endYear:           safeValue('sp-endYear'),
+      windfalls:         (function () {
+        var out = [];
+        document.querySelectorAll('#windfalls-container .windfall-slot').forEach(function(slot) {
+          out.push({
+            name:    slot.querySelector('.wf-name')?.value?.trim() || '',
+            year:    slot.querySelector('.wf-year')?.value || '',
+            amount:  slot.querySelector('.wf-amount')?.value || '',
+            person:  slot.querySelector('.wf-person')?.value || 'p1',
+            wrapper: slot.querySelector('.wf-wrapper')?.value || 'GIA',
+          });
+        });
+        return out;
+      })(),
     };
   }
 
@@ -332,6 +345,53 @@
     if (a.startYear) { const el = safeEl('sp-startYear'); if (el) el.value = a.startYear; }
     if (a.endYear)   { const el = safeEl('sp-endYear');   if (el) el.value = a.endYear;   }
 
+    // Windfall slots — clear and rebuild from saved data
+    if (Array.isArray(a.windfalls)) {
+      const container = document.getElementById('windfalls-container');
+      if (container) {
+        // Remove all existing slots
+        container.querySelectorAll('.windfall-slot').forEach(s => s.remove());
+        // Reset the counter
+        if (typeof window._wfCount !== 'undefined') { window._wfCount = 0; }
+        // If no windfalls saved, restore the blank slot 1
+        const source = a.windfalls.length > 0 ? a.windfalls : [{ name:'', year:'', amount:'', person:'p1', wrapper:'GIA' }];
+        source.forEach(function(wf, idx) {
+          if (idx === 0) {
+            // Re-create slot 1 inline (matches the static HTML structure)
+            const div = document.createElement('div');
+            div.className = 'windfall-slot';
+            div.dataset.slot = '1';
+            div.innerHTML =
+              '<div class="wiz-col-heading wiz-col-heading--sub">Windfall 1</div>' +
+              '<table class="wiz-table">' +
+              '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>' +
+              '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>' +
+              '<tr><td class="wiz-label">Amount (\u00a3)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>' +
+              '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
+              '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+              '</table>';
+            container.appendChild(div);
+          } else {
+            wizAddWindfall();
+          }
+          const slots = container.querySelectorAll('.windfall-slot');
+          const slot  = slots[idx];
+          if (!slot) return;
+          const nameEl    = slot.querySelector('.wf-name');
+          const yearEl    = slot.querySelector('.wf-year');
+          const amountEl  = slot.querySelector('.wf-amount');
+          const personEl  = slot.querySelector('.wf-person');
+          const wrapperEl = slot.querySelector('.wf-wrapper');
+          if (nameEl)    nameEl.value    = wf.name    || '';
+          if (yearEl)    yearEl.value    = wf.year    || '';
+          if (amountEl)  amountEl.value  = wf.amount  || '';
+          if (personEl)  personEl.value  = wf.person  || 'p1';
+          if (wrapperEl) wrapperEl.value = wf.wrapper || 'GIA';
+          if (amountEl && window.RetireRender) RetireRender.applyCurrencyFormattingToInput(amountEl);
+        });
+      }
+    }
+
     updateSidebarNames();
     applyP2State();
     _applySweepSurplusVisibility();
@@ -369,6 +429,7 @@
     refreshTabGating(_isPortfolioValid());
     applyAssumptionsInputs({
       spending: '', stepDownPct: '0', growth: '', inflation: '',
+      windfalls: [],
       thresholdMode: 'frozen', withdrawalStrategy: 'balanced',
       dividendYield: '1.5', bniEnabled: false,
     });
@@ -619,6 +680,15 @@
 
     document.querySelectorAll('[data-p1-btn]').forEach(el => { el.textContent = p1; });
     document.querySelectorAll('[data-p2-btn]').forEach(el => { el.textContent = p2; });
+
+    // Keep windfall person dropdowns in sync with actual names
+    document.querySelectorAll('#windfalls-container .wf-person').forEach(function(sel) {
+      const cur = sel.value;
+      sel.innerHTML =
+        '<option value="p1">' + p1 + '</option>' +
+        '<option value="p2">' + p2 + '</option>';
+      sel.value = cur; // preserve selection
+    });
   }
 
   // ─────────────────────────────
@@ -1025,6 +1095,22 @@
       },
       p1Order: ['GIA', 'SIPP', 'ISA'],
       p2Order: ['GIA', 'SIPP', 'ISA'],
+      windfalls: (function () {
+        const out = [];
+        document.querySelectorAll('#windfalls-container .windfall-slot').forEach(function(slot) {
+          var year   = parseInt(slot.querySelector('.wf-year')?.value, 10);
+          var amount = D.parseCurrency(slot.querySelector('.wf-amount')?.value || '');
+          if (!year || !amount) return;
+          out.push({
+            name:    slot.querySelector('.wf-name')?.value?.trim() || 'Windfall',
+            year,
+            amount,
+            person:  slot.querySelector('.wf-person')?.value || 'p1',
+            wrapper: slot.querySelector('.wf-wrapper')?.value || 'GIA',
+          });
+        });
+        return out;
+      })(),
       // Interest-bearing accounts (e.g. Invest Engine, QMMF with monthly draw).
       // Passed to MC worker so it can model guaranteed income and balance depletion.
       intAccts: (state.portfolioAccounts || [])

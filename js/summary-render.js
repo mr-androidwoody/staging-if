@@ -45,7 +45,7 @@
 
   function _showTab(id) {
     _activeTab = id;
-    var ids = ['ps-card-people', 'ps-card-spending', 'ps-card-portfolio', 'ps-card-strategy'];
+    var ids = ['ps-card-people', 'ps-card-spending', 'ps-card-portfolio', 'ps-card-strategy', 'ps-card-windfalls'];
     ids.forEach(function(cardId) {
       var el = document.getElementById(cardId);
       if (el) el.style.display = (cardId === id) ? '' : 'none';
@@ -549,7 +549,26 @@
       pensionContent
     , false, 'ps-card-strategy');
 
-    return '<div class="ps-grid">' + c1 + c2 + c3 + c4 + '</div>';
+    // ── Card 5: Windfalls ──────────────────────────────────────────────────────
+    var windfalls = (inputs.windfalls || []);
+    var wfRows = '';
+    if (windfalls.length > 0) {
+      windfalls.forEach(function(wf) {
+        wfRows +=
+          row(wf.name || 'Windfall',
+            vline(wf.year + ' • ' + wf.person.toUpperCase() + ' ' + wf.wrapper),
+            chip('green', 'Included'),
+            '£' + Number(wf.amount).toLocaleString('en-GB') + ' today’s money'
+          );
+      });
+    } else {
+      wfRows = '<p class="ps-empty">No windfalls configured.</p>';
+    }
+    var c5 = card(
+      subheading('Windfall events') + wfRows
+    , false, 'ps-card-windfalls');
+
+    return '<div class="ps-grid">' + c1 + c2 + c3 + c4 + c5 + '</div>';
   }
 
   window.RetireSummary = { setData: setData, render: render };
