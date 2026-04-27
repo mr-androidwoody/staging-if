@@ -837,9 +837,25 @@
       const depletionYr  = depletions?.[personKey()]?.year ?? null;
       const engineMaxYrs = depletionYr ? Math.max(1, depletionYr - startYear) : null;
       const giaOnlyYrs   = Math.min(30, Math.floor(gia / amt));
-      const maxYears     = engineMaxYrs !== null ? Math.min(30, engineMaxYrs) : giaOnlyYrs;
 
-      yearsEl.max = maxYears;
+      // If giaOnlyYrs is 0 with no engine result, check whether a GIA windfall
+      // will fund the BnI transfers — the engine handles this correctly even
+      // though the UI can't see the windfall balance at setup time.
+      const personVal2     = cfgIdx === 0 ? 'p1' : 'p2';
+      const hasGIAWindfall2 = giaOnlyYrs === 0 && engineMaxYrs === null && Array.from(
+        document.querySelectorAll('#windfalls-container .windfall-slot')
+      ).some(function(slot) {
+        return slot.querySelector('.wf-wrapper')?.value === 'GIA' &&
+               slot.querySelector('.wf-person')?.value  === personVal2 &&
+               slot.querySelector('.wf-year')?.value    !== '' &&
+               slot.querySelector('.wf-amount')?.value  !== '';
+      });
+
+      const maxYears = engineMaxYrs !== null
+        ? Math.min(30, engineMaxYrs)
+        : (hasGIAWindfall2 ? 30 : Math.max(0, giaOnlyYrs));
+
+      yearsEl.max = Math.max(1, maxYears); // never cap below 1 — engine may draw from windfall GIA
 
       // Clamp current value if it exceeds new max
       if (parseInt(yearsEl.value) > maxYears) yearsEl.value = maxYears;
@@ -848,7 +864,11 @@
       let noteText  = '';
       let noteColor = '#854f0b';
 
-      if (engineMaxYrs !== null) {
+      if (hasGIAWindfall2) {
+        noteEl.textContent = 'No opening GIA balance — Bed & ISA will apply automatically from the windfall landing year if configured above.';
+        noteEl.style.fontStyle = 'italic';
+        noteEl.style.color = '#64748b';
+      } else if (engineMaxYrs !== null) {
         // Engine result available — authoritative
         noteText  = `GIA depletes in year ${engineMaxYrs} of the projection`;
         noteColor = engineMaxYrs <= 3 ? '#a32d2d' : '#854f0b';
