@@ -58,7 +58,7 @@
    * @param {function} [opts.onProgress] — (pct: number) => void
    * @returns {Promise<object>} — resolves with the result from mc-worker.js
    */
-  function run({ inputs, simCount, equityVol, inflationVol, mcGrowth, onProgress }) {
+  function run({ inputs, simCount, equityVol, inflationVol, mcGrowth, clReturn, onProgress }) {
     // Abort any previous in-flight run immediately.
     if (_activeWorker) {
       _activeWorker.terminate();
@@ -113,7 +113,7 @@
       };
 
       // Fire the simulation.
-      worker.postMessage({ inputs, simCount: count, equityVol, inflationVol, mcGrowth });
+      worker.postMessage({ inputs, simCount: count, equityVol, inflationVol, mcGrowth, clReturn });
     });
   }
 
@@ -139,7 +139,7 @@
    * @param {object} opts     — same shape as run() opts (inputs, equityVol, inflationVol, mcGrowth, onProgress)
    * @returns {Promise<object>} — same result shape as run(), plus stressMode field
    */
-  function runStress({ stressId, inputs, equityVol, inflationVol, mcGrowth, onProgress }) {
+  function runStress({ stressId, inputs, equityVol, inflationVol, mcGrowth, clReturn, onProgress }) {
     // Abort any previous in-flight stress run.
     if (_activeStressWorker) {
       _activeStressWorker.terminate();
@@ -202,6 +202,7 @@
         equityVol,
         inflationVol,
         mcGrowth,
+        clReturn,
         stressMode:  stressId,
         stressParams,
       });

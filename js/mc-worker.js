@@ -5,7 +5,7 @@
  * Runs entirely off the main thread — no DOM, no window.* globals.
  *
  * Receives one postMessage from mc-engine.js:
- *   { inputs, simCount, equityVol, inflationVol }
+ *   { inputs, simCount, equityVol, inflationVol, clReturn }
  *
  * Posts back:
  *   { type: 'progress', pct }          — every 500 paths
@@ -78,10 +78,10 @@ const TAX_BANDS = [
  * Grow all wrapper balances by (1 + rate). Mutates bal in place.
  * Equivalent to C.growBalances in calculator.js.
  */
-function growBalances(bal, equityRate, inflationRate) {
-  bal.Cash    = (bal.Cash    || 0) * (1 + inflationRate); // Cash grows at inflation rate (capital-preserved, no equity vol)
-  bal.GIAeq   = (bal.GIAeq   || 0) * (1 + equityRate);  // Equity portion of GIA
-  bal.GIAcash = (bal.GIAcash || 0) * (1 + inflationRate); // Cashlike portion — inflation rate, no vol
+function growBalances(bal, equityRate, inflationRate, clRate) {
+  bal.Cash    = (bal.Cash    || 0);                        // Cash earns 0% — CA_RETURN = 0 in mc-assumptions.js
+  bal.GIAeq   = (bal.GIAeq   || 0) * (1 + equityRate);  // Equity GIA — full equity vol
+  bal.GIAcash = (bal.GIAcash || 0) * (1 + clRate);       // Cashlike GIA — CL_RETURN net of fee, no equity vol
   bal.ISA     = (bal.ISA     || 0) * (1 + equityRate);
   bal.SIPP    = (bal.SIPP    || 0) * (1 + equityRate);
 }
@@ -344,7 +344,7 @@ function sampleRate(mean, vol, floor = -0.5, ceiling = 2.0) {
 //   survived        — true if portfolio never hit zero across all years
 // ─────────────────────────────────────────────────────────────────────────────
 
-function runPath(inputs, equityVol, inflationVol, stressMode, stressParams) {
+function runPath(inputs, equityVol, inflationVol, clReturn, stressMode, stressParams) {
   const {
     startYear, endYear,
     p1DOB, p2DOB,
@@ -591,8 +591,8 @@ function runPath(inputs, equityVol, inflationVol, stressMode, stressParams) {
     }
 
     // ── Growth ────────────────────────────────────────────────────────────
-    growBalances(p1Bal, growthY, inflationY);
-    if (p2enabled) growBalances(p2Bal, growthY, inflationY);
+    growBalances(p1Bal, growthY, inflationY, clReturn);
+    if (p2enabled) growBalances(p2Bal, growthY, inflationY, clReturn);
 
     // ── Approximate tax (reporting only — NOT debited from any balance) ──
     // Target is gross, so shortfall-sized wrapper draws already account for
@@ -646,7 +646,8 @@ function percentile(sortedArr, p) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 self.onmessage = function (e) {
-  const { inputs, simCount, equityVol, inflationVol, mcGrowth, stressMode, stressParams } = e.data;
+  const { inputs, simCount, equityVol, inflationVol, mcGrowth, clReturn, stressMode, stressParams } = e.data;
+  const effectiveClReturn = clReturn ?? 0.0228; // fallback: CL_RETURN (2.5%) - ANNUAL_FEE (0.22%)
 
   // If mcGrowth is provided, override inputs.growth with the historically-grounded
   // figure from mc-assumptions.js. This allows the MC engine to use realistic
@@ -683,7 +684,7 @@ self.onmessage = function (e) {
   const PROGRESS_INTERVAL = 500;
 
   for (let sim = 0; sim < simCount; sim++) {
-    const { portfolioByYear, taxByYear, survived } = runPath(effectiveInputs, equityVol, inflationVol, stressMode, stressParams);
+    const { portfolioByYear, taxByYear, survived } = runPath(effectiveInputs, equityVol, inflationVol, effectiveClReturn, stressMode, stressParams);
 
     for (let yi = 0; yi < numYears; yi++) {
       portfolioMatrix[yi][sim] = portfolioByYear[yi];

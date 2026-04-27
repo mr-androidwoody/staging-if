@@ -372,7 +372,7 @@
               '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
               '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
               '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
-              '<tr class="wf-wrapper-hint-row" style="display:none"><td colspan="2" class="wf-wrapper-hint">Cash grows at the inflation rate in projections — no equity volatility.</td></tr>' +
+              '<tr class="wf-wrapper-hint-row" style="display:none"><td colspan="2" class="wf-wrapper-hint">Cash earns 0% growth in projections. For a capital-preserved low-volatility holding, use GIA with the “100% Cash” split instead.</td></tr>' +
               '</table>';
             container.appendChild(div);
           } else {
@@ -1263,7 +1263,7 @@
           alloc.cashlike  || 0,
           alloc.cash      || 0,
         )
-      : { growth: (state.lastInputs?.growth ?? 0.05), equityVol: 0.16, inflationVol: 0.015 };
+      : { growth: (state.lastInputs?.growth ?? 0.05), equityVol: 0.16, inflationVol: 0.015, clReturn: 0.0228 };
   }
 
   function _setRiskReady(ready) {
@@ -1385,6 +1385,7 @@
     const _mcGrowth      = _mcAssume.growth;
     const _mcEquityVol   = _mcAssume.equityVol;
     const _mcInflationVol = _mcAssume.inflationVol;
+    const _mcClReturn    = _mcAssume.clReturn ?? 0.0228; // net cashlike return for GIAcash; fallback matches CL_RETURN - ANNUAL_FEE
 
     try {
       // ── Main run: 10,000 paths at current spending ─────────────────────
@@ -1394,6 +1395,7 @@
         mcGrowth:     _mcGrowth,
         equityVol:    _mcEquityVol,
         inflationVol: _mcInflationVol,
+        clReturn:     _mcClReturn,
         onProgress:   (pct) => _setLoadingProgress(pct),
       });
 
@@ -1412,6 +1414,7 @@
           mcGrowth:     _mcGrowth,
           equityVol:    _mcEquityVol,
           inflationVol: _mcInflationVol,
+          clReturn:     _mcClReturn,
         })).successRate;
 
         if (rHigh >= TARGET_CONFIDENCE) {
@@ -1440,6 +1443,7 @@
           mcGrowth:     _mcGrowth,
           equityVol:    _mcEquityVol,
           inflationVol: _mcInflationVol,
+          clReturn:     _mcClReturn,
         })).successRate;
 
         if (rLow < TARGET_CONFIDENCE) {
@@ -1455,6 +1459,7 @@
               mcGrowth:     _mcGrowth,
               equityVol:    _mcEquityVol,
               inflationVol: _mcInflationVol,
+              clReturn:     _mcClReturn,
             });
             if (midRes.successRate >= TARGET_CONFIDENCE) {
               lo = mid;
@@ -1469,9 +1474,9 @@
 
       // ── Delay perturbations ───────────────────────────────────────────
       const DELAY_SIMS = 2_000;
-      const delay1 = await MCE.run({ inputs: { ...inputs, deferYears: 1 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol });
-      const delay2 = await MCE.run({ inputs: { ...inputs, deferYears: 2 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol });
-      const delay3 = await MCE.run({ inputs: { ...inputs, deferYears: 3 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol });
+      const delay1 = await MCE.run({ inputs: { ...inputs, deferYears: 1 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol, clReturn: _mcClReturn });
+      const delay2 = await MCE.run({ inputs: { ...inputs, deferYears: 2 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol, clReturn: _mcClReturn });
+      const delay3 = await MCE.run({ inputs: { ...inputs, deferYears: 3 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol, clReturn: _mcClReturn });
       const delayPerturbations = [
         { yearsDelay: 1, successRate: delay1.successRate },
         { yearsDelay: 2, successRate: delay2.successRate },

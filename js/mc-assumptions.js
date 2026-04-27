@@ -142,6 +142,7 @@
       growth:       blend.netReturn,
       equityVol:    blend.vol,
       inflationVol: INFLATION_VOL,
+      clReturn:     Math.max(0, CL_RETURN - ANNUAL_FEE), // net-of-fee cashlike return for GIAcash growth
     };
   }
 
