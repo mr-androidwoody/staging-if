@@ -1093,31 +1093,27 @@
             <button type="button" id="gifts-add-btn" class="wiz-add-btn" onclick="wizAddSlot('gifts-add-btn',['gift2-slot','gift3-slot'])">+ Add another gift</button>
           </div>
 
-          <!-- Inheritance windfall -->
+          <!-- Windfall -->
           <div class="wiz-col">
-            <div class="wiz-col-heading">Inheritance windfall <span class="wiz-badge-soon">coming soon</span></div>
-            <p class="wiz-col-intro">Model a one-off lump-sum inflow - for example, an expected inheritance.<br><br>The amount is added to the portfolio in the year it occurs, and you can choose which wrapper it lands in.</p>
+            <div class="wiz-col-heading">Windfall</div>
+            <p class="wiz-col-intro">Model one-off lump-sum inflows — for example, an expected inheritance or property sale proceeds.<br><br>Each amount is entered in today's money and uprated by inflation to the year it lands.</p>
 
-            <!-- Windfall 1 (permanent) -->
-            <div class="wiz-col-heading wiz-col-heading--sub">Windfall 1</div>
-            <table class="wiz-table">
-              <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" id="windfall1Year" placeholder="e.g. 2032" min="2025" max="2060" disabled></td></tr>
-              <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" id="windfall1Amount" class="currency-input" placeholder="e.g. 400,000" disabled></td></tr>
-              <tr><td class="wiz-label">Added to wrapper</td><td class="wiz-val"><select id="windfall1Wrapper" disabled><option value="Cash">Cash</option><option value="ISA">ISA</option><option value="GIA" selected>GIA</option></select></td></tr>
-            </table>
-
-            <!-- Windfall 2 (hidden until Add another clicked) -->
-            <div id="windfall2-slot" style="display:none">
-              <div class="wiz-section-divider"></div>
-              <div class="wiz-col-heading wiz-col-heading--sub">Windfall 2 <button type="button" class="wiz-remove-btn" onclick="wizRemoveSlot('windfall2-slot',null,'windfalls-add-btn')">✕ Remove</button></div>
-              <table class="wiz-table">
-                <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" id="windfall2Year" placeholder="e.g. 2038" min="2025" max="2060" disabled></td></tr>
-                <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" id="windfall2Amount" class="currency-input" placeholder="e.g. 400,000" disabled></td></tr>
-                <tr><td class="wiz-label">Added to wrapper</td><td class="wiz-val"><select id="windfall2Wrapper" disabled><option value="Cash">Cash</option><option value="ISA">ISA</option><option value="GIA" selected>GIA</option></select></td></tr>
-              </table>
+            <!-- Windfall slots container -->
+            <div id="windfalls-container">
+              <!-- Windfall 1 (permanent) -->
+              <div class="windfall-slot" data-slot="1">
+                <div class="wiz-col-heading wiz-col-heading--sub">Windfall 1</div>
+                <table class="wiz-table">
+                  <tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>
+                  <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>
+                  <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>
+                  <tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>
+                  <tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>
+                </table>
+              </div>
             </div>
 
-            <button type="button" id="windfalls-add-btn" class="wiz-add-btn" onclick="wizAddSlot('windfalls-add-btn',['windfall2-slot'])">+ Add another windfall</button>
+            <button type="button" id="windfalls-add-btn" class="wiz-add-btn" onclick="wizAddWindfall()">+ Add another windfall</button>
           </div>
 
           <!-- One-off purchase -->
@@ -1158,6 +1154,35 @@
           </script>
 
           <script>
+            let _wfCount = 1;
+            function wizAddWindfall() {
+              _wfCount++;
+              const n = _wfCount;
+              const container = document.getElementById('windfalls-container');
+              const div = document.createElement('div');
+              div.className = 'windfall-slot';
+              div.dataset.slot = n;
+              div.innerHTML =
+                '<div class="wiz-section-divider"></div>' +
+                '<div class="wiz-col-heading wiz-col-heading--sub">Windfall ' + n +
+                ' <button type="button" class="wiz-remove-btn" onclick="wizRemoveWindfall(this)">&#x2715; Remove</button></div>' +
+                '<table class="wiz-table">' +
+                '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Property sale"></td></tr>' +
+                '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2038" min="2025" max="2060"></td></tr>' +
+                '<tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 200,000"></td></tr>' +
+                '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
+                '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+                '</table>';
+              container.appendChild(div);
+              // Apply currency formatting to the new amount input
+              if (window.RetireRender && RetireRender.applyCurrencyFormattingToInput) {
+                div.querySelectorAll('.currency-input').forEach(RetireRender.applyCurrencyFormattingToInput);
+              }
+            }
+            function wizRemoveWindfall(btn) {
+              const slot = btn.closest('.windfall-slot');
+              if (slot) slot.remove();
+            }
             function wizAddSlot(addBtnId, slotIds) {
               for (const id of slotIds) {
                 const el = document.getElementById(id);
@@ -1251,6 +1276,7 @@
             <button class="ps-nav__link" data-ps-tab="ps-card-spending">Spending</button>
             <button class="ps-nav__link" data-ps-tab="ps-card-portfolio">Portfolio</button>
             <button class="ps-nav__link" data-ps-tab="ps-card-strategy">Strategy</button>
+            <button class="ps-nav__link" data-ps-tab="ps-card-windfalls">Windfalls</button>
           </nav>
         </div>
         <div class="chart-canvas-area ps-canvas-area" id="summary-panel">
