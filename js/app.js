@@ -363,13 +363,15 @@
             div.className = 'windfall-slot';
             div.dataset.slot = '1';
             div.innerHTML =
-              '<div class="wiz-col-heading wiz-col-heading--sub">Windfall 1</div>' +
+              '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer"><span class="wf-chevron">&#x25bc;</span> Windfall 1</div>' +
+              '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.4rem 1.4rem"></div>' +
               '<table class="wiz-table">' +
               '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>' +
               '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>' +
               '<tr><td class="wiz-label">Amount (\u00a3)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>' +
               '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
-              '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+              '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+              '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
               '</table>';
             container.appendChild(div);
           } else {
@@ -395,6 +397,14 @@
           if (eqRow) eqRow.style.display = (wf.wrapper === 'GIA' || !wf.wrapper) ? '' : 'none';
           if (amountEl && window.RetireRender) RetireRender.applyCurrencyFormattingToInput(amountEl);
         });
+        // After restore, collapse all then expand only the last slot
+        const allSlots = container.querySelectorAll('.windfall-slot');
+        allSlots.forEach(function(s) {
+          if (typeof _wfCollapse === 'function') _wfCollapse(s);
+        });
+        if (allSlots.length > 0 && typeof _wfExpand === 'function') {
+          _wfExpand(allSlots[allSlots.length - 1]);
+        }
       }
     }
 
