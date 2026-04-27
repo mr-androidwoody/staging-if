@@ -3953,6 +3953,22 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 .wiz-remove-btn:hover { opacity: 1; background: #e74c3c; color: #fff; }
 
+.wf-remove-link {
+  transition: color 0.15s, border-color 0.15s;
+}
+.wf-remove-link:hover {
+  color: #e74c3c !important;
+  border-color: #e74c3c !important;
+}
+
+.wf-wrapper-hint {
+  font-size: 0.75rem;
+  color: var(--muted, #64748b);
+  font-style: italic;
+  padding: 0.25rem 0.5rem 0.35rem;
+  line-height: 1.4;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    YOUR OUTLOOK TAB — active state
    ═══════════════════════════════════════════════════════════════ */
