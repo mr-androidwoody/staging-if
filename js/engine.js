@@ -20,6 +20,7 @@
       thresholdMode, thresholdFromYear,
       bniEnabled, bniP1GIA, bniP1Years, bniP2GIA, bniP2Years,
       p1SweepSurplus, p2SweepSurplus,
+      p1PensionSweep, p2PensionSweep,
       dividendYield,
       dividendMode,
       strategy,
@@ -30,6 +31,16 @@
     // Defaults to 0.0022 (0.22%/yr) if not supplied — test harnesses can pass
     // mgmtFee: 0 to isolate other logic from the fee.
     const netGrowth = growth - (mgmtFee ?? 0.0022);
+
+    // Pension sweep — extract monthly net contributions and stop ages.
+    // Defaults to zero so the feature is completely inert when not configured.
+    const p1PensionMonthlyNet = p1PensionSweep?.monthlyNet || 0;
+    const p1PensionStopAge    = p1PensionSweep?.stopAge    || 0;
+    const p2PensionMonthlyNet = p2PensionSweep?.monthlyNet || 0;
+    const p2PensionStopAge    = p2PensionSweep?.stopAge    || 0;
+
+    // Annual allowance statutory cap — gross (2026/27).
+    const PENSION_AA = 60000;
 
     // Fallback wrapper order used by applyFallback inside withdrawalStrategy.
     // Cash is excluded here; SIPP lock is applied per-year below.
@@ -107,6 +118,43 @@
       const p2SP     = p2Age >= p2SPAge ? p2SPAmt * cumInfl : 0;
       const p2SalInc = (p2SalaryStop && p2Age <= p2SalaryStop) ? p2Salary * cumInfl : 0;
       const p1SalInc = (p1SalaryStop && p1Age <= p1SalaryStop) ? p1Salary * cumInfl : 0;
+
+      // ── Pension sweep contributions ──────────────────────────────────────────
+      // Applied before guaranteed income so the enlarged SIPP balance is
+      // available for drawdown in the same year and beyond.
+      // User enters net monthly amount; engine grosses up by /0.8 (basic rate
+      // relief at source). Capped at lower of £60,000/yr and gross salary for
+      // the year (per HMRC annual allowance rules — contributions cannot exceed
+      // 100% of relevant UK earnings, capped at the AA).
+      // Amount is entered in today's money and uprated by cumInfl each year.
+      if (p1PensionMonthlyNet > 0 && (!p1PensionStopAge || p1Age <= p1PensionStopAge)) {
+        const p1NetAnnual   = p1PensionMonthlyNet * 12 * cumInfl;
+        const p1GrossTarget = p1NetAnnual / 0.8;
+        const p1SalaryCap   = p1SalInc > 0 ? p1SalInc : 0;
+        const p1Capped      = Math.min(p1GrossTarget, PENSION_AA, p1SalaryCap > 0 ? p1SalaryCap : PENSION_AA);
+        if (p1Capped > 0) {
+          p1Bal.SIPP = (p1Bal.SIPP || 0) + p1Capped;
+          const capReason = p1Capped < p1GrossTarget
+            ? (p1SalaryCap > 0 && p1SalaryCap < PENSION_AA ? ' (capped at salary)' : ' (capped at £60,000 AA)')
+            : '';
+          annotations.push({ year, person: 'p1', event: 'pension_contribution',
+            message: `${p1name}'s pension contribution: £${Math.round(p1Capped).toLocaleString('en-GB')} gross added to SIPP${capReason}` });
+        }
+      }
+      if (p2PensionMonthlyNet > 0 && (!p2PensionStopAge || p2Age <= p2PensionStopAge)) {
+        const p2NetAnnual   = p2PensionMonthlyNet * 12 * cumInfl;
+        const p2GrossTarget = p2NetAnnual / 0.8;
+        const p2SalaryCap   = p2SalInc > 0 ? p2SalInc : 0;
+        const p2Capped      = Math.min(p2GrossTarget, PENSION_AA, p2SalaryCap > 0 ? p2SalaryCap : PENSION_AA);
+        if (p2Capped > 0) {
+          p2Bal.SIPP = (p2Bal.SIPP || 0) + p2Capped;
+          const capReason = p2Capped < p2GrossTarget
+            ? (p2SalaryCap > 0 && p2SalaryCap < PENSION_AA ? ' (capped at salary)' : ' (capped at £60,000 AA)')
+            : '';
+          annotations.push({ year, person: 'p2', event: 'pension_contribution',
+            message: `${p2name}'s pension contribution: £${Math.round(p2Capped).toLocaleString('en-GB')} gross added to SIPP${capReason}` });
+        }
+      }
 
       // Annotations: one-off lifecycle events
       if (p1Age === p1SPAge && p1SPAmt > 0)
