@@ -372,6 +372,7 @@
               '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
               '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
               '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
+              '<tr class="wf-wrapper-hint-row" style="display:none"><td colspan="2" class="wf-wrapper-hint">Cash grows at the inflation rate in projections — no equity volatility.</td></tr>' +
               '</table>';
             container.appendChild(div);
           } else {
@@ -392,9 +393,11 @@
           if (wrapperEl) wrapperEl.value = wf.wrapper || 'GIA';
           const equityEl  = slot.querySelector('.wf-equity');
           if (equityEl)  equityEl.value  = wf.equityPct != null ? String(wf.equityPct) : '70';
-          // Show/hide equity row based on restored wrapper
-          const eqRow = slot.querySelector('.wf-equity-row');
-          if (eqRow) eqRow.style.display = (wf.wrapper === 'GIA' || !wf.wrapper) ? '' : 'none';
+          // Show/hide equity row and cash hint based on restored wrapper
+          const eqRow   = slot.querySelector('.wf-equity-row');
+          const hintRow = slot.querySelector('.wf-wrapper-hint-row');
+          if (eqRow)   eqRow.style.display   = (wf.wrapper === 'GIA' || !wf.wrapper) ? '' : 'none';
+          if (hintRow) hintRow.style.display  = wf.wrapper === 'Cash' ? '' : 'none';
           if (amountEl && window.RetireRender) RetireRender.applyCurrencyFormattingToInput(amountEl);
         });
         // After restore, collapse all then expand only the last slot
@@ -2057,6 +2060,7 @@
   });
   _updateBniMaxYears();
   _applySweepSurplusVisibility();
+  updateSidebarNames(); // ensure windfall person dropdowns show actual names on first load
 
   // Gate tabs after everything is loaded — must run after RetireTabs.init()
   // so our disabled state wins over any defaults set by the tab system
