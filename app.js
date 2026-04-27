@@ -1,0 +1,2123 @@
+(function () {
+  const D  = window.RetireData;
+  const C  = window.RetireCalc;
+  const R  = window.RetireRender;
+  const E  = window.RetireEngine;
+  const CR = window.RetireCalcRender;
+
+  const STORAGE_KEY     = 'rukRetirementSetup';
+  const ASSUMPTIONS_KEY = 'rukRetirementAssumptions';
+
+  const state = {
+    portfolioAccounts: [],
+    nextId: 1,
+    activeTab: 'setup',
+    p2enabled: true,
+    simulationMode: 'deterministic', // kept for backwards compat with saved assumptions
+    projectionRun: false,
+    riskRun: false,    // true once MC has completed at least once
+    riskStale: false,  // true when projection has been re-run since last MC run
+    lastResult: null,  // most recent engine projection result
+  };
+
+  // ─────────────────────────────
+  // SAFE HELPERS
+  // ─────────────────────────────
+  function safeEl(id)    { return document.getElementById(id); }
+  function safeValue(id) { const el = safeEl(id); return el ? el.value : ''; }
+  function safeNumber(v) { const n = Number(v); return isNaN(n) ? 0 : n; }
+
+  function formatCurrency(val) {
+    return D?.formatCurrency ? D.formatCurrency(val) : (val || 0).toLocaleString('en-GB');
+  }
+
+  // ─────────────────────────────
+  // TOAST
+  // ─────────────────────────────
+  function showToast(msg, isError) {
+    let toast = safeEl('rup-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'rup-toast';
+      Object.assign(toast.style, {
+        position: 'fixed', bottom: '24px', right: '24px',
+        padding: '10px 18px', borderRadius: '6px',
+        fontFamily: 'sans-serif', fontSize: '14px', color: '#fff',
+        zIndex: 9999, opacity: 0, transition: 'opacity 0.2s ease', pointerEvents: 'none',
+      });
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.background = isError ? '#c0392b' : '#27ae60';
+    toast.style.opacity = 1;
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => { toast.style.opacity = 0; }, 2500);
+  }
+
+  // ─────────────────────────────
+  // SAVE BUTTON FEEDBACK
+  // Default state: btn-success (solid green).
+  // Saving state:  btn-saving  (ghost green — white bg, green border, green text).
+  // After 800ms:   resets to btn-success + original label.
+  // ─────────────────────────────
+  function triggerSaveFeedback(btn, originalLabel, saveFn) {
+    try {
+      saveFn();
+    } catch (err) {
+      console.error(err);
+      showToast('Save failed – see console', true);
+      return;
+    }
+
+    // Flip to ghost saving state
+    btn.textContent = 'Saving…';
+    btn.classList.remove('btn-success');
+    btn.classList.add('btn-saving');
+    clearTimeout(btn._saveTimer);
+
+    btn._saveTimer = window.setTimeout(() => {
+      btn.textContent = originalLabel;
+      btn.classList.remove('btn-saving');
+      btn.classList.add('btn-success');
+    }, 800);
+  }
+
+  // ─────────────────────────────
+  // LOAD BUTTON FEEDBACK
+  // Flips button to "Loading…" + ghost blue (btn-loading) immediately.
+  // Resets to original label + btn-secondary after resetMs (default 800ms).
+  // For Load Excel, pass a longer resetMs and call resetLoadBtn() manually
+  // on the excel-loaded event so the button resets when data actually arrives.
+  // ─────────────────────────────
+  function triggerLoadFeedback(btn, originalLabel, resetMs) {
+    btn.textContent = 'Loading…';
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+    clearTimeout(btn._loadTimer);
+
+    btn._loadTimer = window.setTimeout(() => {
+      resetLoadBtn(btn, originalLabel);
+    }, resetMs || 800);
+  }
+
+  function resetLoadBtn(btn, originalLabel) {
+    clearTimeout(btn._loadTimer);
+    btn.textContent = originalLabel;
+    btn.classList.remove('btn-loading');
+    btn.classList.add('btn-secondary');
+    btn.disabled = false;
+  }
+
+  // ─────────────────────────────
+  // DELETE CONFIRM HELPERS
+  // First click: hides trigger button, shows block confirm box.
+  // Cancel: restores. Confirm: executes deleteFn then restores.
+  // ─────────────────────────────
+  function wireDeleteConfirm(triggerId, confirmId, confirmBtnId, cancelBtnId, deleteFn) {
+    const triggerBtn = safeEl(triggerId);
+    const confirmEl  = safeEl(confirmId);
+    const confirmBtn = safeEl(confirmBtnId);
+    const cancelBtn  = safeEl(cancelBtnId);
+    if (!triggerBtn || !confirmEl || !confirmBtn || !cancelBtn) return;
+
+    function showConfirm() {
+      triggerBtn.style.display = 'none';
+      confirmEl.style.display  = 'flex';
+    }
+
+    function hideConfirm() {
+      confirmEl.style.display  = 'none';
+      triggerBtn.style.display = '';
+    }
+
+    triggerBtn.addEventListener('click', showConfirm);
+    cancelBtn.addEventListener('click',  hideConfirm);
+    confirmBtn.addEventListener('click', () => {
+      hideConfirm();
+      try {
+        deleteFn();
+      } catch (err) {
+        console.error(err);
+        showToast('Delete failed – see console', true);
+      }
+    });
+  }
+
+  // ─────────────────────────────
+  // DOM → STATE
+  // ─────────────────────────────
+  function syncAccountsFromDOM() {
+    const rows = document.querySelectorAll('#acct-tbody tr');
+    const updated = [];
+    rows.forEach((row) => {
+      const id  = Number(row.id.replace('acct-row-', ''));
+      const get = field => row.querySelector(`[data-field="${field}"]`);
+      updated.push({
+        id,
+        name:    get('name')?.value    || '',
+        wrapper: get('wrapper')?.value || 'GIA',
+        owner:   get('owner')?.value   || 'p1',
+        value:   safeNumber(D.parseCurrency(get('value')?.value || 0)),
+        alloc: {
+          equities: safeNumber(get('equities')?.value),
+          bonds:    safeNumber(get('bonds')?.value),
+          cashlike: safeNumber(get('cashlike')?.value),
+          cash:     safeNumber(get('cash')?.value),
+        },
+        rate:        get('rate')?.value        ? safeNumber(get('rate').value)                         : null,
+        monthlyDraw: get('monthlyDraw')?.value ? safeNumber(D.parseCurrency(get('monthlyDraw').value)) : null,
+      });
+    });
+    state.portfolioAccounts = updated;
+  }
+
+  // ─────────────────────────────
+  // SETUP STATE
+  // ─────────────────────────────
+  function readSetupInputs() {
+    return {
+      version: 2,
+      p2enabled: state.p2enabled,
+      people: {
+        p1: {
+          name:          safeValue('sp-p1name').trim(),
+          dob:           safeNumber(safeValue('sp-p1dob')),
+          spAge:         safeValue('p1SPAge'),
+          sp:            safeValue('p1SP'),
+          salary:        safeValue('p1Salary'),
+          salaryStopAge: safeValue('p1SalaryStopAge'),
+          sweepSurplus:  document.querySelector('input[name="p1SweepSurplus"]:checked')?.value === 'true',
+        },
+        p2: {
+          name:          safeValue('sp-p2name').trim(),
+          dob:           safeNumber(safeValue('sp-p2dob')),
+          spAge:         safeValue('p2SPAge'),
+          sp:            safeValue('p2SP'),
+          salary:        safeValue('p2Salary'),
+          salaryStopAge: safeValue('p2SalaryStopAge'),
+          sweepSurplus:  document.querySelector('input[name="p2SweepSurplus"]:checked')?.value === 'true',
+        },
+      },
+      startYear: safeNumber(safeValue('sp-startYear')),
+      endYear:   safeNumber(safeValue('sp-endYear')),
+      accounts:  state.portfolioAccounts,
+    };
+  }
+
+  function readAssumptionsInputs() {
+    return {
+      spending:          safeValue('spending'),
+      stepDownPct:       safeValue('stepDownPct'),
+      growth:            safeValue('growth'),
+      growthPreset:      document.querySelector('input[name="growthPreset"]:checked')?.value || null,
+      inflation:         safeValue('inflation'),
+      thresholdMode:     document.querySelector('input[name="thresholdMode"]:checked')?.value || 'frozen',
+      thresholdFromYear: safeValue('thresholdFromYearVal'),
+      withdrawalStrategy: document.querySelector('input[name="withdrawalStrategy"]:checked')?.value || 'balanced',
+      bniEnabled:        document.querySelector('input[name="bniEnabled"]:checked')?.value === 'true',
+      bniP1GIA:          safeValue('bniP1GIA'),
+      bniP2GIA:          safeValue('bniP2GIA'),
+      p1PensionMonthly:  safeValue('p1PensionMonthly'),
+      p1PensionStopAge:  safeValue('p1PensionStopAge'),
+      p2PensionMonthly:  safeValue('p2PensionMonthly'),
+      p2PensionStopAge:  safeValue('p2PensionStopAge'),
+      dividendYield:     safeValue('dividendYield'),
+      dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'payout',
+      startYear:         safeValue('sp-startYear'),
+      endYear:           safeValue('sp-endYear'),
+      windfalls:         (function () {
+        var out = [];
+        document.querySelectorAll('#windfalls-container .windfall-slot').forEach(function(slot) {
+          out.push({
+            name:      slot.querySelector('.wf-name')?.value?.trim() || '',
+            year:      slot.querySelector('.wf-year')?.value || '',
+            amount:    slot.querySelector('.wf-amount')?.value || '',
+            person:    slot.querySelector('.wf-person')?.value || 'p1',
+            wrapper:   slot.querySelector('.wf-wrapper')?.value || 'GIA',
+            equityPct: slot.querySelector('.wf-equity')?.value || '70',
+          });
+        });
+        return out;
+      })(),
+    };
+  }
+
+  function applySetupInputs(data) {
+    if (!data) return;
+
+    const sv    = (id, val) => { const el = safeEl(id); if (el && val != null) el.value = val; };
+    const svCur = (id, val) => { const el = safeEl(id); if (el && val != null) R.applyCurrencyFormattingToInput(Object.assign(el, { value: String(val) })); };
+    sv('sp-p1name',       data.people?.p1?.name          || '');
+    sv('sp-p1dob',        data.people?.p1?.dob           || '');
+    sv('p1SPAge',         data.people?.p1?.spAge         || '');
+    svCur('p1SP',         data.people?.p1?.sp            || '');
+    svCur('p1Salary',     data.people?.p1?.salary        || '');
+    sv('p1SalaryStopAge', data.people?.p1?.salaryStopAge || '');
+    const p1Sweep = document.querySelector(`input[name="p1SweepSurplus"][value="${data.people?.p1?.sweepSurplus ? 'true' : 'false'}"]`);
+    if (p1Sweep) p1Sweep.checked = true;
+    sv('sp-p2name',       data.people?.p2?.name          || '');
+    sv('sp-p2dob',        data.people?.p2?.dob           || '');
+    sv('p2SPAge',         data.people?.p2?.spAge         || '');
+    svCur('p2SP',         data.people?.p2?.sp            || '');
+    svCur('p2Salary',     data.people?.p2?.salary        || '');
+    sv('p2SalaryStopAge', data.people?.p2?.salaryStopAge || '');
+    const p2Sweep = document.querySelector(`input[name="p2SweepSurplus"][value="${data.people?.p2?.sweepSurplus ? 'true' : 'false'}"]`);
+    if (p2Sweep) p2Sweep.checked = true;
+    sv('sp-startYear',    data.startYear                 || '');
+    sv('sp-endYear',      data.endYear                   || '');
+
+    state.p2enabled = data.p2enabled !== false;
+    const p2cb = safeEl('p2enabled');
+    if (p2cb) p2cb.checked = state.p2enabled;
+    applyP2State();
+
+    state.portfolioAccounts = data.accounts || [];
+    state.nextId = Math.max(1, ...state.portfolioAccounts.map(a => a.id || 0)) + 1;
+    const tbody = safeEl('acct-tbody');
+    if (tbody) {
+      tbody.innerHTML = '';
+      const ownerNames = getOwnerNames();
+      state.portfolioAccounts.forEach(acc => {
+        R.renderAccountRow(acc, ownerNames);
+        R.updateRowBadge(acc);
+        R.applyWrapperFieldState(acc);
+      });
+    }
+    refreshSetupSummary();
+    refreshPortfolioUI();
+    refreshYearCount();
+
+    // Ensure all currency-input fields in the setup panel are correctly formatted
+    // after load — catches cases where values were saved as raw numbers
+    document.querySelectorAll('.setup-panel .currency-input').forEach(R.applyCurrencyFormattingToInput);
+  }
+
+  function applyAssumptionsInputs(a) {
+    if (!a) return;
+
+    const sv = (id, val) => { const el = safeEl(id); if (el && val != null) el.value = val; };
+
+    sv('spending',             a.spending);
+    sv('stepDownPct',          a.stepDownPct);
+    sv('growth',               a.growth);
+    const gp = document.querySelector(`input[name="growthPreset"][value="${a.growthPreset}"]`);
+    document.querySelectorAll('input[name="growthPreset"]').forEach(r => r.checked = false);
+    if (gp) gp.checked = true;
+    sv('inflation',            a.inflation);
+    sv('thresholdFromYearVal', a.thresholdFromYear);
+    sv('dividendYield',        a.dividendYield);
+    const dm = document.querySelector(`input[name="dividendMode"][value="${a.dividendMode ?? 'payout'}"]`);
+    if (dm) dm.checked = true;
+    sv('bniP1GIA',             a.bniP1GIA);
+    sv('bniP2GIA',             a.bniP2GIA);
+
+    if (a.thresholdMode) {
+      const r = document.querySelector(`input[name="thresholdMode"][value="${a.thresholdMode}"]`);
+      if (r) r.checked = true;
+    }
+    if (a.withdrawalStrategy) {
+      const r = document.querySelector(`input[name="withdrawalStrategy"][value="${a.withdrawalStrategy}"]`);
+      if (r) r.checked = true;
+    }
+
+    const bniRadio = document.querySelector(`input[name="bniEnabled"][value="${a.bniEnabled ? 'true' : 'false'}"]`);
+    if (bniRadio) bniRadio.checked = true;
+    applyBniState(!!a.bniEnabled);
+
+    // Pension sweep — restore values and open the toggle if a monthly amount was saved
+    if (a.p1PensionMonthly) {
+      sv('p1PensionMonthly', a.p1PensionMonthly);
+      const f = safeEl('p1-pension-fields');
+      const c = safeEl('p1-pension-chevron');
+      if (f) f.style.display = '';
+      if (c) c.textContent = '▼';
+    }
+    if (a.p1PensionStopAge) sv('p1PensionStopAge', a.p1PensionStopAge);
+    if (a.p2PensionMonthly) {
+      sv('p2PensionMonthly', a.p2PensionMonthly);
+      const f = safeEl('p2-pension-fields');
+      const c = safeEl('p2-pension-chevron');
+      if (f) f.style.display = '';
+      if (c) c.textContent = '▼';
+    }
+    if (a.p2PensionStopAge) sv('p2PensionStopAge', a.p2PensionStopAge);
+
+    if (a.startYear) { const el = safeEl('sp-startYear'); if (el) el.value = a.startYear; }
+    if (a.endYear)   { const el = safeEl('sp-endYear');   if (el) el.value = a.endYear;   }
+
+    // Windfall slots — clear and rebuild from saved data
+    if (Array.isArray(a.windfalls)) {
+      const container = document.getElementById('windfalls-container');
+      if (container) {
+        // Remove all existing slots
+        container.querySelectorAll('.windfall-slot').forEach(s => s.remove());
+        // Reset the counter
+        if (typeof window._wfCount !== 'undefined') { window._wfCount = 0; }
+        // If no windfalls saved, restore the blank slot 1
+        const source = a.windfalls.length > 0 ? a.windfalls : [{ name:'', year:'', amount:'', person:'p1', wrapper:'GIA' }];
+        source.forEach(function(wf, idx) {
+          if (idx === 0) {
+            // Re-create slot 1 inline (matches the static HTML structure)
+            const div = document.createElement('div');
+            div.className = 'windfall-slot';
+            div.dataset.slot = '1';
+            div.innerHTML =
+              '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span><span class="wf-chevron">&#x25bc;</span> <span class="wf-label-n">Windfall 1</span></span><span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="display:none;font-size:0.75rem;font-weight:500;color:var(--muted,#94a3b8);cursor:pointer;letter-spacing:0.02em;padding:0.1rem 0.4rem;border:1px solid var(--border,#334155);border-radius:3px">&#x2715; Remove</span></div>' +
+              '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.5rem 1.4rem"></div>' +
+              '<table class="wiz-table">' +
+              '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>' +
+              '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>' +
+              '<tr><td class="wiz-label">Amount (\u00a3)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>' +
+              '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
+              '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
+              '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
+              '<tr class="wf-wrapper-hint-row" style="display:none"><td colspan="2" class="wf-wrapper-hint">Cash earns 0% growth in projections. For a capital-preserved low-volatility holding, use GIA with the “100% Cash” split instead.</td></tr>' +
+              '</table>';
+            container.appendChild(div);
+          } else {
+            wizAddWindfall();
+          }
+          const slots = container.querySelectorAll('.windfall-slot');
+          const slot  = slots[idx];
+          if (!slot) return;
+          const nameEl    = slot.querySelector('.wf-name');
+          const yearEl    = slot.querySelector('.wf-year');
+          const amountEl  = slot.querySelector('.wf-amount');
+          const personEl  = slot.querySelector('.wf-person');
+          const wrapperEl = slot.querySelector('.wf-wrapper');
+          if (nameEl)    nameEl.value    = wf.name    || '';
+          if (yearEl)    yearEl.value    = wf.year    || '';
+          if (amountEl)  amountEl.value  = wf.amount  || '';
+          if (personEl)  personEl.value  = wf.person  || 'p1';
+          if (wrapperEl) wrapperEl.value = wf.wrapper || 'GIA';
+          const equityEl  = slot.querySelector('.wf-equity');
+          if (equityEl)  equityEl.value  = wf.equityPct != null ? String(wf.equityPct) : '70';
+          // Show/hide equity row and cash hint based on restored wrapper
+          const eqRow   = slot.querySelector('.wf-equity-row');
+          const hintRow = slot.querySelector('.wf-wrapper-hint-row');
+          if (eqRow)   eqRow.style.display   = (wf.wrapper === 'GIA' || !wf.wrapper) ? '' : 'none';
+          if (hintRow) hintRow.style.display  = wf.wrapper === 'Cash' ? '' : 'none';
+          if (amountEl && window.RetireRender) RetireRender.applyCurrencyFormattingToInput(amountEl);
+        });
+        // After restore, collapse all then expand only the last slot
+        const allSlots = container.querySelectorAll('.windfall-slot');
+        allSlots.forEach(function(s) {
+          if (typeof _wfCollapse === 'function') _wfCollapse(s);
+        });
+        if (allSlots.length > 0 && typeof _wfExpand === 'function') {
+          _wfExpand(allSlots[allSlots.length - 1]);
+        }
+      }
+    }
+
+    updateSidebarNames();
+    applyP2State();
+    _applySweepSurplusVisibility();
+    const _summary = C.summarisePortfolio(state.portfolioAccounts);
+    refreshCoverageRatio();
+    refreshYearCount();
+  }
+
+  // ─────────────────────────────
+  // OWNER NAMES
+  // ─────────────────────────────
+  function getOwnerNames() {
+    return [
+      safeValue('sp-p1name').trim() || 'Person 1',
+      safeValue('sp-p2name').trim() || 'Person 2',
+    ];
+  }
+
+  // ─────────────────────────────
+  // SAVE / LOAD — core data functions
+  // ─────────────────────────────
+  function saveSetupData() {
+    syncAccountsFromDOM();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(readSetupInputs()));
+  }
+
+  function saveAssumptionsData() {
+    syncSetupToAssumptions();
+    localStorage.setItem(ASSUMPTIONS_KEY, JSON.stringify(readAssumptionsInputs()));
+    refreshTabGating(_isPortfolioValid());
+  }
+
+  function deleteAssumptionsData() {
+    localStorage.removeItem(ASSUMPTIONS_KEY);
+    refreshTabGating(_isPortfolioValid());
+    applyAssumptionsInputs({
+      spending: '', stepDownPct: '0', growth: '', inflation: '',
+      windfalls: [],
+      thresholdMode: 'frozen', withdrawalStrategy: 'balanced',
+      dividendYield: '1.5', bniEnabled: false,
+    });
+    showToast('Assumptions deleted');
+  }
+
+  function deletePortfolioData() {
+    const _sv = (id) => { const el = safeEl(id); if (el) el.value = ""; };
+    _sv("sp-p1name"); _sv("sp-p1dob");
+    _sv("sp-p2name"); _sv("sp-p2dob");
+    state.portfolioAccounts = [];
+    state.nextId = 1;
+    const tbody = safeEl('acct-tbody');
+    if (tbody) tbody.innerHTML = '';
+    localStorage.removeItem(STORAGE_KEY);
+    refreshSetupSummary();
+    refreshPortfolioUI();
+  }
+
+  // ─────────────────────────────
+  // ACCOUNTS
+  // ─────────────────────────────
+  function addAccount() {
+    const acc = {
+      id: state.nextId++, name: '', wrapper: 'GIA', owner: 'p1', value: 0,
+      alloc: { equities: 100, bonds: 0, cashlike: 0, cash: 0 }, rate: null, monthlyDraw: null,
+    };
+    state.portfolioAccounts.push(acc);
+    R.renderAccountRow(acc, getOwnerNames());
+    R.updateRowBadge(acc);
+    R.applyWrapperFieldState(acc);
+    refreshSetupSummary();
+    refreshPortfolioUI();
+  }
+
+  function removeAccount(el) {
+    const row = el.closest('tr');
+    if (row) row.remove();
+    syncAccountsFromDOM();
+    refreshSetupSummary();
+    refreshPortfolioUI();
+  }
+
+  // ─────────────────────────────
+  // PORTFOLIO VALIDATION UI
+  // ─────────────────────────────
+  function _isPortfolioValid() {
+    const accounts = state.portfolioAccounts;
+    if (accounts.length === 0) return false;
+    return accounts.every(acc => {
+      const total = D.ALLOC_CLASSES.reduce((s, c) => s + (acc.alloc[c] || 0), 0);
+      return Math.round(total) === 100;
+    });
+  }
+
+  function refreshPortfolioUI() {
+    const alertBox    = safeEl('portAlertBox');
+    const addBtn      = safeEl('addAccountBtn');
+    const continueBtn = safeEl('continueToAssumptionsBtn');
+
+    const accounts = state.portfolioAccounts;
+    const hasNone  = accounts.length === 0;
+
+    const unbalancedCount = accounts.filter(acc => {
+      const total = D.ALLOC_CLASSES.reduce((s, c) => s + (acc.alloc[c] || 0), 0);
+      return Math.round(total) !== 100;
+    }).length;
+
+    let message = null;
+    if (hasNone) {
+      message = 'Add at least one account';
+    } else if (unbalancedCount > 0) {
+      message = `Balance ${unbalancedCount} account${unbalancedCount > 1 ? 's' : ''} below so they equal exactly 100%`;
+    }
+
+    const isValid = message === null;
+
+    if (alertBox) {
+      alertBox.textContent   = message || '';
+      alertBox.style.display = message ? '' : 'none';
+    }
+
+    // Add account button always visible — no toggling needed
+
+    // Continue button: disabled when invalid
+    if (continueBtn) {
+      continueBtn.disabled = !isValid;
+    }
+
+    // Gate nav tabs
+    refreshTabGating(isValid);
+
+    // ── Growth rate suggestion ────────────────────────────────────────────
+    const suggEl = document.getElementById('growth-suggestion');
+    if (suggEl && window.RetireGrowthAssumptions && isValid) {
+      const alloc = C.summarisePortfolio(state.portfolioAccounts).overallAllocation;
+      const sugg  = window.RetireGrowthAssumptions.getSuggestedGrowth(
+        alloc.equities  || 0,
+        alloc.bonds     || 0,
+        alloc.cashlike  || 0,
+        alloc.cash      || 0,
+      );
+      if (sugg) {
+        const ratePct = (sugg.rate * 100).toFixed(1);
+        const parts = [];
+        if (sugg.equityPct   > 0) parts.push(`${sugg.equityPct}% equity`);
+        if (sugg.bondPct     > 0) parts.push(`${sugg.bondPct}% bond`);
+        if (sugg.cashlikePct > 0) parts.push(`${sugg.cashlikePct}% cashlike`);
+        if (sugg.cashPct     > 0) parts.push(`${sugg.cashPct}% cash`);
+        suggEl.dataset.suggestedRate = ratePct;
+        suggEl.innerHTML = `<div class="growth-sugg__card"><span class="growth-sugg__title">Suggested growth rate: <strong>${ratePct}%</strong></span><span class="growth-sugg__hint">Reflects your - ${parts.join(' / ')} - investment allocations.</span></div>`;
+        suggEl.classList.add('growth-sugg--has-value');
+      } else {
+        suggEl.textContent = '';
+        suggEl.classList.remove('growth-sugg--has-value');
+        delete suggEl.dataset.suggestedRate;
+      }
+    } else if (suggEl) {
+      suggEl.textContent = '';
+      suggEl.classList.remove('growth-sugg--has-value');
+    }
+  }
+
+  // ─────────────────────────────
+  // TAB GATING
+  // ─────────────────────────────
+  function refreshTabGating(portfolioValid) {
+    const assumptionsSaved = !!localStorage.getItem(ASSUMPTIONS_KEY);
+
+    const tabAssumptions = document.querySelector('.tab-btn[data-tab="assumptions"]');
+    const tabResults     = document.querySelector('.tab-btn[data-tab="results"]');
+
+    if (tabAssumptions) {
+      tabAssumptions.disabled = !portfolioValid;
+      tabAssumptions.classList.toggle('tab-btn--disabled', !portfolioValid);
+    }
+    if (tabResults) {
+      const resultsEnabled = portfolioValid && assumptionsSaved && state.projectionRun;
+      tabResults.disabled = !resultsEnabled;
+      tabResults.classList.toggle('tab-btn--disabled', !resultsEnabled);
+    }
+  }
+
+  // ─────────────────────────────
+  // SUMMARY
+  // ─────────────────────────────
+  function refreshSetupSummary() {
+    const summary = C.summarisePortfolio(state.portfolioAccounts);
+    R.renderSetupSummary(summary);
+    refreshCoverageRatio();
+  }
+
+  function refreshCoverageRatio() {
+    const spending  = D.parseCurrency(safeValue('spending')) || 0;
+    const startYear = safeNumber(safeValue('sp-startYear'));
+    const endYear   = safeNumber(safeValue('sp-endYear'));
+
+    const elGuaranteed = document.getElementById('cgr-guaranteed');
+    const elGap        = document.getElementById('cgr-gap');
+    const elGapSub     = document.getElementById('cgr-gap-sub');
+    const elPct        = document.getElementById('cgr-pct');
+
+    if (!elGuaranteed || !elGap || !elPct) return;
+
+    const dash = () => {
+      [elGuaranteed, elGap, elPct].forEach(el => {
+        el.textContent = '–';
+        el.className   = 'drawdown-rate-card__value';
+      });
+      if (elGapSub) elGapSub.textContent = 'gap per year';
+    };
+
+    if (!spending) { dash(); return; }
+
+    // ── Salary: only count if still active at plan start ─────────────────
+    const p1DOB        = safeNumber(safeValue('sp-p1dob'));
+    const p1AgeAtStart = (startYear && p1DOB) ? startYear - p1DOB : null;
+    const p1Salary     = D.parseCurrency(safeValue('p1Salary')) || 0;
+    const p1SalStop    = parseInt(safeValue('p1SalaryStopAge'), 10) || null;
+    const p1SalActive  = p1Salary > 0 &&
+      (!p1SalStop || !p1AgeAtStart || p1AgeAtStart < p1SalStop);
+
+    let p2SalIncome = 0;
+    if (state.p2enabled) {
+      const p2DOB        = safeNumber(safeValue('sp-p2dob'));
+      const p2AgeAtStart = (startYear && p2DOB) ? startYear - p2DOB : null;
+      const p2Salary     = D.parseCurrency(safeValue('p2Salary')) || 0;
+      const p2SalStop    = parseInt(safeValue('p2SalaryStopAge'), 10) || null;
+      const p2SalActive  = p2Salary > 0 &&
+        (!p2SalStop || !p2AgeAtStart || p2AgeAtStart < p2SalStop);
+      p2SalIncome = p2SalActive ? p2Salary : 0;
+    }
+
+    const salaryIncome = (p1SalActive ? p1Salary : 0) + p2SalIncome;
+
+    // ── State pension: only count if already started at plan start ────────
+    const p1SPAmt    = D.parseCurrency(safeValue('p1SP')) || 0;
+    const p1SPAge    = safeNumber(safeValue('p1SPAge'));
+    const p1SPYear   = (p1DOB && p1SPAge) ? p1DOB + p1SPAge : null;
+    const p1SPActive = p1SPAmt > 0 && p1SPYear && startYear && p1SPYear <= startYear;
+
+    let p2SPIncome = 0;
+    if (state.p2enabled) {
+      const p2DOB      = safeNumber(safeValue('sp-p2dob'));
+      const p2SPAmt    = D.parseCurrency(safeValue('p2SP')) || 0;
+      const p2SPAge    = safeNumber(safeValue('p2SPAge'));
+      const p2SPYear   = (p2DOB && p2SPAge) ? p2DOB + p2SPAge : null;
+      const p2SPActive = p2SPAmt > 0 && p2SPYear && startYear && p2SPYear <= startYear;
+      p2SPIncome = p2SPActive ? p2SPAmt : 0;
+    }
+
+    const spIncome = (p1SPActive ? p1SPAmt : 0) + p2SPIncome;
+
+    // ── Interest account draws ────────────────────────────────────────────
+    const intIncome = (state.portfolioAccounts || [])
+      .filter(a => a.monthlyDraw > 0)
+      .reduce((sum, a) => sum + (a.monthlyDraw * 12), 0);
+
+    const guaranteed  = salaryIncome + spIncome + intIncome;
+    const gap         = Math.max(0, spending - guaranteed);
+    const coveragePct = (guaranteed / spending) * 100;
+
+    function fmtMoney(n) {
+      return '£' + Math.round(n).toLocaleString('en-GB');
+    }
+    function coverageClass(pct) {
+      if (pct >= 50) return 'drawdown-rate-card__value drawdown-rate-card__value--ok';
+      if (pct >= 25) return 'drawdown-rate-card__value drawdown-rate-card__value--warn';
+      return 'drawdown-rate-card__value drawdown-rate-card__value--err';
+    }
+
+    elGuaranteed.textContent = fmtMoney(guaranteed);
+    elGuaranteed.className   = 'drawdown-rate-card__value drawdown-rate-card__value--neutral';
+    elGap.textContent        = fmtMoney(gap);
+    elGap.className          = coverageClass(coveragePct);
+    elPct.textContent        = Math.round(coveragePct) + '%';
+    elPct.className          = coverageClass(coveragePct);
+    if (elGapSub) elGapSub.textContent = 'gap per year';
+  }
+
+  function refreshYearCount() {
+    const el    = safeEl('sp-yearCount');
+    if (!el) return;
+    const start = parseInt(safeValue('sp-startYear'));
+    const end   = parseInt(safeValue('sp-endYear'));
+    el.textContent = (start && end && end > start) ? (end - start) + ' years' : '';
+  }
+
+  // ─────────────────────────────
+  // SIDEBAR NAME SYNC
+  // ─────────────────────────────
+  function updateSidebarNames() {
+    const p1 = safeValue('sp-p1name').trim() || 'Person 1';
+    const p2 = safeValue('sp-p2name').trim() || 'Person 2';
+
+    document.querySelectorAll('[data-p1]').forEach(el => {
+      const suffix = el.getAttribute('data-p1');
+      el.textContent = suffix ? `${p1} ${suffix}` : p1;
+    });
+    document.querySelectorAll('[data-p2]').forEach(el => {
+      const suffix = el.getAttribute('data-p2');
+      el.textContent = suffix ? `${p2} ${suffix}` : p2;
+    });
+
+    document.querySelectorAll('[data-p1-stepdown]').forEach(el => {
+      el.textContent = 'Reduced spending';
+      el.setAttribute('title', `Reduces the gross spending target from the year ${p1} turns 75.`);
+    });
+    document.querySelectorAll('[data-p1-stepdown-hint]').forEach(el => {
+      el.textContent = `Reduces the gross spending target from the year ${p1} turns 75.`;
+    });
+
+    document.querySelectorAll('[data-p1-btn]').forEach(el => { el.textContent = p1; });
+    document.querySelectorAll('[data-p2-btn]').forEach(el => { el.textContent = p2; });
+
+    // Keep windfall person dropdowns in sync with actual names
+    document.querySelectorAll('#windfalls-container .wf-person').forEach(function(sel) {
+      const cur = sel.value;
+      sel.innerHTML =
+        '<option value="p1">' + p1 + '</option>' +
+        '<option value="p2">' + p2 + '</option>';
+      sel.value = cur; // preserve selection
+    });
+  }
+
+  // ─────────────────────────────
+  // P2 TOGGLE
+  // ─────────────────────────────
+  const P2_FIELD_IDS = [
+    'p2DOB', 'p2Salary', 'p2SalaryStopAge', 'p2SPAge', 'p2SP',
+    'p2Cash', 'p2SIPP', 'p2ISA', 'p2GIA',
+    'bniP2GIA',
+  ];
+
+  function applyBniState(enabled) {
+    document.querySelectorAll('.bni-field').forEach(row => {
+      row.style.opacity      = enabled ? '' : '0.45';
+      row.style.pointerEvents = enabled ? '' : 'none';
+    });
+    ['bniP1GIA', 'bniP2GIA'].forEach(id => {
+      const el = safeEl(id);
+      if (el) el.disabled = !enabled;
+    });
+    _updateBniMaxYears();
+  }
+
+  function _applySweepSurplusVisibility() {
+    const p1Sal = D.parseCurrency(safeEl('p1Salary')?.value || '') || 0;
+    const p2Sal = D.parseCurrency(safeEl('p2Salary')?.value || '') || 0;
+    const p1Show = p1Sal > 0;
+    const p2Show = p2Sal > 0 && state.p2enabled;
+    ['p1SweepRow','p1SweepToggleCol'].forEach(id => {
+      const el = safeEl(id);
+      if (el) el.style.display = p1Show ? '' : 'none';
+    });
+    ['p2SweepRow','p2SweepToggleCol'].forEach(id => {
+      const el = safeEl(id);
+      if (el) el.style.display = p2Show ? '' : 'none';
+    });
+  }
+
+  function _updateBniMaxYears() {
+    // Read from the visible setup field; fall back to the hidden assumptions field
+    // if sp-startYear is absent (defensive, should always be present).
+    const startYearEl = safeEl('sp-startYear') || safeEl('startYear');
+    const startYear = parseInt(startYearEl?.value) || new Date().getFullYear();
+    const config = [
+      {
+        giaIds:    ['p1GIAeq'],
+        cashId:    'p1Cash',
+        amtId:     'bniP1GIA',
+        yearsId:   'bniP1Years',
+        noteId:    'bniP1YearsNote',
+        tableId:   null,
+        personKey: () => (safeEl('sp-p1name')?.value?.trim() || 'Person 1') + ' GIA',
+      },
+      {
+        giaIds:    ['p2GIAeq'],
+        cashId:    'p2Cash',
+        amtId:     'bniP2GIA',
+        yearsId:   'bniP2Years',
+        noteId:    'bniP2YearsNote',
+        tableId:   'bniP2Table',
+        personKey: () => (safeEl('sp-p2name')?.value?.trim() || 'Person 2') + ' GIA',
+      },
+    ];
+
+    config.forEach(({ giaIds, cashId, amtId, yearsId, noteId, tableId, personKey }, cfgIdx) => {
+      const yearsEl = safeEl(yearsId);
+      const noteEl  = safeEl(noteId);
+      if (!yearsEl || !noteEl) return;
+
+      const gia       = giaIds.reduce((sum, id) => sum + (gv(id) || 0), 0);
+      const cash      = gv(cashId) || 0;
+      const amt       = gv(amtId)  || 0;
+      const available = gia + cash;
+      const tableEl   = tableId ? safeEl(tableId) : null;
+
+      if (available <= 0) {
+        // Check whether any windfall targets this person's GIA — if so show
+        // a softer message rather than a hard "No GIA" warning, because the
+        // engine will automatically apply BnI from the windfall landing year.
+        const personVal = cfgIdx === 0 ? 'p1' : 'p2';
+        const hasGIAWindfall = Array.from(
+          document.querySelectorAll('#windfalls-container .windfall-slot')
+        ).some(function(slot) {
+          return slot.querySelector('.wf-wrapper')?.value === 'GIA' &&
+                 slot.querySelector('.wf-person')?.value  === personVal &&
+                 slot.querySelector('.wf-year')?.value    !== '' &&
+                 slot.querySelector('.wf-amount')?.value  !== '';
+        });
+
+        if (hasGIAWindfall) {
+          noteEl.textContent = 'No opening GIA balance — Bed & ISA will apply automatically from the windfall landing year if configured above.';
+          noteEl.style.fontStyle = 'italic';
+          noteEl.style.color = '#64748b';
+          if (tableEl) {
+            tableEl.style.opacity       = '';
+            tableEl.style.pointerEvents = '';
+          }
+          yearsEl.max = 100;
+        } else {
+          noteEl.textContent = 'No GIA available to fund transfers';
+          noteEl.style.fontStyle = 'italic';
+          noteEl.style.color = '#a32d2d';
+          if (tableEl) {
+            tableEl.style.opacity       = '0.45';
+            tableEl.style.pointerEvents = 'none';
+          }
+          yearsEl.max = 1;
+        }
+        return;
+      }
+
+      // GIA available — restore section
+      if (tableEl) {
+        tableEl.style.opacity       = '';
+        tableEl.style.pointerEvents = '';
+      }
+
+      if (amt <= 0) {
+        yearsEl.max        = 30;
+        noteEl.textContent = '';
+        return;
+      }
+
+      // Use engine depletion year as the authoritative cap when a projection has run,
+      // otherwise estimate from GIA balance only (not whole portfolio).
+      const depletions   = state.lastResult?.depletions;
+      const depletionYr  = depletions?.[personKey()]?.year ?? null;
+      const engineMaxYrs = depletionYr ? Math.max(1, depletionYr - startYear) : null;
+      const giaOnlyYrs   = Math.min(30, Math.floor(gia / amt));
+
+      // If giaOnlyYrs is 0 with no engine result, check whether a GIA windfall
+      // will fund the BnI transfers — the engine handles this correctly even
+      // though the UI can't see the windfall balance at setup time.
+      const personVal2     = cfgIdx === 0 ? 'p1' : 'p2';
+      const hasGIAWindfall2 = giaOnlyYrs === 0 && engineMaxYrs === null && Array.from(
+        document.querySelectorAll('#windfalls-container .windfall-slot')
+      ).some(function(slot) {
+        return slot.querySelector('.wf-wrapper')?.value === 'GIA' &&
+               slot.querySelector('.wf-person')?.value  === personVal2 &&
+               slot.querySelector('.wf-year')?.value    !== '' &&
+               slot.querySelector('.wf-amount')?.value  !== '';
+      });
+
+      const maxYears = engineMaxYrs !== null
+        ? Math.min(30, engineMaxYrs)
+        : (hasGIAWindfall2 ? 30 : Math.max(0, giaOnlyYrs));
+
+      yearsEl.max = Math.max(1, maxYears); // never cap below 1 — engine may draw from windfall GIA
+
+      // Clamp current value if it exceeds new max
+      if (parseInt(yearsEl.value) > maxYears) yearsEl.value = maxYears;
+
+      // ── Note text ──────────────────────────────────────────────────────────
+      let noteText  = '';
+      let noteColor = '#854f0b';
+
+      if (hasGIAWindfall2) {
+        noteEl.textContent = 'No opening GIA balance — Bed & ISA will apply automatically from the windfall landing year if configured above.';
+        noteEl.style.fontStyle = 'italic';
+        noteEl.style.color = '#64748b';
+      } else if (engineMaxYrs !== null) {
+        // Engine result available — authoritative
+        noteText  = `GIA depletes in year ${engineMaxYrs} of the projection`;
+        noteColor = engineMaxYrs <= 3 ? '#a32d2d' : '#854f0b';
+        noteEl.style.color     = noteColor;
+        noteEl.style.fontStyle = 'italic';
+        noteEl.textContent     = noteText;
+      } else if (giaOnlyYrs > 0) {
+        // Pre-projection estimate: GIA balance / annual amount
+        noteText  = `Est. ${giaOnlyYrs} yr${giaOnlyYrs !== 1 ? 's' : ''} at ${D.formatMoney(amt)}/yr (GIA excl. interest-bearing accounts)`;
+        noteColor = giaOnlyYrs <= 3 ? '#a32d2d' : '#854f0b';
+        noteEl.style.color     = noteColor;
+        noteEl.style.fontStyle = 'italic';
+        noteEl.textContent     = noteText;
+      } else {
+        noteEl.textContent = '';
+      }
+    });
+  }
+
+  function applyP2State() {
+    const enabled = state.p2enabled;
+
+    P2_FIELD_IDS.forEach(id => {
+      const el = safeEl(id);
+      if (!el) return;
+      el.disabled = !enabled;
+      el.style.opacity = enabled ? '' : '0.45';
+    });
+
+    document.querySelectorAll('.p2-field').forEach(el => {
+      el.classList.toggle('p2-disabled', !enabled);
+    });
+
+    const p2setup = safeEl('p2-setup-fields');
+    if (p2setup) {
+      p2setup.classList.toggle('p2-disabled', !enabled);
+      p2setup.querySelectorAll('input').forEach(inp => { inp.disabled = !enabled; });
+    }
+
+    document.querySelectorAll('#acct-tbody tr').forEach(row => {
+      const ownerSel = row.querySelector('[data-field="owner"]');
+      if (!ownerSel) return;
+      if (ownerSel.value === 'p2') {
+        row.classList.toggle('p2-disabled', !enabled);
+        row.querySelectorAll('input, select').forEach(inp => { inp.disabled = !enabled; });
+        // Re-apply per-account field state so Rate/Draw are correctly
+        // re-disabled for accounts with no cashlike allocation.
+        if (enabled) {
+          const id  = parseInt(row.id.replace('acct-row-', ''), 10);
+          const acc = state.portfolioAccounts.find(a => a.id === id);
+          if (acc) R.applyWrapperFieldState(acc);
+        }
+      }
+    });
+  }
+
+  // ─────────────────────────────
+  // HANDOFF: setup → assumptions
+  // ─────────────────────────────
+  function syncSetupToAssumptions() {
+    syncAccountsFromDOM();
+    const data   = readSetupInputs();
+    const p1name = data.people.p1.name || 'Person 1';
+    const p2name = data.people.p2.name || 'Person 2';
+
+    const isYieldAccount = a => a.rate != null || a.monthlyDraw != null;
+
+    const sumBy = (owner, wrapper, excludeYield = false) =>
+      state.portfolioAccounts
+        .filter(a =>
+          a.owner === owner &&
+          a.wrapper === wrapper &&
+          (!excludeYield || !isYieldAccount(a))
+        )
+        .reduce((s, a) => s + (a.value || 0), 0);
+
+    const setText = (id, val) => {
+      const el = safeEl(id);
+      if (el) el.textContent = (val === undefined || val === null || val === '') ? '–' : val;
+    };
+
+    const setHidden = (id, val) => {
+      const el = safeEl(id);
+      if (!el) return;
+      el.value = (val === undefined || val === null || val === '')
+        ? '' : D.MONEY_FIELDS.has(id) ? String(Math.round(Number(val) || 0)) : val;
+    };
+
+    const p1dob     = safeValue('sp-p1dob');
+    const p2dob     = safeValue('sp-p2dob');
+    const sy        = safeValue('sp-startYear');
+    const ey        = safeValue('sp-endYear');
+    const p1sal     = D.parseCurrency(safeEl('p1Salary')?.value      || '');
+    const p1salstop = safeEl('p1SalaryStopAge')?.value || '–';
+    const p1spage   = safeEl('p1SPAge')?.value          || '–';
+    const p1sp      = D.parseCurrency(safeEl('p1SP')?.value           || '');
+    const p2sal     = D.parseCurrency(safeEl('p2Salary')?.value      || '');
+    const p2salstop = safeEl('p2SalaryStopAge')?.value || '–';
+    const p2spage   = safeEl('p2SPAge')?.value          || '–';
+    const p2sp      = D.parseCurrency(safeEl('p2SP')?.value           || '');
+
+    setText('ai-p1name',       p1name);
+    setText('ai-p1dob',        p1dob  || '–');
+    setText('ai-p1salary',     p1sal  ? D.formatMoney(p1sal)  : '–');
+    setText('ai-p1salarystop', p1salstop);
+    setText('ai-p1spage',      p1spage);
+    setText('ai-p1sp',         p1sp   ? D.formatMoney(p1sp)   : '–');
+    setText('ai-p2name',       p2name);
+    setText('ai-p2dob',        p2dob  || '–');
+    setText('ai-p2salary',     p2sal  ? D.formatMoney(p2sal)  : '–');
+    setText('ai-p2salarystop', p2salstop);
+    setText('ai-p2spage',      p2spage);
+    setText('ai-p2sp',         p2sp   ? D.formatMoney(p2sp)   : '–');
+    setText('ai-startyear',    sy || '–');
+    setText('ai-endyear',      ey || '–');
+
+    setHidden('p1DOB',           p1dob);
+    setHidden('p2DOB',           p2dob);
+    setHidden('startYear',       sy);
+    setHidden('endYear',         ey);
+    setHidden('p1Salary',        p1sal);
+    setHidden('p1SalaryStopAge', p1salstop !== '–' ? p1salstop : '');
+    setHidden('p1SPAge',         p1spage   !== '–' ? p1spage   : '');
+    setHidden('p1SP',            p1sp);
+    setHidden('p2Salary',        p2sal);
+    setHidden('p2SalaryStopAge', p2salstop !== '–' ? p2salstop : '');
+    setHidden('p2SPAge',         p2spage   !== '–' ? p2spage   : '');
+    setHidden('p2SP',            p2sp);
+
+    const p1cash = sumBy('p1', 'Cash');
+    const p2cash = sumBy('p2', 'Cash');
+    const p1sipp = sumBy('p1', 'SIPP');
+    const p2sipp = sumBy('p2', 'SIPP');
+    const p1isa  = sumBy('p1', 'ISA');
+    const p2isa  = sumBy('p2', 'ISA');
+    const p1gia  = sumBy('p1', 'GIA');
+    const p2gia  = sumBy('p2', 'GIA');
+
+    setText('ai-p1cash', D.formatMoney(p1cash));
+    setText('ai-p1sipp', D.formatMoney(p1sipp));
+    setText('ai-p1isa',  D.formatMoney(p1isa));
+    setText('ai-p1gia',  D.formatMoney(p1gia));
+    setText('ai-p2cash', D.formatMoney(p2cash));
+    setText('ai-p2sipp', D.formatMoney(p2sipp));
+    setText('ai-p2isa',  D.formatMoney(p2isa));
+    setText('ai-p2gia',  D.formatMoney(p2gia));
+
+    // Portfolio footer totals
+    const totIsa  = p1isa  + p2isa;
+    const totSipp = p1sipp + p2sipp;
+    const totGia  = p1gia  + p2gia;
+    const totCash = p1cash + p2cash;
+    const totAll  = totIsa + totSipp + totGia + totCash;
+    setText('ai-total',      D.formatMoney(totAll));
+    setText('ai-total-isa',  D.formatMoney(totIsa));
+    setText('ai-total-sipp', D.formatMoney(totSipp));
+    setText('ai-total-gia',  D.formatMoney(totGia));
+    setText('ai-total-cash', D.formatMoney(totCash));
+
+    setHidden('p1Cash', p1cash);
+    setHidden('p2Cash', p2cash);
+    setHidden('p1SIPP', p1sipp);
+    setHidden('p2SIPP', p2sipp);
+    setHidden('p1ISA',  p1isa);
+    setHidden('p2ISA',  p2isa);
+    setHidden('p1GIA',  p1gia);
+    setHidden('p2GIA',  p2gia);
+
+    // ── GIA equity/cashlike split for MC worker ────────────────────────────
+    // Each GIA account carries a cashlike % in its alloc. We weight by value
+    // to compute how much of each person's total GIA is cashlike vs equity.
+    const giaAccts = (owner) => state.portfolioAccounts.filter(
+      a => a.owner === owner && a.wrapper === 'GIA'
+    );
+    const giaSplit = (owner) => {
+      const accts = giaAccts(owner);
+      const total = accts.reduce((s, a) => s + (a.value || 0), 0);
+      if (total <= 0) return { eq: 0, cash: 0 };
+      const cashFrac = accts.reduce((s, a) => {
+        const w = (a.value || 0) / total;
+        return s + w * ((a.alloc?.cashlike || 0) / 100);
+      }, 0);
+      return { eq: Math.round(total * (1 - cashFrac)), cash: Math.round(total * cashFrac) };
+    };
+    const p1giaSplit = giaSplit('p1');
+    const p2giaSplit = giaSplit('p2');
+    setHidden('p1GIAeq',   p1giaSplit.eq);
+    setHidden('p2GIAeq',   p2giaSplit.eq);
+    setHidden('p1GIAcash', p1giaSplit.cash);
+    setHidden('p2GIAcash', p2giaSplit.cash);
+
+    const intAccts = state.portfolioAccounts.filter(isYieldAccount);
+    const listEl = safeEl('int-accts-list');
+    if (listEl) {
+      if (!intAccts.length) {
+        listEl.innerHTML = '';
+      } else {
+        listEl.innerHTML =
+          `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#4a7fd4;margin-bottom:6px">
+            Interest-bearing accounts
+          </div>` +
+          intAccts.map(a => {
+            const owner = a.owner === 'p1' ? p1name : p2name;
+            const rate  = a.rate != null ? a.rate + '%' : '–';
+            const draw  = a.monthlyDraw != null ? D.formatMoney(a.monthlyDraw) + '/mo' : '–';
+            return `<div class="assump-int-row">
+              <span class="assump-int-name">${a.name || '(unnamed)'}</span>
+              <span class="assump-int-meta">${owner} · ${a.wrapper} · ${rate} · draw ${draw} · ${D.formatMoney(a.value || 0)}</span>
+            </div>`;
+          }).join('');
+      }
+    }
+
+    const total  = state.portfolioAccounts.reduce((s, a) => s + (a.value || 0), 0);
+    const nAccts = state.portfolioAccounts.length;
+    // Banner removed — wizard layout has no .assump-cards container
+
+    updateSidebarNames();
+    applyP2State();
+  }
+
+  // ─────────────────────────────
+  // GATHER INPUTS
+  // ─────────────────────────────
+  function gv(id)  { return D.parseCurrency(safeEl(id)?.value || ''); }
+  function gvi(id) { return parseInt(String(D.parseCurrency(safeEl(id)?.value || '')), 10) || 0; }
+  function gvs(id) { return safeEl(id)?.value || ''; }
+
+  function gatherInputs() {
+    const bniEnabled   = document.querySelector('input[name="bniEnabled"]:checked')?.value === 'true';
+    const growthRaw    = gv('growth');
+    const inflationRaw = gv('inflation');
+
+    return {
+      startYear:         gvi('startYear'),
+      endYear:           gvi('endYear'),
+      p1DOB:             gvi('p1DOB'),
+      p2DOB:             gvi('p2DOB'),
+      p1name:            safeEl('sp-p1name')?.value?.trim() || 'Person 1',
+      p2name:            safeEl('sp-p2name')?.value?.trim() || 'Person 2',
+      p2enabled:         state.p2enabled,
+      spending:          gv('spending'),
+      stepDownPct:       gvi('stepDownPct'),
+      p1Salary:          gv('p1Salary'),
+      p1SalaryStop:      gvi('p1SalaryStopAge'),
+      p1SweepSurplus:    document.querySelector('input[name="p1SweepSurplus"]:checked')?.value === 'true',
+      p2Salary:          state.p2enabled ? gv('p2Salary')         : 0,
+      p2SalaryStop:      state.p2enabled ? gvi('p2SalaryStopAge') : 0,
+      p2SweepSurplus:    state.p2enabled && document.querySelector('input[name="p2SweepSurplus"]:checked')?.value === 'true',
+      p1SPAge:           gvi('p1SPAge'),
+      p1SPAmt:           gv('p1SP'),
+      p2SPAge:           state.p2enabled ? gvi('p2SPAge') : 0,
+      p2SPAmt:           state.p2enabled ? gv('p2SP')    : 0,
+      growth:            growthRaw    / 100,
+      inflation:         inflationRaw / 100,
+      thresholdMode:     document.querySelector('input[name="thresholdMode"]:checked')?.value || 'frozen',
+      thresholdFromYear: parseInt(safeEl('thresholdFromYearVal')?.value) || 2028,
+      bniEnabled,
+      bniP1GIA:          bniEnabled ? gv('bniP1GIA') : 0,
+      bniP1Years:        bniEnabled ? gvi('bniP1Years') : 0,
+      bniP2GIA:          (bniEnabled && state.p2enabled) ? gv('bniP2GIA') : 0,
+      bniP2Years:        (bniEnabled && state.p2enabled) ? gvi('bniP2Years') : 0,
+      p1PensionSweep: {
+        monthlyNet: gv('p1PensionMonthly'),
+        stopAge:    gvi('p1PensionStopAge'),
+      },
+      p2PensionSweep: state.p2enabled ? {
+        monthlyNet: gv('p2PensionMonthly'),
+        stopAge:    gvi('p2PensionStopAge'),
+      } : { monthlyNet: 0, stopAge: 0 },
+      dividendYield:     (parseFloat(safeEl('dividendYield')?.value) || 1.5) / 100,
+      dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'payout',
+      strategy:          document.querySelector('input[name="withdrawalStrategy"]:checked')?.value || 'balanced',
+      p1Bal: {
+        Cash:    gv('p1Cash'),
+        GIAeq:   gv('p1GIAeq'),
+        GIAcash: gv('p1GIAcash'),
+        SIPP:    gv('p1SIPP'),
+        ISA:     gv('p1ISA'),
+      },
+      p2Bal: {
+        Cash:    state.p2enabled ? gv('p2Cash')    : 0,
+        GIAeq:   state.p2enabled ? gv('p2GIAeq')   : 0,
+        GIAcash: state.p2enabled ? gv('p2GIAcash')  : 0,
+        SIPP:    state.p2enabled ? gv('p2SIPP')    : 0,
+        ISA:     state.p2enabled ? gv('p2ISA')     : 0,
+      },
+      p1Order: ['GIA', 'SIPP', 'ISA'],
+      p2Order: ['GIA', 'SIPP', 'ISA'],
+      windfalls: (function () {
+        const out = [];
+        document.querySelectorAll('#windfalls-container .windfall-slot').forEach(function(slot) {
+          var year   = parseInt(slot.querySelector('.wf-year')?.value, 10);
+          var amount = D.parseCurrency(slot.querySelector('.wf-amount')?.value || '');
+          if (!year || !amount) return;
+          out.push({
+            name:     slot.querySelector('.wf-name')?.value?.trim() || 'Windfall',
+            year,
+            amount,
+            person:   slot.querySelector('.wf-person')?.value || 'p1',
+            wrapper:  slot.querySelector('.wf-wrapper')?.value || 'GIA',
+            equityPct: parseInt(slot.querySelector('.wf-equity')?.value ?? '70', 10),
+          });
+        });
+        return out;
+      })(),
+      // Interest-bearing accounts (e.g. Invest Engine, QMMF with monthly draw).
+      // Passed to MC worker so it can model guaranteed income and balance depletion.
+      intAccts: (state.portfolioAccounts || [])
+        .filter(a => a.rate != null || a.monthlyDraw != null)
+        .map(a => ({
+          owner:       a.owner,
+          balance:     a.value || 0,
+          rate:        a.rate  || 0,
+          monthlyDraw: a.monthlyDraw || 0,
+        })),
+    };
+  }
+
+  // ─────────────────────────────
+  // RUN PROJECTION
+  // ─────────────────────────────
+  async function runProjection() {
+    syncSetupToAssumptions();
+    const inputs = gatherInputs();
+
+    // Stash inputs so runRisk() can use them without re-gathering.
+    state.lastInputs = inputs;
+
+    const runBtn = document.querySelector('[data-action="run-projection"]');
+    const originalLabel = runBtn ? runBtn.textContent : 'Run projection';
+
+    if (runBtn) {
+      runBtn.textContent = 'Running…';
+      runBtn.classList.add('btn-loading');
+      runBtn.disabled = true;
+    }
+
+    function resetBtn() {
+      if (!runBtn) return;
+      runBtn.textContent = originalLabel;
+      runBtn.classList.remove('btn-loading');
+      runBtn.disabled = false;
+    }
+
+    try {
+      const result = E.runProjection(inputs, state.portfolioAccounts);
+      if (!result) { resetBtn(); return; }
+
+      resetBtn();
+
+      state.projectionRun = true;
+      state.lastResult = result;
+      refreshTabGating(_isPortfolioValid());
+      CR.setResults(result, inputs.strategy, inputs.p2enabled);
+      window.RetireSummary?.setData(inputs, result, state.portfolioAccounts);
+      _updateBniMaxYears();
+      window._debugResult = result;
+      CR.renderMetrics();
+      CR.renderCharts();
+      RetireTabs.switchTab('results');
+      state.activeTab = 'results';
+
+      // Land on Plan Summary tab after each projection run
+      const summaryBtn = document.querySelector('.results-tab[data-results-tab="summary"]');
+      if (summaryBtn) summaryBtn.click();
+      // Metrics band is shown on summary tab (same as chart tabs)
+
+      // If risk has been run before, mark results as stale and hide outlook tab
+      if (state.riskRun) {
+        state.riskStale = true;
+        window.RetireMCRender?.setStale(true);
+        const outlookTab = document.getElementById('tab-btn-outlook');
+        if (outlookTab) outlookTab.classList.add('results-tab--hidden');
+      }
+
+      // Always re-show the Test my plan button when projection is re-run,
+      // regardless of whether MC has been run before. Clears the riskRun
+      // body flag so the button is not suppressed by other listeners.
+      const testPlanBtn = document.getElementById('btn-test-plan');
+      if (testPlanBtn) {
+        testPlanBtn.style.display = '';
+        testPlanBtn.classList.remove('btn-test-plan--stale');
+        delete document.body.dataset.riskRun;
+      }
+      state.riskRun = false;
+
+      _syncExportBtn();
+
+    } catch (err) {
+      resetBtn();
+      console.error('runProjection error:', err);
+      showToast('Run failed — see console', true);
+    }
+  }
+
+  // ─────────────────────────────
+  // RUN RISK (Monte Carlo)
+  // ─────────────────────────────
+
+  // ── MC assumptions helper ────────────────────────────────────────────
+  // Derives historically-grounded growth/vol figures from the current portfolio
+  // allocation via mc-assumptions.js. Called by runRisk, the mc-run-stress event
+  // handler, and _runBackgroundStress so there is one source of truth and no risk
+  // of the three call sites drifting apart (Bug 18).
+  function _getMCAssume() {
+    const alloc = window.RetireCalc.summarisePortfolio(state.portfolioAccounts).overallAllocation;
+    return window.RetireMCAssumptions
+      ? window.RetireMCAssumptions.getMCAssumptions(
+          alloc.equities  || 0,
+          alloc.bonds     || 0,
+          alloc.cashlike  || 0,
+          alloc.cash      || 0,
+        )
+      : { growth: (state.lastInputs?.growth ?? 0.05), equityVol: 0.16, inflationVol: 0.015, clReturn: 0.0228 };
+  }
+
+  function _setRiskReady(ready) {
+    const tabBtn = document.querySelector('.results-tab[data-results-tab="outlook"]');
+    if (!tabBtn) return;
+    tabBtn.classList.toggle('results-tab--risk-ready', ready);
+  }
+
+  // ── MC loader state ───────────────────────────────────────────────────────
+  let _loaderMsgInterval = null;
+
+  const _LOADER_MESSAGES = [
+    'Simulating 10,000 retirement paths…',
+    'Stress-testing against poor sequence returns…',
+    'Calculating sustainable spending level…',
+    'Running delay perturbation scenarios…',
+    'Preparing your outlook…',
+  ];
+
+  function _setLoadingPhase(text) {
+    const el = safeEl('mc-loading-phase');
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = text;
+      el.style.opacity = '1';
+    }, 200);
+  }
+
+  function _setLoadingProgress(pct) {
+    const bar = safeEl('mc-loading-bar-fill');
+    if (bar) bar.style.width = pct + '%';
+  }
+
+  function _showLoadingState() {
+    const el = safeEl('mc-narrative');
+    if (!el) return;
+
+    // Building squares: 3x3 grid, light blue → accent blue → green (last square)
+    const colours = [
+      '#b8c8e8', '#8aaad4', '#5c87bf',
+      '#8aaad4', '#2d5bff', '#5c87bf',
+      '#5c87bf', '#2d5bff', '#16a34a',
+    ];
+    const squares = colours.map((c, i) =>
+      `<div class="mc-sq" style="animation-delay:${(i * 0.18).toFixed(2)}s;background:${c}"></div>`
+    ).join('');
+
+    el.innerHTML = `
+      <div class="mc-loading">
+        <div class="mc-sq-grid">${squares}</div>
+        <p class="mc-loading__phase" id="mc-loading-phase">${_LOADER_MESSAGES[0]}</p>
+      </div>`;
+
+    // Cycle through messages on an interval, cross-fading each
+    let msgIdx = 0;
+    if (_loaderMsgInterval) clearInterval(_loaderMsgInterval);
+    _loaderMsgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % _LOADER_MESSAGES.length;
+      _setLoadingPhase(_LOADER_MESSAGES[msgIdx]);
+    }, 2200);
+  }
+
+  function _hideLoader() {
+    if (_loaderMsgInterval) {
+      clearInterval(_loaderMsgInterval);
+      _loaderMsgInterval = null;
+    }
+  }
+
+  async function runRisk() {
+    const inputs = state.lastInputs;
+    if (!inputs) return;
+
+    const MCE = window.RetireMCEngine;
+    if (!MCE) {
+      showToast('MC engine not loaded', true);
+      return;
+    }
+
+    // ── Button: loading state ─────────────────────────────────────────────
+    const testPlanBtn = document.getElementById('btn-test-plan');
+    if (testPlanBtn) {
+      testPlanBtn.classList.add('btn-test-plan--loading');
+      testPlanBtn.disabled = true;
+    }
+
+    // ── Reveal and navigate to the outlook tab immediately ────────────────
+    const outlookTab = document.getElementById('tab-btn-outlook');
+    if (outlookTab) {
+      outlookTab.classList.remove('results-tab--hidden');
+      outlookTab.click();
+    }
+
+    _showLoadingState();
+    _setRiskReady(false);
+    const _outlookTabBtn = document.querySelector('.results-tab[data-results-tab="outlook"]');
+    if (_outlookTabBtn) _outlookTabBtn.classList.add('results-tab--simulating');
+
+    const _loaderStart   = Date.now();
+    const _MIN_LOADER_MS = 4000;
+    const _loaderDelay   = () => {
+      const elapsed    = Date.now() - _loaderStart;
+      const remaining  = _MIN_LOADER_MS - elapsed;
+      return remaining > 0
+        ? new Promise(res => setTimeout(res, remaining))
+        : Promise.resolve();
+    };
+
+    function _resetTestPlanBtn() {
+      if (!testPlanBtn) return;
+      testPlanBtn.classList.remove('btn-test-plan--loading');
+      testPlanBtn.disabled = false;
+    }
+
+    // ── Derive MC assumptions from actual portfolio allocation ──────────────────
+    // Uses historically-grounded return/vol figures via _getMCAssume() (Bug 18).
+    const _mcAssume      = _getMCAssume();
+    const _mcGrowth      = _mcAssume.growth;
+    const _mcEquityVol   = _mcAssume.equityVol;
+    const _mcInflationVol = _mcAssume.inflationVol;
+    const _mcClReturn    = _mcAssume.clReturn ?? 0.0228; // net cashlike return for GIAcash; fallback matches CL_RETURN - ANNUAL_FEE
+
+    try {
+      // ── Main run: 10,000 paths at current spending ─────────────────────
+      const result = await MCE.run({
+        inputs,
+        simCount:     10_000,
+        mcGrowth:     _mcGrowth,
+        equityVol:    _mcEquityVol,
+        inflationVol: _mcInflationVol,
+        clReturn:     _mcClReturn,
+        onProgress:   (pct) => _setLoadingProgress(pct),
+      });
+
+      // ── Bisection: find spending level at TARGET_CONFIDENCE ─────────────
+      const TARGET_CONFIDENCE = 0.90;
+      const BISECT_SIMS       = 2_000;
+      const BISECT_ITERS      = 12;
+
+      let sustainableSpending = null;
+      let sustainableIsFloor  = false;
+
+      if (result.successRate >= TARGET_CONFIDENCE) {
+        const rHigh = (await MCE.run({
+          inputs:       { ...inputs, spending: inputs.spending * 1.50 },
+          simCount:     BISECT_SIMS,
+          mcGrowth:     _mcGrowth,
+          equityVol:    _mcEquityVol,
+          inflationVol: _mcInflationVol,
+          clReturn:     _mcClReturn,
+        })).successRate;
+
+        if (rHigh >= TARGET_CONFIDENCE) {
+          sustainableSpending = Math.round(inputs.spending * 1.50);
+          sustainableIsFloor  = true;
+        }
+      }
+
+      _setLoadingPhase('Finding sustainable spending level…');
+      _setLoadingProgress(0);
+
+      if (!sustainableIsFloor) {
+        let lo = inputs.spending * 0.40;
+        let hi = result.successRate >= TARGET_CONFIDENCE
+          ? inputs.spending * 1.50
+          : inputs.spending;
+
+        // Lower-bound pre-check: mirrors the upper-bound check above.
+        // If even the floor (40% of current spending) fails the confidence
+        // threshold, the true sustainable level is below our search range.
+        // Skip the bisection and report lo as the best estimate, flagged via
+        // the comment on sustainableSpending so mc-render shows the full gap.
+        const rLow = (await MCE.run({
+          inputs:       { ...inputs, spending: lo },
+          simCount:     BISECT_SIMS,
+          mcGrowth:     _mcGrowth,
+          equityVol:    _mcEquityVol,
+          inflationVol: _mcInflationVol,
+          clReturn:     _mcClReturn,
+        })).successRate;
+
+        if (rLow < TARGET_CONFIDENCE) {
+          // Lower bound itself is unsustainable — report it so the gap displayed
+          // to the user reflects at minimum how far over the floor they are.
+          sustainableSpending = Math.round(lo);
+        } else {
+          for (let i = 0; i < BISECT_ITERS; i++) {
+            const mid    = (lo + hi) / 2;
+            const midRes = await MCE.run({
+              inputs:       { ...inputs, spending: mid },
+              simCount:     BISECT_SIMS,
+              mcGrowth:     _mcGrowth,
+              equityVol:    _mcEquityVol,
+              inflationVol: _mcInflationVol,
+              clReturn:     _mcClReturn,
+            });
+            if (midRes.successRate >= TARGET_CONFIDENCE) {
+              lo = mid;
+            } else {
+              hi = mid;
+            }
+            _setLoadingProgress(Math.round(((i + 1) / BISECT_ITERS) * 100));
+          }
+          sustainableSpending = Math.round((lo + hi) / 2);
+        }
+      }
+
+      // ── Delay perturbations ───────────────────────────────────────────
+      const DELAY_SIMS = 2_000;
+      const delay1 = await MCE.run({ inputs: { ...inputs, deferYears: 1 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol, clReturn: _mcClReturn });
+      const delay2 = await MCE.run({ inputs: { ...inputs, deferYears: 2 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol, clReturn: _mcClReturn });
+      const delay3 = await MCE.run({ inputs: { ...inputs, deferYears: 3 }, simCount: DELAY_SIMS, mcGrowth: _mcGrowth, equityVol: _mcEquityVol, inflationVol: _mcInflationVol, clReturn: _mcClReturn });
+      const delayPerturbations = [
+        { yearsDelay: 1, successRate: delay1.successRate },
+        { yearsDelay: 2, successRate: delay2.successRate },
+        { yearsDelay: 3, successRate: delay3.successRate },
+      ];
+
+      _setLoadingPhase('Stress-testing delay scenarios…');
+      _setLoadingProgress(0);
+
+      await _loaderDelay();
+
+      const MCR = window.RetireMCRender;
+      if (!MCR) throw new Error('RetireMCRender not loaded');
+      _hideLoader();
+      MCR.setResults(result, inputs.inflation, {
+        currentSpending:     inputs.spending,
+        sustainableSpending: sustainableSpending,
+        sustainableIsFloor,
+        targetConfidence:    TARGET_CONFIDENCE,
+        openingPortfolio:    Object.values(inputs.p1Bal).reduce((s, v) => s + v, 0) +
+                             Object.values(inputs.p2Bal).reduce((s, v) => s + v, 0) +
+                             (inputs.intAccts || []).reduce((s, a) => s + (a.balance || 0), 0),
+        delayPerturbations,
+      });
+      MCR.render();
+      _setRiskReady(true);
+      if (_outlookTabBtn) _outlookTabBtn.classList.remove('results-tab--simulating');
+
+      // ── Mark risk as complete and fresh ──────────────────────────────
+      state.riskRun   = true;
+      state.riskStale = false;
+      MCR.setStale(false);
+      _resetTestPlanBtn();
+      // Hide the button permanently for this session. calc-render.js reads
+      // data-risk-run to avoid re-showing it on sub-tab switches.
+      document.body.dataset.riskRun = 'true';
+      if (testPlanBtn) testPlanBtn.style.display = 'none';
+
+      // Show export button now MC is complete.
+      _syncExportBtn();
+
+      // ── Refresh the deterministic metrics badge now RetireMCResults is populated ──
+      window.RetireCalcRender?.renderMetrics();
+
+      // ── Silently pre-run all three stress scenarios in the background ──
+      // Results are cached via storeStressResult so the PDF export can include
+      // them immediately. The UI is unaffected — cards still show "Test this
+      // scenario" until the user clicks them, at which point switchState()
+      // renders instantly from the cached result rather than re-running.
+      _runBackgroundStress(inputs, _mcAssume);
+
+    } catch (err) {
+      _hideLoader();
+      if (_outlookTabBtn) _outlookTabBtn.classList.remove('results-tab--simulating');
+      // On error: hide the tab again and restore button
+      if (outlookTab) outlookTab.classList.add('results-tab--hidden');
+      _setLoadingPhase('Simulation failed — please try again.');
+      _resetTestPlanBtn();
+      console.error('runRisk error:', err);
+      showToast('Simulation failed — see console', true);
+    }
+  }
+
+  // ─────────────────────────────
+  // BACKGROUND STRESS PRE-RUN
+  // Fires automatically after a successful runRisk(). Silently runs all three
+  // stress scenarios sequentially and caches results via storeStressResult.
+  // No UI changes — the user sees no loader or card state change.
+  // If the user manually clicks a stress card before this completes, the
+  // mc-run-stress event handler runs that scenario with its own loader as
+  // normal; the background run will skip any already-stored result.
+  // ─────────────────────────────
+  async function _runBackgroundStress(inputs, mcAssume) {
+    const MCE = window.RetireMCEngine;
+    const MCR = window.RetireMCRender;
+    if (!MCE || !MCR) return;
+
+    const stressIds = ['sorr', 'inflation', 'lostDecade'];
+    for (const stressId of stressIds) {
+      // Skip if the user has already triggered this scenario manually.
+      if (MCR.getSnapshot()[stressId]) continue;
+      try {
+        const result = await MCE.runStress({
+          stressId,
+          inputs,
+          mcGrowth:     mcAssume.growth,
+          equityVol:    mcAssume.equityVol,
+          inflationVol: mcAssume.inflationVol,
+        });
+        // Only store if the user hasn't run it manually in the meantime.
+        if (!MCR.getSnapshot()[stressId]) {
+          MCR.storeStressResult(stressId, result);
+        }
+      } catch (err) {
+        // Silent failure — background runs are best-effort.
+        console.warn(`Background stress run failed for ${stressId}:`, err);
+      }
+    }
+  }
+
+  // ─────────────────────────────
+  // MC STRESS RUN COORDINATOR
+  // Fired by mc-render.js when the user clicks an uncomputed stress button.
+  // Gathers the same inputs and assumptions as runRisk, delegates the actual
+  // simulation to RetireMCEngine.runStress, then hands the result back to
+  // RetireMCRender.setStressResult which switches the active view and renders.
+  // ─────────────────────────────
+  document.addEventListener('mc-run-stress', async function (e) {
+    const stressId = e.detail?.stressId;
+    if (!stressId) return;
+
+    const MCE = window.RetireMCEngine;
+    const MCR = window.RetireMCRender;
+    if (!MCE || !MCR) {
+      showToast('MC engine not loaded', true);
+      return;
+    }
+
+    const inputs = state.lastInputs;
+    if (!inputs) {
+      showToast('Run a projection first', true);
+      return;
+    }
+
+    MCR.showLoader();
+
+    const _mcAssume = _getMCAssume();
+
+    try {
+      const result = await MCE.runStress({
+        stressId,
+        inputs,
+        mcGrowth:     _mcAssume.growth,
+        equityVol:    _mcAssume.equityVol,
+        inflationVol: _mcAssume.inflationVol,
+      });
+      MCR.setStressResult(stressId, result);
+    } catch (err) {
+      console.error('mc-run-stress error:', err);
+      MCR.switchState('baseline');
+      showToast('Stress run failed — see console', true);
+    }
+  });
+
+  // ─────────────────────────────
+  // CURRENCY FORMATTING
+  // ─────────────────────────────
+  document.addEventListener('focusin', (e) => {
+    if (!e.target.matches('.currency-input')) return;
+    if (String(e.target.value).trim() === '') return;
+    e.target.value = String(Math.round(D.parseCurrency(e.target.value)));
+  });
+
+  document.addEventListener('focusout', (e) => {
+    if (!e.target.matches('.currency-input')) return;
+    R.applyCurrencyFormattingToInput(e.target);
+  });
+
+  // ─────────────────────────────
+  // LIVE INPUT — account table
+  // ─────────────────────────────
+  document.addEventListener('input', (e) => {
+    if (!e.target.closest('#acct-tbody')) return;
+
+    syncAccountsFromDOM();
+    refreshSetupSummary();
+
+    if (e.target.dataset.field === 'cashlike') {
+      const accountId = Number(e.target.dataset.accountId);
+      const acc = state.portfolioAccounts.find(a => a.id === accountId);
+      if (acc) {
+        R.updateRowBadge(acc);
+        R.applyWrapperFieldState(acc);
+        syncAccountsFromDOM();
+      }
+    }
+
+    if (['equities','bonds','cashlike','cash'].includes(e.target.dataset.field)) {
+      const accountId = Number(e.target.dataset.accountId);
+      const acc = state.portfolioAccounts.find(a => a.id === accountId);
+      if (acc) R.updateRowBadge(acc);
+      refreshPortfolioUI();
+    }
+  });
+
+  // ─────────────────────────────
+  // CHANGE — selects and checkboxes
+  // ─────────────────────────────
+  document.addEventListener('change', (e) => {
+    const accountId = e.target.dataset?.accountId;
+    if (accountId) {
+      const field = e.target.dataset.field;
+      syncAccountsFromDOM();
+      refreshSetupSummary();
+
+      if (field === 'wrapper') {
+        const acc = state.portfolioAccounts.find(a => a.id === Number(accountId));
+        if (acc) {
+          R.applyWrapperFieldState(acc);
+          // Re-sync after applyWrapperFieldState has corrected the DOM values
+          // so state reflects the fixed alloc (e.g. Cash % = 100)
+          syncAccountsFromDOM();
+          refreshSetupSummary();
+        }
+      }
+      if (field === 'owner') {
+        R.refreshOwnerOptions(state.portfolioAccounts, getOwnerNames());
+      }
+      return;
+    }
+
+    if (e.target.id === 'stepDownPct') {
+      refreshCoverageRatio();
+      return;
+    }
+
+    if (['bniP1GIA','bniP2GIA','bniP1Years','bniP2Years'].includes(e.target.id)) {
+      _updateBniMaxYears();
+    }
+    if (e.target.name === 'bniEnabled') {
+      applyBniState(e.target.value === 'true');
+      return;
+    }
+
+    if (e.target.id === 'p2enabled') {
+      state.p2enabled = e.target.checked;
+      applyP2State();
+      return;
+    }
+  });
+
+  // Year count display — updates live as start/end year steppers change
+  ['sp-startYear','sp-endYear'].forEach(id => {
+    safeEl(id)?.addEventListener('input',  refreshYearCount);
+    safeEl(id)?.addEventListener('change', refreshYearCount);
+  });
+
+  // Show/hide sweep surplus toggle based on salary value
+  ['p1Salary','p2Salary'].forEach(id => {
+    safeEl(id)?.addEventListener('input', _applySweepSurplusVisibility);
+    safeEl(id)?.addEventListener('change', _applySweepSurplusVisibility);
+  });
+
+  // Growth suggestion — click to apply suggested rate
+  document.getElementById('growth-suggestion')?.addEventListener('click', () => {
+    const suggEl = document.getElementById('growth-suggestion');
+    if (!suggEl?.dataset?.suggestedRate) return;
+    const growthEl = document.getElementById('growth');
+    if (!growthEl) return;
+    growthEl.value = suggEl.dataset.suggestedRate;
+    suggEl.classList.remove('growth-sugg--inactive');
+    document.querySelectorAll('input[name="growthPreset"]').forEach(r => r.checked = false);
+    refreshCoverageRatio();
+  });
+
+  // Mark suggestion card inactive when a preset is chosen or growth is manually edited
+  document.querySelectorAll('input[name="growthPreset"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.getElementById('growth-suggestion')?.classList.add('growth-sugg--inactive');
+    });
+  });
+
+  safeEl('growth')?.addEventListener('input', () => {
+    document.getElementById('growth-suggestion')?.classList.add('growth-sugg--inactive');
+  });
+
+  document.getElementById('spending')?.addEventListener('input', () => {
+    refreshCoverageRatio();
+  });
+
+  // Refresh coverage ratio when guaranteed-income fields lose focus.
+  // Salary and SP are currency inputs (format on blur), stop-age fields are numbers.
+  ['p1Salary','p2Salary','p1SP','p2SP',
+   'p1SalaryStopAge','p2SalaryStopAge','p1SPAge','p2SPAge'].forEach(id => {
+    safeEl(id)?.addEventListener('change', refreshCoverageRatio);
+    safeEl(id)?.addEventListener('focusout', refreshCoverageRatio);
+  });
+
+  // ─────────────────────────────
+  // EXPORT BUTTON VISIBILITY
+  // Shown inside results-header only after MC has completed at least once.
+  // Hidden again if projection is re-run (riskRun resets to stale).
+  // ─────────────────────────────
+  function _syncExportBtn() {
+    const exportBtn = document.getElementById('btn-export-plan');
+    if (!exportBtn) return;
+    exportBtn.style.display = state.riskRun ? '' : 'none';
+  }
+
+  // ─────────────────────────────
+  // GLOBAL CLICK DISPATCHER
+  // ─────────────────────────────
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    if (el.disabled || el.classList.contains('tab-btn--disabled')) return;
+
+    const action = el.dataset.action;
+
+    if (action === 'add-account')    return addAccount();
+    if (action === 'remove-account') return removeAccount(el);
+    if (action === 'run-projection') return runProjection();
+    if (action === 'run-risk')       return runRisk();
+    if (action === 'export-plan')    return window.RetireExport?.exportJSON(
+      state.lastInputs, state.lastResult, state.portfolioAccounts
+    );
+    // load-setup and load-excel handled by direct ID listeners below
+
+    if (action === 'switch-tab') {
+      const tab = el.dataset.tab;
+      if (state.activeTab === 'setup') syncSetupToAssumptions();
+      state.activeTab = tab;
+      // Restore metrics band when leaving results tab.
+      // When returning to results, check which sub-tab is active and keep
+      // the band hidden if the user was on Plan outlook.
+      const band = document.querySelector('.metrics-band');
+      if (band) {
+        if (tab !== 'results') {
+          band.style.display = '';
+        } else {
+          const activeSubTab = document.querySelector('.results-tab--active')?.dataset?.resultsTab;
+          band.style.display = (activeSubTab === 'outlook') ? 'none' : '';
+        }
+      }
+      // Reapply comma formatting to currency inputs when returning to setup
+      if (tab === 'setup') {
+        document.querySelectorAll('.currency-input').forEach(R.applyCurrencyFormattingToInput);
+      }
+      // Restore growth preset radio to match the current growth value
+      if (tab === 'assumptions') {
+        const growthVal = safeEl('growth')?.value?.trim();
+        document.querySelectorAll('input[name="growthPreset"]').forEach(r => {
+          r.checked = r.value === growthVal;
+        });
+      }
+      window.scrollTo(0, 0);
+      return RetireTabs.switchTab(tab);
+    }
+
+    if (action === 'view-both') return CR.setView('both', el);
+    if (action === 'view-p1')   return CR.setView('p1', el);
+    if (action === 'view-p2')   return CR.setView('p2', el);
+    if (action === 'real-on')   return CR.setReal(true, el);
+    if (action === 'real-off')  return CR.setReal(false, el);
+
+    if (action === 'mc-real-on')  return window.RetireMCRender?.setReal(true);
+    if (action === 'mc-real-off') return window.RetireMCRender?.setReal(false);
+  });
+
+  // ─────────────────────────────
+  // SAVE PORTFOLIO — ghost feedback on click
+  // ─────────────────────────────
+  const savePortfolioBtn = safeEl('savePortfolioBtn');
+  if (savePortfolioBtn) {
+    savePortfolioBtn.addEventListener('click', () => {
+      triggerSaveFeedback(savePortfolioBtn, 'Save portfolio', saveSetupData);
+    });
+  }
+
+  // ─────────────────────────────
+  // LOAD EXCEL — ghost blue while file picker is open.
+  // Resets on excel-loaded event (success) or after 8s fallback
+  // (user cancelled the picker or load took too long).
+  // ─────────────────────────────
+  const loadExcelBtn = safeEl('loadExcelBtn');
+  if (loadExcelBtn) {
+    loadExcelBtn.addEventListener('click', () => {
+      triggerLoadFeedback(loadExcelBtn, 'Load Excel', 8000);
+      window.RetireExcelLoader.openFilePicker();
+    });
+  }
+
+  // ─────────────────────────────
+  // DELETE PORTFOLIO — inline confirm
+  // ─────────────────────────────
+  wireDeleteConfirm(
+    'deletePortfolioBtn',
+    'deletePortfolioConfirm',
+    'confirmDeletePortfolioBtn',
+    'cancelDeletePortfolioBtn',
+    deletePortfolioData
+  );
+
+  // ─────────────────────────────
+  // SAVE ASSUMPTIONS — ghost feedback on click
+  // ─────────────────────────────
+  const saveAssumptionsBtn = safeEl('saveAssumptionsBtn');
+  if (saveAssumptionsBtn) {
+    saveAssumptionsBtn.addEventListener('click', () => {
+      triggerSaveFeedback(saveAssumptionsBtn, 'Save assumptions', saveAssumptionsData);
+    });
+  }
+
+  // ─────────────────────────────
+  // DELETE ASSUMPTIONS — inline confirm
+  // ─────────────────────────────
+  wireDeleteConfirm(
+    'deleteAssumptionsBtn',
+    'deleteAssumptionsConfirm',
+    'confirmDeleteAssumptionsBtn',
+    'cancelDeleteAssumptionsBtn',
+    deleteAssumptionsData
+  );
+
+  // ─────────────────────────────
+  // EXCEL LOAD
+  // ─────────────────────────────
+  document.addEventListener('excel-loaded', (e) => {
+    // Reset the Load Excel button immediately when data arrives
+    const loadExcelBtn = safeEl('loadExcelBtn');
+    if (loadExcelBtn) resetLoadBtn(loadExcelBtn, 'Load Excel');
+    const { accounts, params } = e.detail;
+
+    state.portfolioAccounts = [];
+    state.nextId = 1;
+
+    const tbody = safeEl('acct-tbody');
+    if (tbody) tbody.innerHTML = '';
+
+    const ownerNames = [
+      String(params.p1name || 'Person 1'),
+      String(params.p2name || 'Person 2'),
+    ];
+
+    if (safeEl('sp-p1name')) safeEl('sp-p1name').value = ownerNames[0];
+    if (safeEl('sp-p2name')) safeEl('sp-p2name').value = ownerNames[1];
+
+    accounts.forEach(a => {
+      const acc = { id: state.nextId++, ...a };
+      state.portfolioAccounts.push(acc);
+      R.renderAccountRow(acc, ownerNames);
+      R.updateRowBadge(acc);
+      R.applyWrapperFieldState(acc);
+    });
+
+    refreshSetupSummary();
+
+    const MONEY = D.MONEY_FIELDS;
+    Object.entries(params).forEach(([k, v]) => {
+      if (k === 'p1name' || k === 'p2name') return;
+      const el = safeEl(k);
+      if (!el) return;
+
+      if (el.type === 'checkbox') {
+        el.checked = String(v).toLowerCase() === 'true';
+        return;
+      }
+
+      if (el.type === 'radio') return;
+      el.value = MONEY.has(k) ? formatCurrency(Number(v) || 0) : v;
+    });
+
+    if (params.thresholdMode) {
+      const radio = document.querySelector(`input[name="thresholdMode"][value="${params.thresholdMode}"]`);
+      if (radio) radio.checked = true;
+    }
+
+    if (params.bniEnabled !== undefined) {
+      const bniRadio = document.querySelector(`input[name="bniEnabled"][value="${params.bniEnabled ? 'true' : 'false'}"]`);
+      if (bniRadio) bniRadio.checked = true;
+      applyBniState(!!params.bniEnabled);
+    }
+
+    if (params.p1DOB     && safeEl('sp-p1dob'))     safeEl('sp-p1dob').value     = params.p1DOB;
+    if (params.p2DOB     && safeEl('sp-p2dob'))     safeEl('sp-p2dob').value     = params.p2DOB;
+    if (params.startYear && safeEl('sp-startYear')) safeEl('sp-startYear').value = params.startYear;
+    if (params.endYear   && safeEl('sp-endYear'))   safeEl('sp-endYear').value   = params.endYear;
+
+    showToast(`Loaded ${accounts.length} accounts from Excel ✓`);
+    updateSidebarNames();
+    applyP2State();
+    refreshPortfolioUI();
+  });
+
+  // ─────────────────────────────
+  // HIDDEN DEBUG SHORTCUT — Ctrl+J
+  // Downloads the raw plan snapshot JSON without generating a PDF.
+  // Works after projection has been run; MC data included if available.
+  // ─────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'j' && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      if (!state.lastInputs || !state.lastResult) {
+        console.warn('Ctrl+J: run a projection first');
+        return;
+      }
+      window.RetireExport?.exportRawJSON(
+        state.lastInputs, state.lastResult, state.portfolioAccounts
+      );
+    }
+  });
+
+  // ─────────────────────────────
+  // STEPPER BUTTONS
+  // ─────────────────────────────
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.stepper-btn');
+    if (!btn) return;
+
+    const targetId = btn.dataset.stepFor;
+    const dir      = Number(btn.dataset.stepDirection);
+    const input    = targetId
+      ? document.getElementById(targetId)
+      : btn.closest('.stepper-input')?.querySelector('input');
+    if (!input) return;
+
+    const isCurrency = input.type === 'text';
+    const step   = Number(btn.dataset.stepAmount) || Number(input.step) || 1;
+    const val    = isCurrency ? (D.parseCurrency(input.value) || 0) : (Number(input.value) || 0);
+    const min    = input.min !== '' ? Number(input.min) : -Infinity;
+    const max    = input.max !== '' ? Number(input.max) :  Infinity;
+
+    // Derive decimal places from step to avoid float drift (e.g. 4.2 not 4.199999…)
+    const decimals  = (step.toString().split('.')[1] || '').length;
+    const newVal    = parseFloat(Math.min(max, Math.max(min, val + dir * step)).toFixed(decimals));
+
+    input.value = isCurrency ? D.formatCurrency(newVal) : newVal;
+    input.dispatchEvent(new Event('input',  { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  // ─────────────────────────────
+  // INIT
+  // ─────────────────────────────
+  refreshSetupSummary();
+  refreshYearCount();
+  R.initialiseCurrencyInputs();
+  applyBniState(false);
+  RetireTabs.init();
+
+  // ── Splash screen ────────────────────────────
+  (function initSplash() {
+    const splash       = document.getElementById('splash-screen');
+    const getStartedBtn = document.getElementById('splashGetStarted');
+    const aboutBtn      = document.getElementById('footerAboutBtn');
+    const homeBtn       = document.getElementById('homeBtn');
+
+    function hideSplash() {
+      if (splash) splash.classList.add('splash-hidden');
+      RetireTabs.switchTab('setup');
+    }
+    function showSplash() {
+      if (splash) {
+        splash.classList.remove('splash-hidden');
+        splash.scrollTop = 0;
+      }
+    }
+
+    if (getStartedBtn) getStartedBtn.addEventListener('click', hideSplash);
+    if (aboutBtn)      aboutBtn.addEventListener('click', showSplash);
+    if (homeBtn)       homeBtn.addEventListener('click', showSplash);
+  })();
+  CR.initResultsTabs();
+  CR.initTableSelector();
+
+  // ── Hide metrics band when Your outlook sub-tab is active ──────────────
+  document.querySelectorAll('.results-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const band = document.querySelector('.metrics-band');
+      if (!band) return;
+      var t = btn.dataset.resultsTab;
+      band.style.display = (t === 'outlook') ? 'none' : '';
+    });
+  });
+
+  const savedPortfolio = localStorage.getItem(STORAGE_KEY);
+  if (savedPortfolio) {
+    try {
+      applySetupInputs(JSON.parse(savedPortfolio));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const savedAssumptions = localStorage.getItem(ASSUMPTIONS_KEY);
+  if (savedAssumptions) {
+    try {
+      applyAssumptionsInputs(JSON.parse(savedAssumptions));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Populate hidden GIA/Cash fields from portfolio so BnI notes are correct on first load
+  syncSetupToAssumptions();
+  // Re-apply currency formatting to visible salary/SP fields after syncSetupToAssumptions
+  // overwrites them with raw integers via setHidden
+  ['p1Salary','p2Salary','p1SP','p2SP'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) R.applyCurrencyFormattingToInput(el);
+  });
+  _updateBniMaxYears();
+  _applySweepSurplusVisibility();
+  updateSidebarNames(); // ensure windfall person dropdowns show actual names on first load
+
+  // Gate tabs after everything is loaded — must run after RetireTabs.init()
+  // so our disabled state wins over any defaults set by the tab system
+  refreshPortfolioUI();
+
+})();
