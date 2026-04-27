@@ -1212,68 +1212,58 @@ function page8risk(s) {
   const r    = s.results;
   const TOTAL = 10;
 
-  // ── Pull MC arrays directly from results (worker output, always present) ──
-  const mcYears      = r.years          || [];          // [startYear, startYear+1, ...]
-  const p10Arr       = r.p10Portfolio   || [];          // nominal, per year
-  const p50Arr       = r.p50Portfolio   || [];
-  const p90Arr       = r.p90Portfolio   || [];
-  const survArr      = r.survivalByYear || [];          // count of solvent paths per year
-  const simCount     = r.simCount       || 10000;
-  const allDetRows   = s.results.annual_rows || [];     // deterministic rows (for deflator & ages)
+  // ── Data sources ──────────────────────────────────────────────────────────
+  // s.results.annual_rows: deterministic rows, each with mc_p10, mc_p50 (nominal),
+  //   real_deflator, p1_age, p2_age, year.
+  // s.results.survival_by_decade: [{ year, survival_rate, age_p1_end }] — decade checkpoints.
+  // s.results.success_rate, s.results.sim_count — overall MC summary.
+  const allRows    = r.annual_rows       || [];
+  const byDecade   = r.survival_by_decade || [];
+  const simCount   = r.sim_count         || 10000;
+  const startYear  = s.meta.plan_start_year;
 
-  // Build a lookup: calendar year -> deterministic row (for real_deflator, p1_age, p2_age)
-  const detByYear = {};
-  allDetRows.forEach(row => { detByYear[row.year] = row; });
+  // Every-other-year rows (same cadence as pages 5/6/7)
+  const dispRows = allRows.filter(row => (row.year - startYear) % 2 === 0);
 
-  // ── Every-other-year filter (same cadence as pages 5/6/7) ────────────────
-  const startYear = s.meta.plan_start_year;
-  const displayYears = mcYears.filter(y => (y - startYear) % 2 === 0);
-
-  // Helper: index in mcYears array for a given calendar year
-  const yi = y => mcYears.indexOf(y);
-
-  // Real conversion using deterministic deflator (approximation for MC values)
-  const realV = (y, nomVal) => {
-    const det = detByYear[y];
-    const defl = det ? (det.real_deflator || 1) : 1;
-    return nomVal * defl;
-  };
-
-  // Survival rate for a year (0–1)
-  const survRate = y => {
-    const i = yi(y);
-    return i >= 0 && survArr[i] != null ? survArr[i] / simCount : null;
-  };
+  // Lookup survival rate for a given year by interpolating from survival_by_decade.
+  // survival_by_decade entries mark the rate *at the end of that decade*.
+  // For display years between decade markers, we use the rate of the most recent
+  // preceding (or equal) decade checkpoint.
+  function survRateForYear(y) {
+    // If overall success rate is 1 and no decade data, everything is fine.
+    if (!byDecade.length) return r.success_rate ?? null;
+    let best = null;
+    for (const d of byDecade) {
+      if (d.year <= y) best = d.survival_rate;
+    }
+    // If y is before the first checkpoint, use the overall success rate.
+    return best ?? r.success_rate ?? null;
+  }
 
   // ── Stat card computations ────────────────────────────────────────────────
-  const lastYear  = mcYears[mcYears.length - 1];
-  const lastIdx   = mcYears.length - 1;
 
-  // Deflator for last year
-  const lastDet   = detByYear[lastYear] || {};
-  const lastDefl  = lastDet.real_deflator || 1;
-
-  // Card 1: First year survival drops below 95%
-  let firstVulnerableYear = null;
-  let firstVulnerableAge  = null;
-  for (let i = 0; i < mcYears.length; i++) {
-    const rate = survArr[i] != null ? survArr[i] / simCount : 1;
-    if (rate < 0.95) {
-      firstVulnerableYear = mcYears[i];
-      const det = detByYear[firstVulnerableYear];
-      firstVulnerableAge = det ? det.p1_age : null;
+  // Card 1: First decade where survival drops below 95%.
+  let firstVulnDecade = null;
+  let firstVulnAge    = null;
+  for (const d of byDecade) {
+    if (d.survival_rate < 0.95) {
+      firstVulnDecade = d.year;
+      firstVulnAge    = d.age_p1_end ?? null;
       break;
     }
   }
 
-  // Card 2: Median terminal portfolio (real)
-  const p50End = p50Arr[lastIdx] != null ? p50Arr[lastIdx] * lastDefl : null;
+  // Card 2 & 3: Terminal portfolio from last annual_rows entry (real terms).
+  const lastRow  = allRows[allRows.length - 1] || {};
+  const lastDefl = lastRow.real_deflator || 1;
+  // mc_p50 and mc_p10 on annual_rows are nominal — apply deflator for real terms.
+  const p50End   = lastRow.mc_p50 != null ? lastRow.mc_p50 * lastDefl : null;
+  const p10End   = lastRow.mc_p10 != null ? lastRow.mc_p10 * lastDefl : null;
+  const lastYear = lastRow.year ?? (startYear + allRows.length - 1);
 
-  // Card 3: Worst-decile terminal portfolio (real)
-  const p10End = p10Arr[lastIdx] != null ? p10Arr[lastIdx] * lastDefl : null;
-
-  // Card 4: Years with survival rate above 90%
-  const yearsAbove90 = mcYears.filter((y, i) => survArr[i] != null && survArr[i] / simCount >= 0.90).length;
+  // Card 4: Decade checkpoints above 90% survival.
+  const decadesAbove90  = byDecade.filter(d => d.survival_rate >= 0.90).length;
+  const totalDecades    = byDecade.length;
 
   // ── Colour helpers ────────────────────────────────────────────────────────
   function survColour(rate) {
@@ -1295,12 +1285,12 @@ function page8risk(s) {
     return 'Vulnerable';
   }
   function fmtSurv(rate) {
-    if (rate == null) return '—';
+    if (rate == null)  return '—';
     if (rate >= 0.995) return '99%+';
     return Math.round(rate * 100) + '%';
   }
   function fmtK(n) {
-    if (n == null || n < 0) return n != null && n < 0 ? '—' : '—';
+    if (n == null || n < 0) return '—';
     if (n >= 1000000) return '£' + (n / 1000000).toFixed(2) + 'M';
     if (n >= 1000)    return '£' + Math.round(n / 1000) + 'k';
     return '£' + Math.round(n);
@@ -1321,30 +1311,31 @@ function page8risk(s) {
 
   const cardData = [
     {
-      l: 'First vulnerable year',
-      v: firstVulnerableYear
-        ? `${firstVulnerableYear}${firstVulnerableAge ? ' (age ' + firstVulnerableAge + ')' : ''}`
+      l: 'First vulnerable decade',
+      v: firstVulnDecade
+        ? `${firstVulnDecade}${firstVulnAge != null ? ' (age ' + firstVulnAge + ')' : ''}`
         : 'None in projection',
-      s: firstVulnerableYear ? 'first year survival drops below 95%' : 'survival stays above 95% throughout',
-      vCol: firstVulnerableYear ? '#BA7517' : '#3B6D11',
+      s: firstVulnDecade ? 'first decade survival drops below 95%' : 'survival stays above 95% throughout',
+      vCol: firstVulnDecade ? '#BA7517' : '#3B6D11',
     },
     {
       l: 'Median terminal portfolio',
       v: p50End != null ? fmtK(p50End) : '—',
       s: `real terms at ${lastYear} · 1-in-2 outcome`,
-      vCol: p50End > 0 ? '#3B6D11' : '#A32D2D',
+      vCol: p50End != null && p50End > 0 ? '#3B6D11' : '#A32D2D',
     },
     {
       l: 'Worst-decile terminal portfolio',
       v: p10End != null ? fmtK(Math.max(0, p10End)) : '—',
       s: `real terms at ${lastYear} · 1-in-10 outcome`,
-      vCol: p10End > 0 ? '#BA7517' : '#A32D2D',
+      vCol: p10End != null && p10End > 0 ? '#BA7517' : '#A32D2D',
     },
     {
-      l: 'Years above 90% survival',
-      v: `${yearsAbove90} of ${mcYears.length}`,
-      s: 'years where 9 in 10 paths remain solvent',
-      vCol: yearsAbove90 >= mcYears.length * 0.9 ? '#3B6D11' : yearsAbove90 >= mcYears.length * 0.7 ? '#BA7517' : '#A32D2D',
+      l: 'Decades above 90% survival',
+      v: totalDecades ? `${decadesAbove90} of ${totalDecades}` : '—',
+      s: 'decade checkpoints where 9 in 10 paths remain solvent',
+      vCol: totalDecades && decadesAbove90 === totalDecades ? '#3B6D11'
+          : totalDecades && decadesAbove90 >= totalDecades * 0.7 ? '#BA7517' : '#A32D2D',
     },
   ];
 
@@ -1360,33 +1351,34 @@ function page8risk(s) {
   body.appendChild(cards);
 
   // ── Table ─────────────────────────────────────────────────────────────────
-  const labelW  = 158;
-  const colCount = displayYears.length + 1;
-  const dataW   = Math.floor((1123 - 64 - labelW) / displayYears.length);
+  const labelW   = 158;
+  const colCount = dispRows.length + 1;
+  const dataW    = dispRows.length > 0
+    ? Math.floor((1123 - 64 - labelW) / dispRows.length)
+    : 60;
 
   const tbl = document.createElement('table');
   tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:7.5px;table-layout:fixed;';
 
   let cg = `<col style="width:${labelW}px;">`;
-  displayYears.forEach(() => { cg += `<col style="width:${dataW}px;">`; });
+  dispRows.forEach(() => { cg += `<col style="width:${dataW}px;">`; });
   tbl.innerHTML = `<colgroup>${cg}</colgroup>`;
 
-  // Header: year row
+  // Year header row
   const thead = document.createElement('thead');
   const yearRow = document.createElement('tr');
   yearRow.innerHTML = `<th style="text-align:left;padding:4px 6px;border-bottom:2px solid var(--ink);font-size:7.5px;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Year</th>`;
-  displayYears.forEach(y => {
-    yearRow.innerHTML += `<th style="text-align:right;padding:4px 3px;border-bottom:2px solid var(--ink);font-size:7.5px;font-weight:700;color:var(--ink);">${y}</th>`;
+  dispRows.forEach(row => {
+    yearRow.innerHTML += `<th style="text-align:right;padding:4px 3px;border-bottom:2px solid var(--ink);font-size:7.5px;font-weight:700;color:var(--ink);">${row.year}</th>`;
   });
   thead.appendChild(yearRow);
 
   // Age row
   const ageRow = document.createElement('tr');
   ageRow.innerHTML = `<td style="padding:2px 6px 5px;font-size:7px;color:var(--ink-light);">Age ${plan.p1.name}${plan.p2 ? ' | ' + plan.p2.name : ''}</td>`;
-  displayYears.forEach(y => {
-    const det = detByYear[y] || {};
-    const ages = det.p1_age != null
-      ? det.p1_age + (plan.p2 && det.p2_age != null ? '|' + det.p2_age : '')
+  dispRows.forEach(row => {
+    const ages = row.p1_age != null
+      ? row.p1_age + (plan.p2 && row.p2_age != null ? '|' + row.p2_age : '')
       : '—';
     ageRow.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;color:var(--ink-light);">${ages}</td>`;
   });
@@ -1395,7 +1387,6 @@ function page8risk(s) {
 
   const tbody = document.createElement('tbody');
 
-  // Generic row builder
   function riskRow(label, values, opts = {}) {
     const tr = document.createElement('tr');
     if (opts.groupHeader) {
@@ -1407,68 +1398,73 @@ function page8risk(s) {
     const bg      = isTotal ? 'background:#e8eef8;' : isSub ? 'background:var(--bg-mid);' : '';
     const fw      = isTotal || isSub ? 'font-weight:700;' : '';
     const bt      = isTotal ? 'border-top:2px solid var(--ink);' : '';
-    tr.innerHTML  = `<td style="padding:5px 6px;${fw}${bg}${bt}color:${isTotal ? 'var(--ink)' : 'var(--ink-mid)'};">${label}</td>`;
+    const lCol    = isTotal ? 'var(--ink)' : 'var(--ink-mid)';
+    tr.innerHTML  = `<td style="padding:5px 6px;${fw}${bg}${bt}color:${lCol};">${label}</td>`;
     values.forEach((v, i) => {
       const cellBg = isTotal ? '#e8eef8' : isSub ? 'var(--bg-mid)' : i % 2 === 0 ? 'var(--white)' : '#fafbfd';
-      const content = opts.raw ? v : (v > 0.5 ? fmtK(v) : '—');
-      const color   = opts.color || (isTotal ? 'var(--ink)' : 'var(--ink-mid)');
-      tr.innerHTML += `<td style="text-align:right;padding:4px 3px;${fw}background:${cellBg};color:${color};${bt}">${content}</td>`;
+      const color  = opts.color || lCol;
+      const disp   = (v != null && v > 0.5) ? fmtK(v) : '—';
+      tr.innerHTML += `<td style="text-align:right;padding:4px 3px;${fw}background:${cellBg};color:${color};${bt}">${disp}</td>`;
     });
     return tr;
   }
 
   // ── SECTION 1: Survival probability ──────────────────────────────────────
-  tbody.appendChild(riskRow('Survival probability', [], { groupHeader: true }));
+  tbody.appendChild(riskRow('Survival probability (interpolated from decade checkpoints)', [], { groupHeader: true }));
 
-  // Survival rate row with colour-coded cells
+  // Colour-coded survival rate row
   const survTr = document.createElement('tr');
   survTr.innerHTML = `<td style="padding:5px 6px;color:var(--ink-mid);">Probability of remaining solvent</td>`;
-  displayYears.forEach((y, i) => {
-    const rate    = survRate(y);
-    const col     = survColour(rate);
-    const label   = fmtSurv(rate);
-    const cellBg  = i % 2 === 0 ? 'var(--white)' : '#fafbfd';
-    survTr.innerHTML += `<td style="text-align:right;padding:4px 3px;background:${cellBg};font-weight:700;color:${col};">${label}</td>`;
+  dispRows.forEach((row, i) => {
+    const rate   = survRateForYear(row.year);
+    const col    = survColour(rate);
+    const cellBg = i % 2 === 0 ? 'var(--white)' : '#fafbfd';
+    survTr.innerHTML += `<td style="text-align:right;padding:4px 3px;background:${cellBg};font-weight:700;color:${col};">${fmtSurv(rate)}</td>`;
   });
   tbody.appendChild(survTr);
 
   // Qualitative label row
   const qualTr = document.createElement('tr');
-  qualTr.innerHTML = `<td style="padding:3px 6px 5px;font-style:italic;color:var(--ink-light);font-size:7px;"></td>`;
-  displayYears.forEach((y, i) => {
-    const rate   = survRate(y);
+  qualTr.innerHTML = `<td style="padding:3px 6px 5px;color:var(--ink-light);font-size:7px;"></td>`;
+  dispRows.forEach((row, i) => {
+    const rate   = survRateForYear(row.year);
     const col    = survColour(rate);
-    const label  = survLabel(rate);
     const cellBg = i % 2 === 0 ? 'var(--white)' : '#fafbfd';
-    qualTr.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;background:${cellBg};color:${col};font-style:italic;">${label}</td>`;
+    qualTr.innerHTML += `<td style="text-align:right;padding:2px 3px 5px;font-size:7px;background:${cellBg};color:${col};font-style:italic;">${survLabel(rate)}</td>`;
   });
   tbody.appendChild(qualTr);
 
-  // ── SECTION 2: Portfolio fan (real terms) ─────────────────────────────────
-  tbody.appendChild(riskRow('Simulated portfolio (today\'s money)', [], { groupHeader: true }));
+  // ── SECTION 2: Portfolio fan (real terms, from mc_p10 / mc_p50 on annual_rows) ──
+  tbody.appendChild(riskRow("Simulated portfolio (today's money)", [], { groupHeader: true }));
 
-  tbody.appendChild(riskRow('Strong outcome (9 in 10 do better)', displayYears.map(y => {
-    const i = yi(y);
-    return i >= 0 && p10Arr[i] != null ? realV(y, p10Arr[i]) : null;
+  // p10: weak outcome — deflate nominal mc_p10
+  tbody.appendChild(riskRow('Weak outcome (1 in 10 do worse)', dispRows.map(row => {
+    const v = row.mc_p10;
+    return v != null ? v * (row.real_deflator || 1) : null;
   }), { color: 'var(--amber)' }));
 
-  tbody.appendChild(riskRow('Typical outcome (median)', displayYears.map(y => {
-    const i = yi(y);
-    return i >= 0 && p50Arr[i] != null ? realV(y, p50Arr[i]) : null;
+  // p50: median — deflate nominal mc_p50
+  tbody.appendChild(riskRow('Typical outcome (median)', dispRows.map(row => {
+    const v = row.mc_p50;
+    return v != null ? v * (row.real_deflator || 1) : null;
   }), { color: 'var(--blue)', subtotal: true }));
 
-  tbody.appendChild(riskRow('Favourable outcome (9 in 10 do worse)', displayYears.map(y => {
-    const i = yi(y);
-    return i >= 0 && p90Arr[i] != null ? realV(y, p90Arr[i]) : null;
-  }), { color: '#3B6D11' }));
+  // p90: only include if present on rows
+  const hasP90 = dispRows.some(row => row.mc_p90 != null);
+  if (hasP90) {
+    tbody.appendChild(riskRow('Strong outcome (9 in 10 do worse)', dispRows.map(row => {
+      const v = row.mc_p90;
+      return v != null ? v * (row.real_deflator || 1) : null;
+    }), { color: '#3B6D11' }));
+  }
 
-  // ── SECTION 3: Spread ─────────────────────────────────────────────────────
-  tbody.appendChild(riskRow('Outcome spread (today\'s money)', [], { groupHeader: true }));
+  // ── SECTION 3: Spread (p50 minus p10, real terms) ─────────────────────────
+  tbody.appendChild(riskRow("Outcome spread (today's money)", [], { groupHeader: true }));
 
-  tbody.appendChild(riskRow('Range (favourable minus weak)', displayYears.map(y => {
-    const i = yi(y);
-    if (i < 0 || p90Arr[i] == null || p10Arr[i] == null) return null;
-    return realV(y, p90Arr[i] - p10Arr[i]);
+  tbody.appendChild(riskRow('Spread: median minus weak outcome', dispRows.map(row => {
+    const p50 = row.mc_p50, p10 = row.mc_p10;
+    if (p50 == null || p10 == null) return null;
+    return (p50 - p10) * (row.real_deflator || 1);
   }), { color: 'var(--ink-mid)' }));
 
   tbl.appendChild(tbody);
@@ -1480,9 +1476,9 @@ function page8risk(s) {
   note.innerHTML = `
     <div class="section-label" style="color:var(--blue);margin-bottom:4px;">How to read this table</div>
     <p style="font-size:8.5px;color:var(--ink-mid);line-height:1.65;">
-      <b>Survival probability</b> is the share of ${simCount.toLocaleString('en-GB')} simulated paths in which the portfolio has not yet run out of money in that year. A rate above 95% is considered solid.
-      <b>Simulated portfolio values</b> are shown in today's money using the deterministic inflation path as a deflator. The weak outcome (p10) is the value exceeded by 90% of paths in that year. The median (p50) is the midpoint outcome. The favourable outcome (p90) is the value exceeded by only 10% of paths.
-      The spread row shows the gap between favourable and weak outcomes: a widening spread over time reflects the compounding uncertainty of longer projection horizons.
+      <b>Survival probability</b> shows the share of ${simCount.toLocaleString('en-GB')} simulated paths still solvent at each decade checkpoint, interpolated across the displayed years. A rate above 95% is considered solid.
+      <b>Simulated portfolio values</b> are in today's money (nominal MC values deflated using the deterministic inflation path). The weak outcome (p10) is worse than 90% of paths. The median (p50) is the midpoint.
+      The <b>spread</b> shows how far the median exceeds the weak outcome: a widening gap over time reflects the compounding uncertainty of longer horizons.
     </p>`;
   body.appendChild(note);
 
