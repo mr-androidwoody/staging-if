@@ -50,6 +50,75 @@
   .pension-sweep-fields {
     margin-top: 8px;
   }
+  .wiz-guaranteed-strip {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #dde3ed);
+    border-radius: 6px;
+  }
+  .wiz-guaranteed-strip__heading {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted, #6b7a99);
+    margin-bottom: 8px;
+  }
+  .wiz-guaranteed-strip__body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 32px;
+  }
+  .wiz-gi-person {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 200px;
+  }
+  .wiz-gi-person__name {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted, #6b7a99);
+    margin-bottom: 2px;
+  }
+  .wiz-gi-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text, #1a2236);
+  }
+  .wiz-gi-item__amount {
+    font-weight: 600;
+  }
+  .wiz-gi-item__label {
+    color: var(--muted, #6b7a99);
+    font-size: 12px;
+  }
+  .wiz-gi-item__tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--surface-raised, #f0f4fa);
+    color: var(--muted, #6b7a99);
+  }
+  .wiz-gi-item__tag--active {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .wiz-gi-item__tag--future {
+    background: #fff8e1;
+    color: #b45309;
+  }
+  .wiz-gi-none {
+    font-size: 13px;
+    color: var(--muted, #6b7a99);
+    font-style: italic;
+  }
   .wiz-household-total {
     display: flex;
     align-items: center;
@@ -694,6 +763,14 @@
           </div>
 
         </div><!-- /.wiz-grid -->
+
+        <!-- Guaranteed income strip — full width, between balances and household total -->
+        <div class="wiz-guaranteed-strip" id="wiz-guaranteed-strip">
+          <div class="wiz-guaranteed-strip__heading">Guaranteed income at plan start</div>
+          <div class="wiz-guaranteed-strip__body" id="wiz-guaranteed-body">
+            <!-- Populated by syncSetupToAssumptions() -->
+          </div>
+        </div>
 
         <!-- Household total — full width, below both columns -->
         <div class="wiz-household-total">
