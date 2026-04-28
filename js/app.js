@@ -415,7 +415,6 @@
     applyP2State();
     _applySweepSurplusVisibility();
     const _summary = C.summarisePortfolio(state.portfolioAccounts);
-    refreshCoverageRatio();
     refreshYearCount();
   }
 
@@ -598,96 +597,6 @@
   function refreshSetupSummary() {
     const summary = C.summarisePortfolio(state.portfolioAccounts);
     R.renderSetupSummary(summary);
-    refreshCoverageRatio();
-  }
-
-  function refreshCoverageRatio() {
-    const spending  = D.parseCurrency(safeValue('spending')) || 0;
-    const startYear = safeNumber(safeValue('sp-startYear'));
-    const endYear   = safeNumber(safeValue('sp-endYear'));
-
-    const elGuaranteed = document.getElementById('cgr-guaranteed');
-    const elGap        = document.getElementById('cgr-gap');
-    const elGapSub     = document.getElementById('cgr-gap-sub');
-    const elPct        = document.getElementById('cgr-pct');
-
-    if (!elGuaranteed || !elGap || !elPct) return;
-
-    const dash = () => {
-      [elGuaranteed, elGap, elPct].forEach(el => {
-        el.textContent = '–';
-        el.className   = 'drawdown-rate-card__value';
-      });
-      if (elGapSub) elGapSub.textContent = 'gap per year';
-    };
-
-    if (!spending) { dash(); return; }
-
-    // ── Salary: only count if still active at plan start ─────────────────
-    const p1DOB        = safeNumber(safeValue('sp-p1dob'));
-    const p1AgeAtStart = (startYear && p1DOB) ? startYear - p1DOB : null;
-    const p1Salary     = D.parseCurrency(safeValue('p1Salary')) || 0;
-    const p1SalStop    = safeNumber(safeValue('p1SalaryStopAge'));
-    const p1SalActive  = p1Salary > 0 &&
-      (!p1SalStop || !p1AgeAtStart || p1AgeAtStart < p1SalStop);
-
-    let p2SalIncome = 0;
-    if (state.p2enabled) {
-      const p2DOB        = safeNumber(safeValue('sp-p2dob'));
-      const p2AgeAtStart = (startYear && p2DOB) ? startYear - p2DOB : null;
-      const p2Salary     = D.parseCurrency(safeValue('p2Salary')) || 0;
-      const p2SalStop    = safeNumber(safeValue('p2SalaryStopAge'));
-      const p2SalActive  = p2Salary > 0 &&
-        (!p2SalStop || !p2AgeAtStart || p2AgeAtStart < p2SalStop);
-      p2SalIncome = p2SalActive ? p2Salary : 0;
-    }
-
-    const salaryIncome = (p1SalActive ? p1Salary : 0) + p2SalIncome;
-
-    // ── State pension: count if it starts before plan end ─────────────────
-    const p1SPAmt    = D.parseCurrency(safeValue('p1SP')) || 0;
-    const p1SPAge    = safeNumber(safeValue('p1SPAge'));
-    const p1SPYear   = (p1DOB && p1SPAge) ? p1DOB + p1SPAge : null;
-    const planEnd    = endYear || (startYear ? startYear + 30 : 0);
-    const p1SPActive = p1SPAmt > 0 && p1SPYear && p1SPYear <= planEnd;
-
-    let p2SPIncome = 0;
-    if (state.p2enabled) {
-      const p2DOB    = safeNumber(safeValue('sp-p2dob'));
-      const p2SPAmt  = D.parseCurrency(safeValue('p2SP')) || 0;
-      const p2SPAge  = safeNumber(safeValue('p2SPAge'));
-      const p2SPYear = (p2DOB && p2SPAge) ? p2DOB + p2SPAge : null;
-      const p2SPActive = p2SPAmt > 0 && p2SPYear && p2SPYear <= planEnd;
-      p2SPIncome = p2SPActive ? p2SPAmt : 0;
-    }
-
-    const spIncome = (p1SPActive ? p1SPAmt : 0) + p2SPIncome;
-
-    // ── Interest account draws ────────────────────────────────────────────
-    const intIncome = (state.portfolioAccounts || [])
-      .filter(a => a.monthlyDraw > 0)
-      .reduce((sum, a) => sum + (a.monthlyDraw * 12), 0);
-
-    const guaranteed  = salaryIncome + spIncome + intIncome;
-    const gap         = Math.max(0, spending - guaranteed);
-    const coveragePct = (guaranteed / spending) * 100;
-
-    function fmtMoney(n) {
-      return '£' + Math.round(n).toLocaleString('en-GB');
-    }
-    function coverageClass(pct) {
-      if (pct >= 50) return 'drawdown-rate-card__value drawdown-rate-card__value--ok';
-      if (pct >= 25) return 'drawdown-rate-card__value drawdown-rate-card__value--warn';
-      return 'drawdown-rate-card__value drawdown-rate-card__value--err';
-    }
-
-    elGuaranteed.textContent = fmtMoney(guaranteed);
-    elGuaranteed.className   = 'drawdown-rate-card__value drawdown-rate-card__value--neutral';
-    elGap.textContent        = fmtMoney(gap);
-    elGap.className          = coverageClass(coveragePct);
-    elPct.textContent        = Math.round(coveragePct) + '%';
-    elPct.className          = coverageClass(coveragePct);
-    if (elGapSub) elGapSub.textContent = 'gap per year';
   }
 
   function refreshYearCount() {
@@ -1084,28 +993,6 @@
     setHidden('p2GIAeq',   p2giaSplit.eq);
     setHidden('p1GIAcash', p1giaSplit.cash);
     setHidden('p2GIAcash', p2giaSplit.cash);
-
-    const intAccts = state.portfolioAccounts.filter(isYieldAccount);
-    const listEl = safeEl('int-accts-list');
-    if (listEl) {
-      if (!intAccts.length) {
-        listEl.innerHTML = '';
-      } else {
-        listEl.innerHTML =
-          `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#4a7fd4;margin-bottom:6px">
-            Interest-bearing accounts
-          </div>` +
-          intAccts.map(a => {
-            const owner = a.owner === 'p1' ? p1name : p2name;
-            const rate  = a.rate != null ? a.rate + '%' : '–';
-            const draw  = a.monthlyDraw != null ? D.formatMoney(a.monthlyDraw) + '/mo' : '–';
-            return `<div class="assump-int-row">
-              <span class="assump-int-name">${a.name || '(unnamed)'}</span>
-              <span class="assump-int-meta">${owner} · ${a.wrapper} · ${rate} · draw ${draw} · ${D.formatMoney(a.value || 0)}</span>
-            </div>`;
-          }).join('');
-      }
-    }
 
     const total  = state.portfolioAccounts.reduce((s, a) => s + (a.value || 0), 0);
     const nAccts = state.portfolioAccounts.length;
@@ -1734,7 +1621,6 @@
     }
 
     if (e.target.id === 'stepDownPct') {
-      refreshCoverageRatio();
       return;
     }
 
@@ -1774,7 +1660,6 @@
     growthEl.value = suggEl.dataset.suggestedRate;
     suggEl.classList.remove('growth-sugg--inactive');
     document.querySelectorAll('input[name="growthPreset"]').forEach(r => r.checked = false);
-    refreshCoverageRatio();
   });
 
   // Mark suggestion card inactive when a preset is chosen or growth is manually edited
@@ -1786,18 +1671,6 @@
 
   safeEl('growth')?.addEventListener('input', () => {
     document.getElementById('growth-suggestion')?.classList.add('growth-sugg--inactive');
-  });
-
-  document.getElementById('spending')?.addEventListener('input', () => {
-    refreshCoverageRatio();
-  });
-
-  // Refresh coverage ratio when guaranteed-income fields lose focus.
-  // Salary and SP are currency inputs (format on blur), stop-age fields are numbers.
-  ['p1Salary','p2Salary','p1SP','p2SP',
-   'p1SalaryStopAge','p2SalaryStopAge','p1SPAge','p2SPAge'].forEach(id => {
-    safeEl(id)?.addEventListener('change', refreshCoverageRatio);
-    safeEl(id)?.addEventListener('focusout', refreshCoverageRatio);
   });
 
   // ─────────────────────────────
