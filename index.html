@@ -187,6 +187,41 @@
   .wiz-phase-money--covered {
     color: #27ae60;
   }
+  .wiz-timeline-tooltip {
+    position: absolute;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #dde3ed);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--text, #1a2236);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .wiz-timeline-tooltip.visible { opacity: 1; }
+  .wiz-timeline-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 8px;
+  }
+  .wiz-timeline-legend__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted, #6b7a99);
+  }
+  .wiz-timeline-legend__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
   .wiz-timeline-empty {
     padding: 32px 0;
     text-align: center;
@@ -1552,7 +1587,13 @@
           <p class="wiz-col-intro">Here is how your key financial events line up across your retirement. The timeline is built from the details you have entered so far. Review it before setting your income target on the next step.</p>
 
           <!-- SVG timeline — rendered by app.js renderTimeline() -->
-          <div id="wiz-timeline-svg" class="wiz-timeline-svg-wrap"></div>
+          <div style="position:relative">
+            <div id="wiz-timeline-svg" class="wiz-timeline-svg-wrap"></div>
+            <div id="wiz-timeline-tooltip" class="wiz-timeline-tooltip"></div>
+          </div>
+
+          <!-- Legend — rendered by app.js -->
+          <div id="wiz-timeline-legend" class="wiz-timeline-legend"></div>
 
           <!-- Phase summary table — rendered by app.js renderTimeline() -->
           <div id="wiz-timeline-phases" class="wiz-timeline-phases"></div>
