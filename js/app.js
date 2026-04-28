@@ -223,7 +223,7 @@
       p2PensionMonthly:  safeValue('p2PensionMonthly'),
       p2PensionStopAge:  safeValue('p2PensionStopAge'),
       dividendYield:     safeValue('dividendYield'),
-      dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'payout',
+      dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'reinvest',
       startYear:         safeValue('sp-startYear'),
       endYear:           safeValue('sp-endYear'),
       windfalls:         (function () {
@@ -307,7 +307,7 @@
     sv('inflation',            a.inflation);
     sv('thresholdFromYearVal', a.thresholdFromYear);
     sv('dividendYield',        a.dividendYield);
-    const dm = document.querySelector(`input[name="dividendMode"][value="${a.dividendMode ?? 'payout'}"]`);
+    const dm = document.querySelector(`input[name="dividendMode"][value="${a.dividendMode ?? 'reinvest'}"]`);
     if (dm) dm.checked = true;
     sv('bniP1GIA',             a.bniP1GIA);
     sv('bniP2GIA',             a.bniP2GIA);
@@ -439,7 +439,7 @@
       spending: '', stepDownPct: '0', growth: '', inflation: '',
       windfalls: [],
       thresholdMode: 'frozen', withdrawalStrategy: 'balanced',
-      dividendYield: '1.5', bniEnabled: false,
+      dividendYield: '1.5', dividendMode: 'reinvest', bniEnabled: false,
     });
     showToast('Assumptions deleted');
   }
@@ -1048,7 +1048,7 @@
         stopAge:    gvi('p2PensionStopAge'),
       } : { monthlyNet: 0, stopAge: 0 },
       dividendYield:     (parseFloat(safeEl('dividendYield')?.value) || 1.5) / 100,
-      dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'payout',
+      dividendMode:      document.querySelector('input[name="dividendMode"]:checked')?.value ?? 'reinvest',
       strategy:          document.querySelector('input[name="withdrawalStrategy"]:checked')?.value || 'balanced',
       p1Bal: {
         Cash:    gv('p1Cash'),
