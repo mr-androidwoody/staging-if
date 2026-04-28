@@ -346,68 +346,56 @@
     if (a.startYear) { const el = safeEl('sp-startYear'); if (el) el.value = a.startYear; }
     if (a.endYear)   { const el = safeEl('sp-endYear');   if (el) el.value = a.endYear;   }
 
-    // Windfall slots — clear and rebuild from saved data
+    // Windfall slots — clear and rebuild from saved data using card design
     if (Array.isArray(a.windfalls)) {
       const container = document.getElementById('windfalls-container');
       if (container) {
-        // Remove all existing slots
         container.querySelectorAll('.windfall-slot').forEach(s => s.remove());
-        // Reset the counter
-        if (typeof window._wfCount !== 'undefined') { window._wfCount = 0; }
-        // If no windfalls saved, restore the blank slot 1
         const source = a.windfalls.length > 0 ? a.windfalls : [{ name:'', year:'', amount:'', person:'p1', wrapper:'GIA' }];
         source.forEach(function(wf, idx) {
-          if (idx === 0) {
-            // Re-create slot 1 inline (matches the static HTML structure)
-            const div = document.createElement('div');
-            div.className = 'windfall-slot';
-            div.dataset.slot = '1';
-            div.innerHTML =
-              '<div class="wiz-col-heading wiz-col-heading--sub wf-header" onclick="wizToggleWindfall(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span><span class="wf-chevron">&#x25bc;</span> <span class="wf-label-n">Windfall 1</span></span><span class="wf-remove-link" onclick="event.stopPropagation();wizRemoveWindfall(this)" style="display:none;font-size:0.75rem;font-weight:500;color:var(--muted,#94a3b8);cursor:pointer;letter-spacing:0.02em;padding:0.1rem 0.4rem;border:1px solid var(--border,#334155);border-radius:3px">&#x2715; Remove</span></div>' +
-              '<div class="wf-summary" style="display:none;font-size:0.8rem;color:var(--muted,#64748b);padding:0.15rem 0 0.5rem 1.4rem"></div>' +
-              '<table class="wiz-table">' +
-              '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>' +
-              '<tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"></td></tr>' +
-              '<tr><td class="wiz-label">Amount (\u00a3)</td><td class="wiz-val"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"></td></tr>' +
-              '<tr><td class="wiz-label">Person</td><td class="wiz-val"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></td></tr>' +
-              '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></td></tr>' +
-              '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% Equity / 30% Cash</option><option value="50">50% Equity / 50% Cash</option><option value="0">100% Cash</option></select></td></tr>' +
-              '<tr class="wf-wrapper-hint-row" style="display:none"><td colspan="2" class="wf-wrapper-hint">Cash earns 0% growth in projections. For a capital-preserved low-volatility holding, use GIA with the “100% Cash” split instead.</td></tr>' +
-              '</table>';
-            container.appendChild(div);
-          } else {
-            wizAddWindfall();
-          }
-          const slots = container.querySelectorAll('.windfall-slot');
-          const slot  = slots[idx];
-          if (!slot) return;
-          const nameEl    = slot.querySelector('.wf-name');
-          const yearEl    = slot.querySelector('.wf-year');
-          const amountEl  = slot.querySelector('.wf-amount');
-          const personEl  = slot.querySelector('.wf-person');
-          const wrapperEl = slot.querySelector('.wf-wrapper');
+          const div = document.createElement('div');
+          div.className = 'windfall-slot wf-card';
+          if (idx === 0) div.dataset.slot = '1';
+          div.innerHTML =
+            '<div class="wf-card__header"><span class="wf-card__title wf-label-n">Windfall</span>' +
+            '<button type="button" class="wf-card__remove wf-remove-link" onclick="wizRemoveWindfall(this)">&#x2715;</button></div>' +
+            '<div class="wf-card__body">' +
+            '<div class="wf-card__row wf-card__row--span"><label class="wf-card__label">Name</label>' +
+            '<input type="text" class="wf-name wf-card__input" placeholder="e.g. Inheritance"></div>' +
+            '<div class="wf-card__row"><label class="wf-card__label">Year</label>' +
+            '<input type="number" class="wf-year wf-card__input" placeholder="e.g. 2032" min="2025" max="2060"></div>' +
+            '<div class="wf-card__row"><label class="wf-card__label">Amount (£)</label>' +
+            '<input type="text" class="wf-amount currency-input wf-card__input" placeholder="e.g. 400,000"></div>' +
+            '<div class="wf-card__row"><label class="wf-card__label">Person</label>' +
+            '<select class="wf-person wf-card__input"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></div>' +
+            '<div class="wf-card__row"><label class="wf-card__label">Wrapper</label>' +
+            '<select class="wf-wrapper wf-card__input" onchange="wizWfWrapperChange(this)">' +
+            '<option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></div>' +
+            '<div class="wf-card__row wf-equity-row"><label class="wf-card__label">GIA split</label>' +
+            '<select class="wf-equity wf-card__input"><option value="100">100% Equity</option>' +
+            '<option value="70" selected>70% / 30% Cash</option><option value="50">50% / 50% Cash</option><option value="0">100% Cash</option></select></div>' +
+            '<div class="wf-wrapper-hint-row wf-card__hint" style="display:none">Cash earns 0% growth. Use GIA with 100% Cash for capital-preserved holdings.</div>' +
+            '</div>';
+          container.appendChild(div);
+          const nameEl    = div.querySelector('.wf-name');
+          const yearEl    = div.querySelector('.wf-year');
+          const amountEl  = div.querySelector('.wf-amount');
+          const personEl  = div.querySelector('.wf-person');
+          const wrapperEl = div.querySelector('.wf-wrapper');
+          const equityEl  = div.querySelector('.wf-equity');
+          const eqRow     = div.querySelector('.wf-equity-row');
+          const hintRow   = div.querySelector('.wf-wrapper-hint-row');
           if (nameEl)    nameEl.value    = wf.name    || '';
           if (yearEl)    yearEl.value    = wf.year    || '';
           if (amountEl)  amountEl.value  = wf.amount  || '';
           if (personEl)  personEl.value  = wf.person  || 'p1';
           if (wrapperEl) wrapperEl.value = wf.wrapper || 'GIA';
-          const equityEl  = slot.querySelector('.wf-equity');
           if (equityEl)  equityEl.value  = wf.equityPct != null ? String(wf.equityPct) : '70';
-          // Show/hide equity row and cash hint based on restored wrapper
-          const eqRow   = slot.querySelector('.wf-equity-row');
-          const hintRow = slot.querySelector('.wf-wrapper-hint-row');
-          if (eqRow)   eqRow.style.display   = (wf.wrapper === 'GIA' || !wf.wrapper) ? '' : 'none';
-          if (hintRow) hintRow.style.display  = wf.wrapper === 'Cash' ? '' : 'none';
+          if (eqRow)     eqRow.style.display   = (wf.wrapper === 'GIA' || !wf.wrapper) ? '' : 'none';
+          if (hintRow)   hintRow.style.display  = wf.wrapper === 'Cash' ? '' : 'none';
           if (amountEl && window.RetireRender) RetireRender.applyCurrencyFormattingToInput(amountEl);
         });
-        // After restore, collapse all then expand only the last slot
-        const allSlots = container.querySelectorAll('.windfall-slot');
-        allSlots.forEach(function(s) {
-          if (typeof _wfCollapse === 'function') _wfCollapse(s);
-        });
-        if (allSlots.length > 0 && typeof _wfExpand === 'function') {
-          _wfExpand(allSlots[allSlots.length - 1]);
-        }
+        if (typeof _wfRenumber === 'function') _wfRenumber();
       }
     }
 
