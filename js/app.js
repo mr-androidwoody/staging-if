@@ -2213,14 +2213,6 @@
       return { phases: merged, events, startYear, endYear, p1dob, p2dob, stepDownYear, spending };
     }
 
-    // ── vis-timeline state (persisted across re-renders) ──────────────────
-    let _tlInst = null;       // vis.Timeline instance
-    let _tlItems = null;      // vis.DataSet for bands
-    let _tlGroups = null;     // vis.DataSet for rows
-    let _overlaySvg = null;   // SVG element for dots
-
-    const ROW_H = 44; // px — tall enough for dots to live inside bands
-
     const EVT_COLOUR = {
       salary:'#ef4444', sp:'#16a34a', pension:'#6366f1',
       contrib:'#f59e0b', windfall:'#06b6d4', stepdown:'#f43f5e',
@@ -2228,308 +2220,206 @@
 
     function renderVis(data) {
       const { events, startYear, endYear, p1dob, p2dob, stepDownYear } = data;
-      const p1name = safeValue('sp-p1name') || 'P1';
-      const p2name = safeValue('sp-p2name') || 'P2';
+      const p1name    = safeValue('sp-p1name') || 'P1';
+      const p2name    = safeValue('sp-p2name') || 'P2';
       const p2enabled = state.p2enabled;
-      const d = y => new Date(y, 0, 1);
 
-      const tlEl = document.getElementById('wiz-tl-vis');
-      if (!tlEl) return;
+      const wrap = safeEl('wiz-tl-vis');
+      if (!wrap) return;
 
-      // Read the key year boundaries directly from buildPhases data
-      // (more reliable than reconstructing from events which may be absent)
+      // Dimensions
+      const W        = wrap.offsetWidth || 800;
+      const LEFT     = 58;   // label column width
+      const RIGHT    = 8;
+      const ROW_H    = 44;
+      const ROW_GAP  = 2;
+      const ROWS     = p2enabled ? 2 : 1;
+      const SVG_H    = ROWS * (ROW_H + ROW_GAP) + 44; // rows + age axis space
+
+      const totalYears = endYear - startYear;
+      const trackW     = W - LEFT - RIGHT;
+      const xOf = yr => LEFT + ((yr - startYear) / totalYears) * trackW;
+
+      // Row tops (y coordinate of top of each band)
+      const rowY = { p1: 0, p2: ROW_H + ROW_GAP };
+
+      // Per-person band boundaries from events
       const p1SalEnd = events.find(e => e.type === 'salary' && e.person === 'p1')?.year || 0;
       const p2SalEnd = events.find(e => e.type === 'salary' && e.person === 'p2')?.year || 0;
       const p1SPYear = events.find(e => e.type === 'sp'     && e.person === 'p1')?.year || 0;
       const p2SPYear = events.find(e => e.type === 'sp'     && e.person === 'p2')?.year || 0;
 
-      // Build per-person bands directly from the known year boundaries.
-      // Each band covers [cursor, next_boundary) with no gaps.
-      function buildPersonBands(salEnd, spYear, groupId) {
+      // Band colour palette
+      const BAND = {
+        salary:  { fill:'#93c5fd', text:'#1e3a8a' },
+        pre:     { fill:'#bfdbfe', text:'#1e40af' },
+        sp:      { fill:'#3b82f6', text:'#ffffff' },
+        spPost:  { fill:'#dbeafe', text:'#1e40af' },
+      };
+
+      function personBands(salEnd, spYear, rowId) {
         const bands = [];
         let cursor = startYear;
-
-        // Salary phase: only if salary ends after start and before end
         if (salEnd > startYear && salEnd <= endYear) {
-          bands.push({ from: cursor, to: salEnd, label: 'Salary', cls: 'ph-salary', group: groupId });
+          bands.push({ from:cursor, to:salEnd, label:'Salary',      style:'salary', row:rowId });
           cursor = salEnd;
         }
-
-        // Pre-pension: gap between salary end and state pension start
         if (spYear > cursor && spYear <= endYear) {
-          bands.push({ from: cursor, to: spYear, label: 'Pre-pension', cls: 'ph-pre', group: groupId });
+          bands.push({ from:cursor, to:spYear, label:'Pre-pension', style:'pre',    row:rowId });
           cursor = spYear;
         }
-
-        // State Pension: split at stepDownYear if it falls after sp start
         if (cursor < endYear) {
-          const sdY = stepDownYear && stepDownYear > cursor && stepDownYear < endYear ? stepDownYear : 0;
+          const sdY = (stepDownYear && stepDownYear > cursor && stepDownYear < endYear) ? stepDownYear : 0;
           if (sdY) {
-            bands.push({ from: cursor, to: sdY,     label: 'State Pension', cls: 'ph-sp',      group: groupId });
-            bands.push({ from: sdY,    to: endYear, label: 'State Pension', cls: 'ph-sp-post', group: groupId });
+            bands.push({ from:cursor, to:sdY,     label:'State Pension', style:'sp',     row:rowId });
+            bands.push({ from:sdY,    to:endYear, label:'State Pension', style:'spPost', row:rowId });
           } else {
-            bands.push({ from: cursor, to: endYear, label: 'State Pension', cls: 'ph-sp', group: groupId });
+            bands.push({ from:cursor, to:endYear, label:'State Pension', style:'sp', row:rowId });
           }
         }
-
         return bands;
       }
 
-      const allBands = buildPersonBands(p1SalEnd, p1SPYear, 'p1');
-      if (p2enabled) buildPersonBands(p2SalEnd, p2SPYear, 'p2').forEach(b => allBands.push(b));
+      const allBands = personBands(p1SalEnd, p1SPYear, 'p1');
+      if (p2enabled) personBands(p2SalEnd, p2SPYear, 'p2').forEach(b => allBands.push(b));
 
-      // Build groups
-      const groupDefs = [{ id: 'p1', content: p1name }];
-      if (p2enabled) groupDefs.push({ id: 'p2', content: p2name });
+      // Build SVG
+      let svg = `<svg viewBox="0 0 ${W} ${SVG_H}" width="${W}" height="${SVG_H}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" style="display:block;overflow:visible">`;
 
-      // Destroy previous instance cleanly
-      if (_tlInst) { _tlInst.destroy(); _tlInst = null; }
-      if (_overlaySvg) { _overlaySvg.remove(); _overlaySvg = null; }
-      tlEl.innerHTML = '';
+      // ── Label column background
+      svg += `<rect x="0" y="0" width="${LEFT}" height="${ROWS*(ROW_H+ROW_GAP)}" fill="#f8fafc"/>`;
 
-      _tlGroups = new vis.DataSet(groupDefs);
-      _tlItems  = new vis.DataSet(
-        allBands.map((b, i) => ({
-          id: 'band-' + i, group: b.group,
-          start: d(b.from), end: d(b.to),
-          content: b.label, type: 'range',
-          className: b.cls, selectable: false,
-        }))
-      );
+      // ── Bands
+      allBands.forEach((b, bi) => {
+        const x1  = xOf(b.from), x2 = xOf(b.to);
+        const y   = rowY[b.row];
+        const pal = BAND[b.style];
+        const bw  = x2 - x1;
 
-      const numRows = groupDefs.length;
-      _tlInst = new vis.Timeline(tlEl, _tlItems, _tlGroups, {
-        start: d(startYear), end: d(endYear),
-        min:   d(startYear), max: d(endYear),
-        moveable: false, zoomable: false, selectable: false,
-        showMajorLabels: false, showMinorLabels: false,
-        orientation: { axis: 'none' },
-        groupHeightMode: 'fixed',
-        margin: { item: { horizontal: 0, vertical: 0 }, axis: 0 },
-        height: numRows * (ROW_H + 1) + 4,
-      });
-
-      // After vis finishes its first render, paint dots and axis
-      _tlInst.on('changed', function bootstrap() {
-        _tlInst.off('changed', bootstrap);
-        // Force band items to fill row height via direct DOM styling
-        // (vis-timeline ignores height:100% on .vis-item in some versions)
-        tlEl.querySelectorAll('.vis-item.vis-range').forEach(el => {
-          el.style.top    = '0';
-          el.style.height = ROW_H + 'px';
-        });
-        _buildDotOverlay(tlEl, events, groupDefs, startYear, endYear, p2enabled);
-        _buildAgeAxis(tlEl, startYear, endYear, p1dob, p2dob, p1name, p2name, p2enabled);
-      });
-    }
-
-    // ── Geometry helpers ──────────────────────────────────────────────────
-    function _leftW(tlEl) {
-      const lp = tlEl.querySelector('.vis-panel.vis-left');
-      return lp ? lp.offsetWidth : 0;
-    }
-
-    function _xOfYear(tlEl, year, startYear, endYear) {
-      const lw = _leftW(tlEl);
-      const tw = tlEl.offsetWidth - lw;
-      const sMs = new Date(startYear, 0, 1).getTime();
-      const eMs = new Date(endYear,   0, 1).getTime();
-      const yMs = new Date(year,      0, 1).getTime();
-      return lw + ((yMs - sMs) / (eMs - sMs)) * tw;
-    }
-
-    function _rowTop(tlEl, groupDefs, groupId) {
-      const fg   = tlEl.querySelector('.vis-foreground');
-      const grps = fg ? fg.querySelectorAll('.vis-group') : [];
-      const idx  = groupDefs.findIndex(g => g.id === groupId);
-      let top = 0;
-      for (let i = 0; i < idx; i++) top += (grps[i]?.offsetHeight || ROW_H);
-      return top;
-    }
-
-    function _fgTop(tlEl) {
-      const fg = tlEl.querySelector('.vis-foreground');
-      if (!fg) return 0;
-      return fg.getBoundingClientRect().top - tlEl.getBoundingClientRect().top;
-    }
-
-    // ── Dot overlay ───────────────────────────────────────────────────────
-    function _buildDotOverlay(tlEl, events, groupDefs, startYear, endYear, p2enabled) {
-      if (_overlaySvg) _overlaySvg.remove();
-
-      const ns  = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(ns, 'svg');
-      svg.setAttribute('width',  tlEl.offsetWidth);
-      svg.setAttribute('height', tlEl.offsetHeight);
-      svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:20;overflow:visible';
-      tlEl.style.position = 'relative';
-      tlEl.appendChild(svg);
-      _overlaySvg = svg;
-
-      const tip = document.getElementById('wiz-tl-tip');
-
-      // Measure row positions directly from vis group DOM elements
-      // This is more reliable than computing fg offset + cumulative height
-      const fg   = tlEl.querySelector('.vis-foreground');
-      const fgRect = fg ? fg.getBoundingClientRect() : null;
-      const tlRect = tlEl.getBoundingClientRect();
-
-      // Build a map of groupId -> {top, height} relative to tlEl
-      const groupRects = {};
-      groupDefs.forEach((g, idx) => {
-        const grpEls = fg ? fg.querySelectorAll('.vis-group') : [];
-        const grpEl  = grpEls[idx];
-        if (grpEl && fgRect) {
-          const gr = grpEl.getBoundingClientRect();
-          groupRects[g.id] = {
-            top:    gr.top    - tlRect.top,
-            height: gr.height || ROW_H,
-          };
+        // Step-down left border marker on spPost
+        if (b.style === 'spPost') {
+          svg += `<rect x="${x1}" y="${y}" width="3" height="${ROW_H}" fill="#f43f5e"/>`;
+          svg += `<rect x="${x1+3}" y="${y}" width="${bw-3}" height="${ROW_H}" fill="${pal.fill}"/>`;
         } else {
-          // Fallback: stack at ROW_H each
-          groupRects[g.id] = { top: idx * (ROW_H + 1), height: ROW_H };
+          svg += `<rect x="${x1}" y="${y}" width="${bw}" height="${ROW_H}" fill="${pal.fill}"/>`;
+        }
+
+        // White divider between adjacent bands
+        if (bi > 0) {
+          const prev = allBands[bi-1];
+          if (prev.row === b.row) {
+            svg += `<line x1="${x1}" y1="${y}" x2="${x1}" y2="${y+ROW_H}" stroke="#fff" stroke-width="2"/>`;
+          }
+        }
+
+        // Band label (clip to band width)
+        if (bw > 24) {
+          const labelX = Math.max(x1 + 6, x1 + 3);
+          svg += `<text x="${labelX}" y="${y + ROW_H/2 + 4}" font-size="11" font-weight="600" fill="${pal.text}" clip-path="url(#clip-${bi})">${b.label}</text>`;
+          svg += `<clipPath id="clip-${bi}"><rect x="${x1+2}" y="${y}" width="${bw-4}" height="${ROW_H}"/></clipPath>`;
         }
       });
 
-      // Filter and assign group row
-      const visible = events.filter(ev =>
-        ev.person === null || ev.person === 'p1' || (p2enabled && ev.person === 'p2')
-      ).map(ev => ({ ...ev, groupId: ev.person === 'p2' ? 'p2' : 'p1' }));
-
-      // Cluster by (groupId, year)
-      const clusters = {};
-      visible.forEach(ev => {
-        const key = ev.groupId + ':' + ev.year;
-        if (!clusters[key]) clusters[key] = [];
-        clusters[key].push(ev);
+      // ── Row separators and label column text
+      const names  = [p1name, p2enabled ? p2name : null];
+      const rowIds = ['p1', p2enabled ? 'p2' : null];
+      rowIds.forEach((rid, i) => {
+        if (!rid) return;
+        const y = rowY[rid];
+        // Row border
+        svg += `<rect x="${LEFT}" y="${y}" width="${trackW+RIGHT}" height="${ROW_H}" fill="none" stroke="#e2e8f0" stroke-width="1"/>`;
+        // Name label
+        svg += `<text x="${LEFT-6}" y="${y + ROW_H/2 + 4}" text-anchor="end" font-size="11" font-weight="700" fill="#64748b">${names[i]}</text>`;
       });
 
+      // ── Event dots
+      // Cluster events by (row, year) to spread them
+      const clustKey = ev => (ev.person === 'p2' ? 'p2' : 'p1') + ':' + ev.year;
+      const clusters = {};
+      events.filter(ev => ev.person === null || ev.person === 'p1' || (p2enabled && ev.person === 'p2'))
+        .map(ev => ({ ...ev, rowId: ev.person === 'p2' ? 'p2' : 'p1' }))
+        .forEach(ev => {
+          const k = clustKey(ev);
+          if (!clusters[k]) clusters[k] = [];
+          clusters[k].push(ev);
+        });
+
       const DOT_R  = 6;
-      const H_STEP = 15;
+      const H_STEP = 14;
 
       Object.values(clusters).forEach(evts => {
-        const baseX = _xOfYear(tlEl, evts[0].year, startYear, endYear);
-        const gid   = evts[0].groupId;
-        const rect  = groupRects[gid] || { top: 0, height: ROW_H };
-        const n     = evts.length;
-        const pad   = DOT_R + 4;
-        const usable = rect.height - pad * 2;
+        const baseX  = xOf(evts[0].year);
+        const y      = rowY[evts[0].rowId];
+        const n      = evts.length;
+        const pad    = DOT_R + 4;
+        const usable = ROW_H - pad * 2;
 
         evts.forEach((ev, i) => {
           const hSign = i === 0 ? 0 : (i % 2 === 1 ? 1 : -1);
-          const hStep = Math.ceil(i / 2);
-          const cx = baseX + hSign * hStep * H_STEP;
-          const cy = rect.top + pad + (n === 1 ? usable / 2 : (i / (n - 1)) * usable);
-
-          const col = EVT_COLOUR[ev.type] || '#64748b';
-          const circle = document.createElementNS(ns, 'circle');
-          circle.setAttribute('cx', cx);
-          circle.setAttribute('cy', cy);
-          circle.setAttribute('r',  DOT_R);
-          circle.setAttribute('fill',   col);
-          circle.setAttribute('stroke', '#fff');
-          circle.setAttribute('stroke-width', '2');
-          circle.style.cssText = 'pointer-events:all;cursor:default;filter:drop-shadow(0 1px 3px rgba(0,0,0,.22));transition:r .12s';
-
-          if (tip) {
-            circle.addEventListener('mouseenter', e => {
-              circle.setAttribute('r', DOT_R + 2);
-              tip.textContent = ev.label + ' (' + ev.year + ')';
-              tip.classList.add('on');
-              tip.style.left = (e.clientX + 14) + 'px';
-              tip.style.top  = (e.clientY - 34) + 'px';
-            });
-            circle.addEventListener('mousemove', e => {
-              tip.style.left = (e.clientX + 14) + 'px';
-              tip.style.top  = (e.clientY - 34) + 'px';
-            });
-            circle.addEventListener('mouseleave', () => {
-              circle.setAttribute('r', DOT_R);
-              tip.classList.remove('on');
-            });
-          }
-          svg.appendChild(circle);
+          const cx    = baseX + hSign * Math.ceil(i/2) * H_STEP;
+          const cy    = y + pad + (n === 1 ? usable/2 : (i/(n-1)) * usable);
+          const col   = EVT_COLOUR[ev.type] || '#64748b';
+          // encode label/year as data attributes via title element for tooltip
+          svg += `<circle class="wiz-tl-dot" cx="${cx}" cy="${cy}" r="${DOT_R}" fill="${col}" stroke="#fff" stroke-width="2" style="cursor:default;filter:drop-shadow(0 1px 3px rgba(0,0,0,.22))" data-label="${ev.label.replace(/"/g,'&quot;')}" data-year="${ev.year}"/>`;
         });
       });
-    }
 
-    // ── Age axis ──────────────────────────────────────────────────────────
-    function _buildAgeAxis(tlEl, startYear, endYear, p1dob, p2dob, p1name, p2name, p2enabled) {
-      const axisSvg = document.getElementById('wiz-tl-axis');
-      if (!axisSvg) return;
+      // ── Age axis
+      const axisY = ROWS * (ROW_H + ROW_GAP) + 4;
+      svg += `<line x1="${LEFT}" y1="${axisY}" x2="${W-RIGHT}" y2="${axisY}" stroke="#cbd5e1" stroke-width="1"/>`;
 
-      const lw     = _leftW(tlEl);
-      const totalW = tlEl.offsetWidth;
-      const trackW = totalW - lw;
-      const axisH  = p2enabled ? 34 : 22;
-      const ns     = 'http://www.w3.org/2000/svg';
-
-      axisSvg.setAttribute('width',   totalW);
-      axisSvg.setAttribute('height',  axisH);
-      axisSvg.setAttribute('viewBox', '0 0 ' + totalW + ' ' + axisH);
-      axisSvg.innerHTML = '';
-
-      const sMs = new Date(startYear, 0, 1).getTime();
-      const eMs = new Date(endYear,   0, 1).getTime();
-
-      // Baseline
-      const base = document.createElementNS(ns, 'line');
-      base.setAttribute('x1', lw); base.setAttribute('x2', totalW);
-      base.setAttribute('y1', 0);  base.setAttribute('y2', 0);
-      base.setAttribute('stroke', '#cbd5e1'); base.setAttribute('stroke-width', '1');
-      axisSvg.appendChild(base);
-
-      for (let y = startYear; y <= endYear; y++) {
-        if ((y - p1dob) % 5 !== 0) continue;
-        const x = lw + ((new Date(y, 0, 1).getTime() - sMs) / (eMs - sMs)) * trackW;
-
-        const tick = document.createElementNS(ns, 'line');
-        tick.setAttribute('x1', x); tick.setAttribute('x2', x);
-        tick.setAttribute('y1', 0); tick.setAttribute('y2', 5);
-        tick.setAttribute('stroke', '#94a3b8'); tick.setAttribute('stroke-width', '1');
-        axisSvg.appendChild(tick);
-
-        const t1 = document.createElementNS(ns, 'text');
-        t1.setAttribute('x', x); t1.setAttribute('y', 16);
-        t1.setAttribute('text-anchor', 'middle');
-        t1.setAttribute('font-size', '10'); t1.setAttribute('fill', '#64748b');
-        t1.setAttribute('font-family', 'system-ui,sans-serif');
-        t1.textContent = y - p1dob;
-        axisSvg.appendChild(t1);
-
+      for (let yr = startYear; yr <= endYear; yr++) {
+        const p1age = yr - p1dob;
+        if (p1age % 5 !== 0) continue;
+        const x = xOf(yr);
+        svg += `<line x1="${x}" y1="${axisY}" x2="${x}" y2="${axisY+5}" stroke="#94a3b8" stroke-width="1"/>`;
+        svg += `<text x="${x}" y="${axisY+16}" text-anchor="middle" font-size="10" fill="#64748b">${p1age}</text>`;
         if (p2enabled && p2dob) {
-          const t2 = document.createElementNS(ns, 'text');
-          t2.setAttribute('x', x); t2.setAttribute('y', 29);
-          t2.setAttribute('text-anchor', 'middle');
-          t2.setAttribute('font-size', '10'); t2.setAttribute('fill', '#94a3b8');
-          t2.setAttribute('font-family', 'system-ui,sans-serif');
-          t2.textContent = y - p2dob;
-          axisSvg.appendChild(t2);
+          svg += `<text x="${x}" y="${axisY+28}" text-anchor="middle" font-size="10" fill="#94a3b8">${yr - p2dob}</text>`;
         }
       }
+      // Axis name labels
+      svg += `<text x="${LEFT-6}" y="${axisY+16}" text-anchor="end" font-size="10" font-weight="700" fill="#64748b">${p1name}</text>`;
+      if (p2enabled) svg += `<text x="${LEFT-6}" y="${axisY+28}" text-anchor="end" font-size="10" font-weight="700" fill="#94a3b8">${p2name}</text>`;
 
-      function axisName(text, y, col) {
-        const el = document.createElementNS(ns, 'text');
-        el.setAttribute('x', lw - 8); el.setAttribute('y', y);
-        el.setAttribute('text-anchor', 'end');
-        el.setAttribute('font-size', '10'); el.setAttribute('font-weight', '700');
-        el.setAttribute('fill', col); el.setAttribute('font-family', 'system-ui,sans-serif');
-        el.textContent = text;
-        axisSvg.appendChild(el);
+      svg += '</svg>';
+
+      wrap.innerHTML = svg;
+
+      // ── Tooltip on dots
+      const tip = safeEl('wiz-tl-tip');
+      if (tip) {
+        wrap.querySelectorAll('.wiz-tl-dot').forEach(dot => {
+          dot.addEventListener('mouseenter', e => {
+            dot.setAttribute('r', DOT_R + 2);
+            tip.textContent = dot.dataset.label + ' (' + dot.dataset.year + ')';
+            tip.classList.add('on');
+            tip.style.left = (e.clientX + 14) + 'px';
+            tip.style.top  = (e.clientY - 34) + 'px';
+          });
+          dot.addEventListener('mousemove', e => {
+            tip.style.left = (e.clientX + 14) + 'px';
+            tip.style.top  = (e.clientY - 34) + 'px';
+          });
+          dot.addEventListener('mouseleave', () => {
+            dot.setAttribute('r', DOT_R);
+            tip.classList.remove('on');
+          });
+        });
       }
-      axisName(p1name, 16, '#64748b');
-      if (p2enabled) axisName(p2name, 29, '#94a3b8');
     }
+
+    function attachTooltip() { /* handled inside renderVis */ }
 
     function renderLegend(data) {
       const { events } = data;
       const EVT_META = [
-        { type: 'salary',   col: '#ef4444', label: 'Salary ends' },
-        { type: 'sp',       col: '#16a34a', label: 'State pension starts' },
-        { type: 'pension',  col: '#6366f1', label: 'Pension access' },
-        { type: 'contrib',  col: '#f59e0b', label: 'Contributions end' },
-        { type: 'windfall', col: '#06b6d4', label: 'Windfall' },
-        { type: 'stepdown', col: '#f43f5e', label: 'Income step-down' },
+        { type:'salary',   col:'#ef4444', label:'Salary ends' },
+        { type:'sp',       col:'#16a34a', label:'State pension starts' },
+        { type:'pension',  col:'#6366f1', label:'Pension access' },
+        { type:'contrib',  col:'#f59e0b', label:'Contributions end' },
+        { type:'windfall', col:'#06b6d4', label:'Windfall' },
+        { type:'stepdown', col:'#f43f5e', label:'Income step-down' },
       ];
       const usedTypes = new Set(events.map(e => e.type));
       const evtHtml = EVT_META
@@ -2537,19 +2427,16 @@
         .map(m => `<div class="wiz-timeline-legend__item"><div class="wiz-timeline-legend__dot" style="background:${m.col}"></div>${m.label}</div>`)
         .join('');
       const phaseHtml = [
-        { col: '#93c5fd', label: 'Salary' },
-        { col: '#bfdbfe', label: 'Pre-pension' },
-        { col: '#3b82f6', label: 'State Pension' },
-        { col: '#dbeafe', label: 'State Pension (reduced income)' },
+        { col:'#93c5fd', label:'Salary' },
+        { col:'#bfdbfe', label:'Pre-pension' },
+        { col:'#3b82f6', label:'State Pension' },
+        { col:'#dbeafe', label:'State Pension (reduced income)' },
       ].map(p => `<div class="wiz-timeline-legend__item"><div class="wiz-timeline-legend__sq" style="background:${p.col}"></div>${p.label}</div>`)
        .join('');
       return evtHtml + phaseHtml;
     }
 
-    function attachTooltip() { /* handled inside _buildDotOverlay */ }
 
-
-    function renderPhaseTable(data) {
       const { phases } = data;
       if (!phases.length) return '';
 
