@@ -327,21 +327,21 @@
     // Auto-open BnI accordion if enabled
     if (a.bniEnabled && typeof window.advOpen === 'function') window.advOpen('adv-bni');
 
-    // Pension sweep — restore values and open the toggle if a monthly amount was saved
+    // Pension sweep — restore values and set toggle on if a monthly amount was saved
     if (a.p1PensionMonthly) {
       sv('p1PensionMonthly', a.p1PensionMonthly);
       const f = safeEl('p1-pension-fields');
-      const c = safeEl('p1-pension-chevron');
+      const t = safeEl('p1-pension-track');
       if (f) f.style.display = '';
-      if (c) c.textContent = '▼';
+      if (t) t.classList.add('is-on');
     }
     if (a.p1PensionStopAge) sv('p1PensionStopAge', a.p1PensionStopAge);
     if (a.p2PensionMonthly) {
       sv('p2PensionMonthly', a.p2PensionMonthly);
       const f = safeEl('p2-pension-fields');
-      const c = safeEl('p2-pension-chevron');
+      const t = safeEl('p2-pension-track');
       if (f) f.style.display = '';
-      if (c) c.textContent = '▼';
+      if (t) t.classList.add('is-on');
     }
     if (a.p2PensionStopAge) sv('p2PensionStopAge', a.p2PensionStopAge);
 
