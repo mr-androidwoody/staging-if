@@ -2016,14 +2016,13 @@
       const totalGIA = giaTotal + wfGIA;
       if (totalGIA <= 0) return null;
 
-      // Equity portion of GIA drives gains
-      // Use overall portfolio equity % as proxy if per-account not available
+      // Equity portion drives gains — use overall portfolio equity % as proxy
       const summary    = C.summarisePortfolio(state.portfolioAccounts);
       const equityFrac = (summary.overallAllocation?.equities || 70) / 100;
-      const investedGIA = giaTotal * equityFrac;
 
-      // Annual gain on invested portion
-      const annualGain = investedGIA * growth;
+      // Annual gain on total GIA (opening + windfall), equity portion only
+      const investedGIA  = totalGIA * equityFrac;
+      const annualGain   = Math.round(investedGIA * growth);
 
       // Max transferable respecting CGT allowance (gain portion of transfer)
       // Simple proxy: if gain/balance ratio = growth, max transfer = CGT_ALLOWANCE / growth
@@ -2047,8 +2046,9 @@
       const isaHeadroom = suggestedYears; // simplified — full analysis in engine
 
       return {
-        giaTotal: Math.round(totalGIA),
-        annualGain: Math.round(annualGain),
+        giaTotal: Math.round(giaTotal),
+        totalGIA: Math.round(totalGIA),
+        annualGain,
         suggestedAmt: roundedAmt,
         suggestedYears: Math.max(1, suggestedYears),
         wfGIA: Math.round(wfGIA),
@@ -2066,8 +2066,8 @@
       }
       return `
         <div class="bni-suggestion__row">
-          <span class="bni-suggestion__label">${pName} — GIA balance</span>
-          <span class="bni-suggestion__val">£${s.giaTotal.toLocaleString('en-GB')}</span>
+          <span class="bni-suggestion__label">${pName} — GIA balance${s.wfGIA > 0 && s.giaTotal === 0 ? ' (windfall only)' : ''}</span>
+          <span class="bni-suggestion__val">£${s.totalGIA.toLocaleString('en-GB')}</span>
         </div>
         <div class="bni-suggestion__row">
           <span class="bni-suggestion__label">${pName} — est. annual gain</span>
