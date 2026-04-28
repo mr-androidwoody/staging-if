@@ -103,60 +103,6 @@
     background: var(--surface, #fff);
   }
 
-  /* ── BnI suggestion card ─────────────────────────────── */
-  .bni-suggestion {
-    margin-bottom: 14px;
-    padding: 12px 14px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 8px;
-  }
-  .bni-suggestion__heading {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #1e40af;
-    margin-bottom: 8px;
-  }
-  .bni-suggestion__row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 3px 0;
-    border-bottom: 1px solid #dbeafe;
-    font-size: 12px;
-  }
-  .bni-suggestion__row:last-child { border-bottom: none; }
-  .bni-suggestion__label { color: #374151; }
-  .bni-suggestion__val {
-    font-weight: 700;
-    color: #1e40af;
-  }
-  .bni-suggestion__note {
-    margin-top: 8px;
-    font-size: 11px;
-    color: #3b82f6;
-    font-style: italic;
-  }
-  .bni-suggestion__apply {
-    margin-top: 10px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #1d4ed8;
-    background: none;
-    border: 1px solid #93c5fd;
-    border-radius: 4px;
-    padding: 4px 10px;
-    cursor: pointer;
-  }
-  .bni-suggestion__apply:hover { background: #dbeafe; }
-  .bni-suggestion--none {
-    background: #f8fafc;
-    border-color: #dde3ed;
-  }
-  .bni-suggestion--none .bni-suggestion__heading { color: #6b7a99; }
-
   /* ── Timeline panel ──────────────────────────────────── */
   .wiz-timeline-panel {
     display: flex;
@@ -1478,25 +1424,17 @@
                 <span class="adv-section__chevron" id="adv-bni-chevron">▶</span>
               </div>
               <div class="adv-section__body" id="adv-bni-body" style="display:none">
-                <p class="wiz-hint" style="margin:8px 0 10px">Sell GIA assets and repurchase inside an ISA, sheltering future growth from CGT and dividend tax. Up to £20,000 per person per year.</p>
+                <p class="wiz-hint" style="margin:0 0 12px">Sell GIA assets and repurchase inside an ISA, sheltering future growth from CGT and dividend tax. Up to £20,000 per person per year. Amounts below are pre-filled based on your GIA balance and growth rate — adjust to suit.</p>
 
-                <!-- BnI suggestion — populated by RetireBniSuggestion.render() -->
-                <div id="bni-suggestion" class="bni-suggestion" style="display:none"></div>
+                <!-- Hidden enable radio — always true when accordion is open -->
+                <div style="display:none">
+                  <label><input type="radio" name="bniEnabled" id="bniEnabled" value="true" checked></label>
+                  <label><input type="radio" name="bniEnabled" id="bniDisabled" value="false"></label>
+                </div>
 
-                <table class="wiz-table" style="margin-bottom:10px">
-                  <tr>
-                    <td class="wiz-label">Use Bed &amp; ISA</td>
-                    <td class="wiz-val">
-                      <div class="wiz-seg">
-                        <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniEnabled" value="true"> Enabled</label>
-                        <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniDisabled" value="false" checked> Disabled</label>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-                <div class="wiz-section-divider"></div>
+                <!-- P1 -->
                 <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
-                <table class="wiz-table">
+                <table class="wiz-table" id="bniP1Table">
                   <tr>
                     <td class="wiz-label">Annual amount (£)</td>
                     <td class="wiz-val" style="text-align:right">
@@ -1519,13 +1457,15 @@
                   </tr>
                 </table>
                 <div id="bniP1YearsNote" class="bni-years-note bni-field"></div>
+
+                <!-- P2 -->
                 <div class="wiz-col-heading wiz-col-heading--sub p2-field" data-p2>Person 2</div>
                 <table class="wiz-table p2-field" id="bniP2Table">
                   <tr>
                     <td class="wiz-label">Annual amount (£)</td>
                     <td class="wiz-val" style="text-align:right">
                       <div class="currency-stepper bni-field">
-                        <input type="text" id="bniP2GIA" class="currency-input" placeholder="e.g. 5,000">
+                        <input type="text" id="bniP2GIA" class="currency-input" placeholder="e.g. 20,000">
                         <button class="stepper-btn" data-step-for="bniP2GIA" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
                         <button class="stepper-btn" data-step-for="bniP2GIA" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
                       </div>
@@ -1543,6 +1483,7 @@
                   </tr>
                 </table>
                 <div id="bniP2YearsNote" class="bni-years-note bni-field"></div>
+
               </div>
             </div><!-- /.adv-section (BnI) -->
 
@@ -1588,13 +1529,21 @@
                 var open    = body.style.display !== 'none';
                 body.style.display   = open ? 'none' : '';
                 chevron.textContent  = open ? '▶' : '▼';
+                // Wire BnI enabled state to accordion open/close
+                if (id === 'adv-bni') {
+                  var enabledRadio  = document.getElementById('bniEnabled');
+                  var disabledRadio = document.getElementById('bniDisabled');
+                  if (enabledRadio)  enabledRadio.checked  = !open;
+                  if (disabledRadio) disabledRadio.checked = open;
+                  if (window.applyBniState) applyBniState(!open);
+                  if (!open && window.RetireBniSuggestion) RetireBniSuggestion.render();
+                }
               }
               // Expose so app.js can open a section programmatically
               window.advOpen = function(id) {
                 var body    = document.getElementById(id + '-body');
-                var chevron = document.getElementById(id + '-chevron');
-                if (body)    body.style.display  = '';
-                if (chevron) chevron.textContent = '▼';
+                var chevron = document.getElementById(id + '-chevron\');
+                if (body && body.style.display === 'none') advToggle(id);
               };
             </script>
 
