@@ -1834,7 +1834,7 @@
     const dropdown  = document.getElementById('excelSplitDropdown');
     const dlBtn     = document.getElementById('downloadTemplateBtn');
 
-    function openMenu()  { splitBtn.classList.add('btn-split--open');    chevron.setAttribute('aria-expanded', 'true');  }
+    if (!splitBtn || !chevron) return;  { splitBtn.classList.add('btn-split--open');    chevron.setAttribute('aria-expanded', 'true');  }
     function closeMenu() { splitBtn.classList.remove('btn-split--open'); chevron.setAttribute('aria-expanded', 'false'); }
     function toggleMenu() { splitBtn.classList.contains('btn-split--open') ? closeMenu() : openMenu(); }
 
