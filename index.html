@@ -70,6 +70,60 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border, #dde3ed);
   }
+  /* ── BnI suggestion card ─────────────────────────────── */
+  .bni-suggestion {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+  }
+  .bni-suggestion__heading {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #1e40af;
+    margin-bottom: 8px;
+  }
+  .bni-suggestion__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 3px 0;
+    border-bottom: 1px solid #dbeafe;
+    font-size: 12px;
+  }
+  .bni-suggestion__row:last-child { border-bottom: none; }
+  .bni-suggestion__label { color: #374151; }
+  .bni-suggestion__val {
+    font-weight: 700;
+    color: #1e40af;
+  }
+  .bni-suggestion__note {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #3b82f6;
+    font-style: italic;
+  }
+  .bni-suggestion__apply {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1d4ed8;
+    background: none;
+    border: 1px solid #93c5fd;
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .bni-suggestion__apply:hover { background: #dbeafe; }
+  .bni-suggestion--none {
+    background: #f8fafc;
+    border-color: #dde3ed;
+  }
+  .bni-suggestion--none .bni-suggestion__heading { color: #6b7a99; }
+
   /* ── Timeline panel ──────────────────────────────────── */
   .wiz-timeline-panel {
     display: flex;
@@ -745,9 +799,9 @@
         <button class="wiz-tab" data-wiz="1" type="button"><span class="wiz-step">2</span>Money</button>
         <button class="wiz-tab" data-wiz="2" type="button"><span class="wiz-step">3</span>Events</button>
         <button class="wiz-tab" data-wiz="3" type="button"><span class="wiz-step">4</span>Growth</button>
-        <button class="wiz-tab" data-wiz="4" type="button"><span class="wiz-step">5</span>Timeline</button>
-        <button class="wiz-tab" data-wiz="5" type="button"><span class="wiz-step">6</span>Income</button>
-        <button class="wiz-tab" data-wiz="6" type="button"><span class="wiz-step">7</span>Strategy</button>
+        <button class="wiz-tab" data-wiz="4" type="button"><span class="wiz-step">5</span>Income</button>
+        <button class="wiz-tab" data-wiz="5" type="button"><span class="wiz-step">6</span>Strategy</button>
+        <button class="wiz-tab" data-wiz="6" type="button"><span class="wiz-step">7</span>Timeline</button>
       </div>
 
       <!-- ══ PANEL 0 — Who & When ══ -->
@@ -1314,31 +1368,8 @@
       </div><!-- /#wiz-panel-3 -->
 
       
-      <!-- ══ PANEL 4 — Timeline ══ -->
+      <!-- ══ PANEL 4 — Income target ══ -->
       <div class="wiz-panel" id="wiz-panel-4">
-        <div class="wiz-timeline-panel">
-          <div class="wiz-col-heading">Your retirement timeline</div>
-          <p class="wiz-col-intro">Here is how your key financial events line up across your retirement. The timeline is built from the details you have entered so far. Review it before setting your income target on the next step.</p>
-
-          <!-- SVG timeline — rendered by app.js renderTimeline() -->
-          <div id="wiz-timeline-svg" class="wiz-timeline-svg-wrap"></div>
-
-          <!-- Phase summary table — rendered by app.js renderTimeline() -->
-          <div id="wiz-timeline-phases" class="wiz-timeline-phases"></div>
-
-        </div>
-        <div class="wiz-footer">
-          <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
-          <div class="wiz-progress">
-            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:71%"></div></div>
-            <span class="wiz-progress-label">Step 5 of 7</span>
-          </div>
-          <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
-        </div>
-      </div><!-- /#wiz-panel-4 -->
-
-      <!-- ══ PANEL 5 — Income target ══ -->
-      <div class="wiz-panel" id="wiz-panel-5">
         <div class="wiz-grid wiz-grid--2">
 
           <!-- Sustainability suggestion -->
@@ -1390,15 +1421,15 @@
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
           <div class="wiz-progress">
-            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:86%"></div></div>
-            <span class="wiz-progress-label">Step 6 of 7</span>
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:71%"></div></div>
+            <span class="wiz-progress-label">Step 5 of 7</span>
           </div>
           <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
         </div>
-      </div><!-- /#wiz-panel-5 -->
+      </div><!-- /#wiz-panel-4 -->
 
-<!-- ══ PANEL 6 — Strategy ══ -->
-      <div class="wiz-panel" id="wiz-panel-6">
+<!-- ══ PANEL 5 — Strategy ══ -->
+      <div class="wiz-panel" id="wiz-panel-5">
         <div class="wiz-grid wiz-grid--2">
 
           <!-- Withdrawal strategy -->
@@ -1433,6 +1464,10 @@
           <div class="wiz-col">
             <div class="wiz-col-heading">Bed &amp; ISA</div>
             <p class="wiz-body-text">Bed & ISA is a technique where you sell assets held in a General Investment Account (GIA) and immediately repurchase them inside an ISA. Once inside the ISA, all future growth, dividends, and gains are completely tax-free.<br><br>It's particularly valuable if you hold a large GIA. Each year you can shelter up to £20,000 per person from future CGT and dividend tax. The sale crystallises any gain in the year of transfer, so IncomeFlow models the CGT cost of each transfer against the long-term tax saving.</p>
+
+            <!-- BnI suggestion — populated by _renderBniSuggestion() -->
+            <div id="bni-suggestion" class="bni-suggestion" style="display:none"></div>
+
             <table class="wiz-table" style="margin-bottom:10px">
               <tr>
                 <td class="wiz-label">Use Bed & ISA</td>
@@ -1496,6 +1531,29 @@
           </div>
 
         </div><!-- /.wiz-grid -->
+        <div class="wiz-footer">
+          <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
+          <div class="wiz-progress">
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:86%"></div></div>
+            <span class="wiz-progress-label">Step 6 of 7</span>
+          </div>
+          <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
+        </div>
+      </div><!-- /#wiz-panel-5 -->
+
+<!-- ══ PANEL 6 — Timeline ══ -->
+      <div class="wiz-panel" id="wiz-panel-6">
+        <div class="wiz-timeline-panel">
+          <div class="wiz-col-heading">Your retirement timeline</div>
+          <p class="wiz-col-intro">Here is how your key financial events line up across your retirement. The timeline is built from the details you have entered so far. Review it before setting your income target on the next step.</p>
+
+          <!-- SVG timeline — rendered by app.js renderTimeline() -->
+          <div id="wiz-timeline-svg" class="wiz-timeline-svg-wrap"></div>
+
+          <!-- Phase summary table — rendered by app.js renderTimeline() -->
+          <div id="wiz-timeline-phases" class="wiz-timeline-phases"></div>
+
+        </div>
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
           <div class="wiz-progress">
@@ -1941,7 +1999,8 @@ The account type or tax wrapper this holding sits in. ISA (Individual Savings Ac
       t.classList.toggle('wiz-tab--done', j < i);
     });
     // Render timeline when step 4 becomes active
-    if (i === 4 && window.RetireTimeline) window.RetireTimeline.render();
+    if (i === 6 && window.RetireTimeline) window.RetireTimeline.render();
+    if (i === 5 && window.RetireBniSuggestion) window.RetireBniSuggestion.render();
   }
 
   document.querySelector('#tab-assumptions').addEventListener('click', function(e) {
