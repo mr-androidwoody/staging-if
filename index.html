@@ -50,9 +50,6 @@
   .pension-sweep-fields {
     margin-top: 8px;
   }
-  .drawdown-rate-card__value--neutral {
-    color: var(--ink, #1a2233);
-  }
 </style>
 </head>
 
@@ -603,6 +600,41 @@
                 </td>
               </tr>
             </table>
+
+            <div class="wiz-section-divider"></div>
+
+            <div class="wiz-col-heading">
+              <span class="assump-tooltip-anchor">Income target<span class="assump-tooltip">Set your annual pre-tax income target, which the projection will meet by calculating optimal withdrawals from your accounts.</span></span>
+            </div>
+            <p class="wiz-col-intro">Set the gross annual household income you want the projection to fund.</p>
+            <table class="wiz-table">
+              <tr>
+                <td class="wiz-label"><span class="assump-tooltip-anchor">Annual income (£)<span class="assump-tooltip">The gross household income you need each year, before tax. IncomeFlow works backwards from this to determine how much to withdraw from each wrapper.</span></span></td>
+                <td class="wiz-val" style="text-align:right">
+                  <div class="currency-stepper">
+                    <input type="text" id="spending" class="currency-input" placeholder="e.g. 45,000">
+                    <button class="stepper-btn" data-step-for="spending" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
+                    <button class="stepper-btn" data-step-for="spending" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="wiz-label" data-p1-stepdown>Reduced spending at 75</td>
+                <td class="wiz-val" style="text-align:right">
+                  <select id="stepDownPct">
+                    <option value="0">No step-down</option>
+                    <option value="5">5%</option>
+                    <option value="10">10%</option>
+                    <option value="15">15%</option>
+                    <option value="20">20%</option>
+                    <option value="25">25%</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="wiz-label wiz-muted" colspan="2" data-p1-stepdown-hint>Reduces the gross spending target from the year Person 1 turns 75.</td>
+              </tr>
+            </table>
           </div>
 
         </div><!-- /.wiz-grid -->
@@ -655,37 +687,6 @@
                 <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
               </table>
               <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
-
-              <!-- Pension contribution toggle -->
-              <div class="pension-sweep-toggle" id="p1-pension-toggle" onclick="wizTogglePension('p1')">
-                <span class="pension-sweep-toggle__label">Make pension contributions</span>
-                <span class="pension-sweep-toggle__chevron" id="p1-pension-chevron">▶</span>
-              </div>
-              <div class="pension-sweep-fields" id="p1-pension-fields" style="display:none">
-                <table class="wiz-table">
-                  <tr>
-                    <td class="wiz-label">Monthly contribution (£/mo)</td>
-                    <td class="wiz-val" style="text-align:right">
-                      <div class="currency-stepper">
-                        <input type="text" id="p1PensionMonthly" class="currency-input" placeholder="e.g. 500">
-                        <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
-                        <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="wiz-label">Stop age</td>
-                    <td class="wiz-val" style="text-align:right">
-                      <div class="stepper-input">
-                        <input type="number" id="p1PensionStopAge" placeholder="e.g. 57" min="18" max="75">
-                        <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
-                        <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-                <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
-              </div>
             </div>
 
             <!-- P2 balances -->
@@ -702,104 +703,78 @@
                 <span class="wiz-total-val" id="ai-total">–</span>
               </div>
               <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
-
-              <!-- Pension contribution toggle -->
-              <div class="pension-sweep-toggle" id="p2-pension-toggle" onclick="wizTogglePension('p2')">
-                <span class="pension-sweep-toggle__label">Make pension contributions</span>
-                <span class="pension-sweep-toggle__chevron" id="p2-pension-chevron">▶</span>
-              </div>
-              <div class="pension-sweep-fields" id="p2-pension-fields" style="display:none">
-                <table class="wiz-table">
-                  <tr>
-                    <td class="wiz-label">Monthly contribution (£/mo)</td>
-                    <td class="wiz-val" style="text-align:right">
-                      <div class="currency-stepper">
-                        <input type="text" id="p2PensionMonthly" class="currency-input" placeholder="e.g. 500">
-                        <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
-                        <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="wiz-label">Stop age</td>
-                    <td class="wiz-val" style="text-align:right">
-                      <div class="stepper-input">
-                        <input type="number" id="p2PensionStopAge" placeholder="e.g. 57" min="18" max="75">
-                        <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
-                        <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-                <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
-              </div>
             </div>
           </div>
 
-          <!-- Income target -->
+          <!-- Pension contributions -->
           <div class="wiz-col">
-            <div class="wiz-col-heading">
-              <span class="assump-tooltip-anchor">Income target<span class="assump-tooltip">Set your annual pre-tax income target, which the projection will meet by calculating optimal withdrawals from your accounts.</span></span>
+            <div class="wiz-col-heading">Pension contributions</div>
+            <p class="wiz-col-intro">If either of you is still making pension contributions, set the monthly amount and the age at which contributions stop.</p>
+
+            <!-- P1 pension -->
+            <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
+            <div class="pension-sweep-toggle" id="p1-pension-toggle" onclick="wizTogglePension('p1')">
+              <span class="pension-sweep-toggle__label">Make pension contributions</span>
+              <span class="pension-sweep-toggle__chevron" id="p1-pension-chevron">▶</span>
             </div>
-            <p class="wiz-col-intro">Set the gross annual household income you want the projection to fund.</p>
-            <table class="wiz-table">
-              <tr>
-                <td class="wiz-label"><span class="assump-tooltip-anchor">Annual income (£)<span class="assump-tooltip">The gross household income you need each year, before tax. IncomeFlow works backwards from this to determine how much to withdraw from each wrapper.</span></span></td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="currency-stepper" >
-                    <input type="text" id="spending" class="currency-input" placeholder="e.g. 45,000">
-                    <button class="stepper-btn" data-step-for="spending" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="spending" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label" data-p1-stepdown>Reduced spending at 75</td>
-                <td class="wiz-val" style="text-align:right">
-                  <select id="stepDownPct" >
-                    <option value="0">No step-down</option>
-                    <option value="5">5%</option>
-                    <option value="10">10%</option>
-                    <option value="15">15%</option>
-                    <option value="20">20%</option>
-                    <option value="25">25%</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label wiz-muted" colspan="2" data-p1-stepdown-hint>Reduces the gross spending target from the year Person 1 turns 75.</td>
-              </tr>
-            </table>
-            <div class="wiz-section-divider"></div>
-            <div class="drawdown-rate-panel">
-              <p class="drawdown-rate-panel__intro">How much of your spending target is covered by guaranteed income at plan start.</p>
-              <div class="drawdown-rate-cards">
-                <div class="drawdown-rate-card">
-                  <p class="drawdown-rate-card__label">Guaranteed income</p>
-                  <p class="drawdown-rate-card__value drawdown-rate-card__value--neutral" id="cgr-guaranteed">&#8211;</p>
-                  <p class="drawdown-rate-card__sub">Salary &amp; interest at plan start (SP excluded until it begins)</p>
-                </div>
-                <div class="drawdown-rate-card">
-                  <p class="drawdown-rate-card__label">Portfolio must fund</p>
-                  <p class="drawdown-rate-card__value" id="cgr-gap">&#8211;</p>
-                  <p class="drawdown-rate-card__sub" id="cgr-gap-sub">gap per year</p>
-                </div>
-                <div class="drawdown-rate-card">
-                  <p class="drawdown-rate-card__label">Coverage</p>
-                  <p class="drawdown-rate-card__value" id="cgr-pct">&#8211;</p>
-                  <p class="drawdown-rate-card__sub">of target from guaranteed sources</p>
-                </div>
-              </div>
-              <div class="drawdown-rate-legend">
-                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--ok">Above 50%: portfolio funds less than half your target</span>
-                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--warn">25&#8211;50%: portfolio funds the majority of your target</span>
-                <span class="drawdown-rate-legend__item drawdown-rate-legend__item--err">Below 25%: portfolio funds almost all of your target</span>
-              </div>
+            <div class="pension-sweep-fields" id="p1-pension-fields" style="display:none">
+              <table class="wiz-table">
+                <tr>
+                  <td class="wiz-label">Monthly contribution (£/mo)</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="currency-stepper">
+                      <input type="text" id="p1PensionMonthly" class="currency-input" placeholder="e.g. 500">
+                      <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="wiz-label">Stop age</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="stepper-input">
+                      <input type="number" id="p1PensionStopAge" placeholder="e.g. 57" min="18" max="75">
+                      <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
             </div>
-            <div id="int-accts-section" style="display:none">
-              <div class="wiz-section-divider"></div>
-              <div class="wiz-col-heading wiz-col-heading--sub">Interest-bearing accounts</div>
-              <div id="int-accts-list"></div>
+
+            <div class="wiz-section-divider p2-field"></div>
+
+            <!-- P2 pension -->
+            <div class="wiz-col-heading wiz-col-heading--sub p2-field" data-p2>Person 2</div>
+            <div class="pension-sweep-toggle p2-field" id="p2-pension-toggle" onclick="wizTogglePension('p2')">
+              <span class="pension-sweep-toggle__label">Make pension contributions</span>
+              <span class="pension-sweep-toggle__chevron" id="p2-pension-chevron">▶</span>
+            </div>
+            <div class="pension-sweep-fields p2-field" id="p2-pension-fields" style="display:none">
+              <table class="wiz-table">
+                <tr>
+                  <td class="wiz-label">Monthly contribution (£/mo)</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="currency-stepper">
+                      <input type="text" id="p2PensionMonthly" class="currency-input" placeholder="e.g. 500">
+                      <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="wiz-label">Stop age</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="stepper-input">
+                      <input type="number" id="p2PensionStopAge" placeholder="e.g. 57" min="18" max="75">
+                      <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
             </div>
           </div>
 
