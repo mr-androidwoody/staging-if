@@ -518,7 +518,7 @@
               </div>
             </div>
             <div id="p1SweepRow" class="sweep-surplus-label-col" style="display:none">
-              <label><span class="assump-tooltip-anchor">Reivest surplus cash<span class="assump-tooltip">Automatically move cash you don't need for spending into your investment account to help protect your future income. If you are making pension contributions, those take priority — the net contribution cost is deducted from your surplus before any remainder is swept to GIA.</span></span></label>
+              <label><span class="assump-tooltip-anchor">Reinvest surplus cash<span class="assump-tooltip">Automatically move cash you don't need for spending into your investment account to help protect your future income. If you are making pension contributions, those take priority — the net contribution cost is deducted from your surplus before any remainder is swept to GIA.</span></span></label>
             </div>
             <div id="p1SweepToggleCol" class="sweep-surplus-toggle-col" style="display:none">
               <div class="wiz-seg">
@@ -583,7 +583,7 @@
               </div>
             </div>
             <div id="p2SweepRow" class="sweep-surplus-label-col" style="display:none">
-              <label><span class="assump-tooltip-anchor">Reivest surplus cash<span class="assump-tooltip">Automatically move cash you don't need for spending into your investment account to help protect your future income. If you are making pension contributions, those take priority — the net contribution cost is deducted from your surplus before any remainder is swept to GIA.</span></span></label>
+              <label><span class="assump-tooltip-anchor">Reinvest surplus cash<span class="assump-tooltip">Automatically move cash you don't need for spending into your investment account to help protect your future income. If you are making pension contributions, those take priority — the net contribution cost is deducted from your surplus before any remainder is swept to GIA.</span></span></label>
             </div>
             <div id="p2SweepToggleCol" class="sweep-surplus-toggle-col" style="display:none">
               <div class="wiz-seg">
@@ -1426,11 +1426,18 @@
               <div class="adv-section__body" id="adv-bni-body" style="display:none">
                 <p class="wiz-hint" style="margin:0 0 12px">Sell GIA assets and repurchase inside an ISA, sheltering future growth from CGT and dividend tax. Up to £20,000 per person per year. Amounts below are pre-filled based on your GIA balance and growth rate — adjust to suit.</p>
 
-                <!-- Hidden enable radio — always true when accordion is open -->
-                <div style="display:none">
-                  <label><input type="radio" name="bniEnabled" id="bniEnabled" value="true" checked></label>
-                  <label><input type="radio" name="bniEnabled" id="bniDisabled" value="false"></label>
-                </div>
+                <!-- Enable toggle -->
+                <table class="wiz-table" style="margin-bottom:12px">
+                  <tr>
+                    <td class="wiz-label">Use Bed &amp; ISA</td>
+                    <td class="wiz-val">
+                      <div class="wiz-seg">
+                        <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniEnabled" value="true"> Enabled</label>
+                        <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniDisabled" value="false" checked> Disabled</label>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
 
                 <!-- P1 -->
                 <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
@@ -1527,16 +1534,10 @@
                 var body    = document.getElementById(id + '-body');
                 var chevron = document.getElementById(id + '-chevron');
                 var open    = body.style.display !== 'none';
-                body.style.display   = open ? 'none' : '';
-                chevron.textContent  = open ? '▶' : '▼';
-                // Wire BnI enabled state to accordion open/close
-                if (id === 'adv-bni') {
-                  var enabledRadio  = document.getElementById('bniEnabled');
-                  var disabledRadio = document.getElementById('bniDisabled');
-                  if (enabledRadio)  enabledRadio.checked  = !open;
-                  if (disabledRadio) disabledRadio.checked = open;
-                  if (window.applyBniState) applyBniState(!open);
-                  if (!open && window.RetireBniSuggestion) RetireBniSuggestion.render();
+                body.style.display  = open ? 'none' : '';
+                chevron.textContent = open ? '▶' : '▼';
+                if (!open && id === 'adv-bni' && window.RetireBniSuggestion) {
+                  RetireBniSuggestion.render();
                 }
               }
               // Expose so app.js can open a section programmatically
