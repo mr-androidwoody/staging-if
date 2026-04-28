@@ -1985,6 +1985,161 @@
   updateSidebarNames(); // ensure windfall person dropdowns show actual names on first load
 
   // ─────────────────────────────
+  // BNI SUGGESTION
+  // ─────────────────────────────
+  (function () {
+    const CGT_ALLOWANCE  = 3000;
+    const ISA_ALLOWANCE  = 20000;
+    const MGMT_FEE       = 0.0022;
+
+    function calcSuggestion(pKey, pGIAeqId, pGIAcashId, pISAId) {
+      const startYear  = safeNumber(safeValue('sp-startYear'));
+      const endYear    = safeNumber(safeValue('sp-endYear'));
+      const growthRaw  = safeNumber(safeValue('growth')) / 100 || 0.04;
+      const growth     = Math.max(0, growthRaw - MGMT_FEE);
+
+      const giaEq      = safeNumber(safeEl(pGIAeqId)?.value  || 0);
+      const giaCash    = safeNumber(safeEl(pGIAcashId)?.value || 0);
+      const giaTotal   = giaEq + giaCash;
+      const isaBalance = safeNumber(safeEl(pISAId)?.value     || 0);
+
+      // Also sum windfalls landing into this person's GIA
+      const personVal = pKey;
+      let wfGIA = 0;
+      document.querySelectorAll('#windfalls-container .windfall-slot').forEach(slot => {
+        if (slot.querySelector('.wf-wrapper')?.value === 'GIA' &&
+            slot.querySelector('.wf-person')?.value  === personVal) {
+          wfGIA += D.parseCurrency(slot.querySelector('.wf-amount')?.value || '') || 0;
+        }
+      });
+
+      const totalGIA = giaTotal + wfGIA;
+      if (totalGIA <= 0) return null;
+
+      // Equity portion of GIA drives gains
+      // Use overall portfolio equity % as proxy if per-account not available
+      const summary    = C.summarisePortfolio(state.portfolioAccounts);
+      const equityFrac = (summary.overallAllocation?.equities || 70) / 100;
+      const investedGIA = giaTotal * equityFrac;
+
+      // Annual gain on invested portion
+      const annualGain = investedGIA * growth;
+
+      // Max transferable respecting CGT allowance (gain portion of transfer)
+      // Simple proxy: if gain/balance ratio = growth, max transfer = CGT_ALLOWANCE / growth
+      const gainRatio  = growth * equityFrac; // approx gain per £ of GIA transferred
+      const maxByCGT   = gainRatio > 0 ? Math.floor(CGT_ALLOWANCE / gainRatio) : ISA_ALLOWANCE;
+      const suggested  = Math.min(ISA_ALLOWANCE, maxByCGT);
+      const roundedAmt = Math.round(suggested / 1000) * 1000;
+
+      // Years available: until GIA runs out at suggested withdrawal rate
+      // Account for portfolio depletion from state.lastResult if available
+      const depletionYr = state.lastResult?.depletions?.[pKey + ' GIA']?.year ?? null;
+      const yearsFromDepletion = depletionYr && startYear
+        ? Math.max(1, depletionYr - startYear) : null;
+      const yearsFromBalance = roundedAmt > 0
+        ? Math.min(30, Math.floor(totalGIA / roundedAmt)) : 30;
+      const suggestedYears = yearsFromDepletion !== null
+        ? Math.min(yearsFromDepletion, 30)
+        : yearsFromBalance;
+
+      // ISA headroom: years until ISA limit reached
+      const isaHeadroom = suggestedYears; // simplified — full analysis in engine
+
+      return {
+        giaTotal: Math.round(totalGIA),
+        annualGain: Math.round(annualGain),
+        suggestedAmt: roundedAmt,
+        suggestedYears: Math.max(1, suggestedYears),
+        wfGIA: Math.round(wfGIA),
+        byCGT: Math.round(maxByCGT),
+      };
+    }
+
+    function renderPerson(pKey, pName, giaEqId, giaCashId, isaId) {
+      const s = calcSuggestion(pKey, giaEqId, giaCashId, isaId);
+      if (!s) {
+        return `<div class="bni-suggestion__row">
+          <span class="bni-suggestion__label">${pName}</span>
+          <span class="bni-suggestion__val">No GIA available</span>
+        </div>`;
+      }
+      return `
+        <div class="bni-suggestion__row">
+          <span class="bni-suggestion__label">${pName} — GIA balance</span>
+          <span class="bni-suggestion__val">£${s.giaTotal.toLocaleString('en-GB')}</span>
+        </div>
+        <div class="bni-suggestion__row">
+          <span class="bni-suggestion__label">${pName} — est. annual gain</span>
+          <span class="bni-suggestion__val">£${s.annualGain.toLocaleString('en-GB')}/yr</span>
+        </div>
+        <div class="bni-suggestion__row">
+          <span class="bni-suggestion__label">${pName} — suggested transfer</span>
+          <span class="bni-suggestion__val">£${s.suggestedAmt.toLocaleString('en-GB')}/yr for ${s.suggestedYears} yr${s.suggestedYears !== 1 ? 's' : ''}</span>
+        </div>`;
+    }
+
+    function render() {
+      const el = safeEl('bni-suggestion');
+      if (!el) return;
+
+      const p1name = safeValue('sp-p1name')?.trim() || 'Person 1';
+      const p2name = safeValue('sp-p2name')?.trim() || 'Person 2';
+
+      const s1 = calcSuggestion('p1', 'p1GIAeq', 'p1GIAcash', 'p1ISA');
+      const s2 = state.p2enabled ? calcSuggestion('p2', 'p2GIAeq', 'p2GIAcash', 'p2ISA') : null;
+
+      if (!s1 && !s2) {
+        el.className = 'bni-suggestion bni-suggestion--none';
+        el.style.display = '';
+        el.innerHTML = `<div class="bni-suggestion__heading">Bed &amp; ISA opportunity</div>
+          <p style="font-size:12px;color:#6b7a99;margin:0">Neither person holds a GIA, so Bed &amp; ISA does not apply to this plan.</p>`;
+        return;
+      }
+
+      const p1rows = s1 ? renderPerson('p1', p1name, 'p1GIAeq', 'p1GIAcash', 'p1ISA') : '';
+      const p2rows = state.p2enabled && s2 ? renderPerson('p2', p2name, 'p2GIAeq', 'p2GIAcash', 'p2ISA') : '';
+
+      // Apply button fills in the suggested values
+      const applyBtn = (s1 || s2) ? `<button class="bni-suggestion__apply" onclick="window.RetireBniSuggestion.apply()">Apply suggested values →</button>` : '';
+
+      el.className = 'bni-suggestion';
+      el.style.display = '';
+      el.innerHTML = `
+        <div class="bni-suggestion__heading">Bed &amp; ISA opportunity</div>
+        ${p1rows}
+        ${p2rows}
+        <p class="bni-suggestion__note">Suggested amounts keep gains within the £${CGT_ALLOWANCE.toLocaleString('en-GB')} CGT allowance and the £${ISA_ALLOWANCE.toLocaleString('en-GB')} ISA limit. You can override below.</p>
+        ${applyBtn}`;
+    }
+
+    function apply() {
+      const s1 = calcSuggestion('p1', 'p1GIAeq', 'p1GIAcash', 'p1ISA');
+      const s2 = state.p2enabled ? calcSuggestion('p2', 'p2GIAeq', 'p2GIAcash', 'p2ISA') : null;
+
+      if (s1 && s1.suggestedAmt > 0) {
+        const el = safeEl('bniP1GIA');
+        if (el) { el.value = s1.suggestedAmt.toLocaleString('en-GB'); R.applyCurrencyFormattingToInput(el); }
+        const yr = safeEl('bniP1Years');
+        if (yr) yr.value = s1.suggestedYears;
+      }
+      if (s2 && s2.suggestedAmt > 0) {
+        const el = safeEl('bniP2GIA');
+        if (el) { el.value = s2.suggestedAmt.toLocaleString('en-GB'); R.applyCurrencyFormattingToInput(el); }
+        const yr = safeEl('bniP2Years');
+        if (yr) yr.value = s2.suggestedYears;
+      }
+
+      // Enable BnI and trigger state update
+      const enabledRadio = document.querySelector('input[name="bniEnabled"][value="true"]');
+      if (enabledRadio) { enabledRadio.checked = true; applyBniState(true); }
+      _updateBniMaxYears();
+    }
+
+    window.RetireBniSuggestion = { render, apply };
+  })();
+
+  // ─────────────────────────────
   // TIMELINE RENDERER
   // ─────────────────────────────
   (function () {
