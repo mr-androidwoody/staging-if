@@ -50,6 +50,26 @@
   .pension-sweep-fields {
     margin-top: 8px;
   }
+  .wiz-money-section {
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #dde3ed);
+    border-radius: 8px;
+  }
+  .wiz-money-section:first-child {
+    margin-top: 0;
+  }
+  .wiz-money-section__heading {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted, #6b7a99);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border, #dde3ed);
+  }
   .wiz-guaranteed-strip {
     margin-top: 16px;
     padding: 12px 16px;
@@ -123,11 +143,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 16px 0 0;
-    padding: 12px 16px;
-    background: var(--surface-raised, #f0f4fa);
-    border: 1px solid var(--border, #dde3ed);
-    border-radius: 6px;
+    padding: 4px 0;
   }
   .wiz-household-total__label {
     font-size: 12px;
@@ -726,57 +742,66 @@
 
       <!-- ══ PANEL 1 — Money ══ -->
       <div class="wiz-panel" id="wiz-panel-1">
-        <div class="wiz-grid wiz-grid--2">
 
-          <!-- P1 balances -->
-          <div class="wiz-col">
-            <div class="wiz-col-heading" data-p1>Person 1</div>
-            <p class="wiz-col-intro">Pulled from Your assets. Check they look right — if anything needs updating, go back and edit your accounts.</p>
-            <table class="wiz-table">
-              <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1cash">–</span></td></tr>
-              <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1sipp">–</span></td></tr>
-              <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1isa">–</span></td></tr>
-              <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
-            </table>
-            <div class="wiz-total-row">
-              <span class="wiz-total-label" data-p1>Person 1 total</span>
-              <span class="wiz-total-val" id="ai-p1total">–</span>
+        <!-- Section 1: Portfolio balances -->
+        <div class="wiz-money-section">
+          <div class="wiz-money-section__heading">Portfolio balances</div>
+          <div class="wiz-grid wiz-grid--2">
+
+            <!-- P1 balances -->
+            <div class="wiz-col">
+              <div class="wiz-col-heading" data-p1>Person 1</div>
+              <p class="wiz-col-intro">Pulled from Your assets. Check they look right — if anything needs updating, go back and edit your accounts.</p>
+              <table class="wiz-table">
+                <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1cash">–</span></td></tr>
+                <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1sipp">–</span></td></tr>
+                <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1isa">–</span></td></tr>
+                <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
+              </table>
+              <div class="wiz-total-row">
+                <span class="wiz-total-label" data-p1>Person 1 total</span>
+                <span class="wiz-total-val" id="ai-p1total">–</span>
+              </div>
+              <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
             </div>
-            <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
-          </div>
 
-          <!-- P2 balances -->
-          <div class="wiz-col p2-field">
-            <div class="wiz-col-heading" data-p2>Person 2</div>
-            <p class="wiz-col-intro">Pulled from Your assets. Check they look right — if anything needs updating, go back and edit your accounts.</p>
-            <table class="wiz-table">
-              <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2cash">–</span></td></tr>
-              <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2sipp">–</span></td></tr>
-              <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2isa">–</span></td></tr>
-              <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2gia">–</span></td></tr>
-            </table>
-            <div class="wiz-total-row">
-              <span class="wiz-total-label" data-p2>Person 2 total</span>
-              <span class="wiz-total-val" id="ai-p2total">–</span>
+            <!-- P2 balances -->
+            <div class="wiz-col p2-field">
+              <div class="wiz-col-heading" data-p2>Person 2</div>
+              <p class="wiz-col-intro">Pulled from Your assets. Check they look right — if anything needs updating, go back and edit your accounts.</p>
+              <table class="wiz-table">
+                <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2cash">–</span></td></tr>
+                <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2sipp">–</span></td></tr>
+                <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2isa">–</span></td></tr>
+                <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2gia">–</span></td></tr>
+              </table>
+              <div class="wiz-total-row">
+                <span class="wiz-total-label" data-p2>Person 2 total</span>
+                <span class="wiz-total-val" id="ai-p2total">–</span>
+              </div>
+              <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
             </div>
-            <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
+
+          </div><!-- /.wiz-grid -->
+        </div><!-- /.wiz-money-section (Portfolio balances) -->
+
+        <!-- Section 2: Total household investments -->
+        <div class="wiz-money-section">
+          <div class="wiz-money-section__heading">Total household investments</div>
+          <div class="wiz-household-total">
+            <span class="wiz-household-total__label">Combined portfolio value</span>
+            <span class="wiz-household-total__val" id="ai-total">–</span>
           </div>
+        </div><!-- /.wiz-money-section (Total) -->
 
-        </div><!-- /.wiz-grid -->
-
-        <!-- Guaranteed income strip — full width, between balances and household total -->
-        <div class="wiz-guaranteed-strip" id="wiz-guaranteed-strip">
-          <div class="wiz-guaranteed-strip__heading">Guaranteed income at plan start</div>
-          <div class="wiz-guaranteed-strip__body" id="wiz-guaranteed-body">
+        <!-- Section 3: Guaranteed income -->
+        <div class="wiz-money-section" id="wiz-guaranteed-strip">
+          <div class="wiz-money-section__heading">Guaranteed income at plan start</div>
+          <div class="wiz-grid wiz-grid--2" id="wiz-guaranteed-body">
             <!-- Populated by syncSetupToAssumptions() -->
           </div>
-        </div>
+        </div><!-- /.wiz-money-section (Guaranteed income) -->
 
-        <!-- Household total — full width, below both columns -->
-        <div class="wiz-household-total">
-          <span class="wiz-household-total__label">Total household investments</span>
-          <span class="wiz-household-total__val" id="ai-total">–</span>
-        </div>
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
           <div class="wiz-progress">
