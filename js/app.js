@@ -2238,9 +2238,6 @@
         }
         if (i > 0) svg += `<line x1="${x1}" y1="${AXIS_Y-PHASE_H}" x2="${x1}" y2="${AXIS_Y}" stroke="white" stroke-width="1.5"/>`;
         const pw = x2 - x1;
-        if (pw > 55) {
-          svg += `<text x="${(x1+x2)/2}" y="${AXIS_Y - PHASE_H/2 + 4}" text-anchor="middle" font-size="10" font-weight="500" fill="${textCol}">${ph.label}</text>`;
-        }
       });
 
       // Axis line
@@ -2250,7 +2247,7 @@
       for (let y = Math.ceil(startYear / 5) * 5; y <= endYear; y += 5) {
         const x = xOf(y);
         svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${AXIS_Y+4}" stroke="#94a3b8" stroke-width="1"/>`;
-        svg += `<text x="${x}" y="${AXIS_Y+14}" text-anchor="middle" font-size="10" fill="#94a3b8">${y}</text>`;
+        svg += `<text x="${x}" y="${AXIS_Y+14}" text-anchor="middle" font-size="9" fill="#94a3b8">${y}</text>`;
       }
 
       // Group events by year, jitter horizontally, solid stems
@@ -2264,8 +2261,18 @@
           const x = baseX + (JITTER[i] || 0);
           const dotY = AXIS_Y - PHASE_H - 14 - (i * 18);
           svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${dotY+7}" stroke="${col}" stroke-width="1.5"/>`;
-          svg += `<circle class="wf-tl-dot" cx="${x}" cy="${dotY}" r="6" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
+          svg += `<circle class="wf-tl-dot" cx="${x}" cy="${dotY}" r="5" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
         });
+      });
+
+      // Phase labels drawn last so they sit above lollipop stems
+      phases.forEach(ph => {
+        const x1 = xOf(ph.from), x2 = xOf(ph.to);
+        const textCol = PHASE_TEXT[ph.label] || '#374151';
+        const pw = x2 - x1;
+        if (pw > 55) {
+          svg += `<text x="${(x1+x2)/2}" y="${AXIS_Y - PHASE_H/2 + 4}" text-anchor="middle" font-size="10" font-weight="500" fill="${textCol}">${ph.label}</text>`;
+        }
       });
 
       svg += '</svg>';
