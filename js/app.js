@@ -2192,8 +2192,8 @@
     function renderSVG(data) {
       const { phases, events, startYear, endYear } = data;
       const totalYears = endYear - startYear;
-      const W = 900, H = 120;
-      const PAD_L = 10, PAD_R = 10, AXIS_Y = 78, PHASE_H = 36;
+      const W = 900, H = 140;
+      const PAD_L = 10, PAD_R = 10, AXIS_Y = 96, PHASE_H = 36;
       const JITTER = [-4, 4, -9, 9, 0, -13, 13];
 
       const xOf = year => PAD_L + ((year - startYear) / totalYears) * (W - PAD_L - PAD_R);
@@ -2260,8 +2260,8 @@
           const col = EVT_COLOUR[ev.type] || '#64748b';
           const x = baseX + (JITTER[i] || 0);
           const dotY = AXIS_Y - PHASE_H - 14 - (i * 18);
-          svg += `<line x1="${x}" y1="${AXIS_Y - PHASE_H}" x2="${x}" y2="${dotY+6}" stroke="${col}" stroke-width="1.5"/>`;
-          svg += `<circle class="wf-tl-dot" cx="${x}" cy="${dotY}" r="5" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
+          svg += `<line x1="${x}" y1="${AXIS_Y - PHASE_H}" x2="${x}" y2="${dotY+6}" stroke="${col}" stroke-width="1"/>`;
+          svg += `<circle class="wf-tl-dot" cx="${x}" cy="${dotY}" r="4" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
         });
       });
 
@@ -2271,7 +2271,7 @@
         const textCol = PHASE_TEXT[ph.label] || '#374151';
         const pw = x2 - x1;
         if (pw > 55) {
-          svg += `<text x="${(x1+x2)/2}" y="${AXIS_Y - PHASE_H/2 + 4}" text-anchor="middle" font-size="10" font-weight="500" fill="${textCol}">${ph.label}</text>`;
+          svg += `<text x="${(x1+x2)/2}" y="${AXIS_Y - PHASE_H/2 + 4}" text-anchor="middle" font-size="9" font-weight="500" fill="${textCol}">${ph.label}</text>`;
         }
       });
 
