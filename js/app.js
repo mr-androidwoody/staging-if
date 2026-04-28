@@ -1984,6 +1984,271 @@
   _applySweepSurplusVisibility();
   updateSidebarNames(); // ensure windfall person dropdowns show actual names on first load
 
+  // ─────────────────────────────
+  // TIMELINE RENDERER
+  // ─────────────────────────────
+  (function () {
+    function buildPhases() {
+      const data      = readSetupInputs();
+      const p1        = data.people.p1;
+      const p2        = data.people.p2;
+      const startYear = safeNumber(safeValue('sp-startYear'));
+      const endYear   = safeNumber(safeValue('sp-endYear'));
+      if (!startYear || !endYear || endYear <= startYear) return null;
+
+      const p1dob  = safeNumber(p1.dob);
+      const p2dob  = state.p2enabled ? safeNumber(p2.dob) : 0;
+
+      // Key event years
+      const p1SalEnd  = (p1dob && p1.salaryStopAge) ? p1dob + safeNumber(p1.salaryStopAge) : 0;
+      const p2SalEnd  = (p2dob && p2.salaryStopAge && state.p2enabled) ? p2dob + safeNumber(p2.salaryStopAge) : 0;
+      const p1SPYear  = (p1dob && p1.spAge) ? p1dob + safeNumber(p1.spAge) : 0;
+      const p2SPYear  = (p2dob && p2.spAge && state.p2enabled) ? p2dob + safeNumber(p2.spAge) : 0;
+      const p1PenAcc  = (p1dob) ? p1dob + 57 : 0;  // pension access age 57
+      const p2PenAcc  = (p2dob && state.p2enabled) ? p2dob + 57 : 0;
+
+      // Pension contribution stop years
+      const p1PenStop = (p1dob && safeEl('p1PensionStopAge')?.value)
+        ? p1dob + safeNumber(safeEl('p1PensionStopAge').value) : 0;
+      const p2PenStop = (p2dob && safeEl('p2PensionStopAge')?.value && state.p2enabled)
+        ? p2dob + safeNumber(safeEl('p2PensionStopAge').value) : 0;
+
+      // Windfall years
+      const windfalls = [];
+      document.querySelectorAll('#windfalls-container .windfall-slot').forEach(slot => {
+        const yr  = safeNumber(slot.querySelector('.wf-year')?.value);
+        const nm  = slot.querySelector('.wf-name')?.value?.trim() || 'Windfall';
+        const amt = D.parseCurrency(slot.querySelector('.wf-amount')?.value || '') || 0;
+        if (yr >= startYear && yr <= endYear) windfalls.push({ year: yr, name: nm, amount: amt });
+      });
+
+      // Build sorted list of phase boundary years (clamped to projection range)
+      const boundaries = new Set([startYear, endYear]);
+      const clamp = y => y >= startYear && y <= endYear ? y : null;
+      [p1SalEnd, p2SalEnd, p1SPYear, p2SPYear].forEach(y => { if (clamp(y)) boundaries.add(y); });
+      const sorted = Array.from(boundaries).sort((a, b) => a - b);
+
+      // Income per year helper — guaranteed income at a given year
+      function guaranteedAt(year) {
+        const p1sal  = (p1SalEnd === 0 || year < p1SalEnd) ? (D.parseCurrency(p1.salary) || 0) : 0;
+        const p2sal  = state.p2enabled && (p2SalEnd === 0 || year < p2SalEnd) ? (D.parseCurrency(p2.salary) || 0) : 0;
+        const p1sp   = (p1SPYear && year >= p1SPYear) ? (D.parseCurrency(p1.sp) || 0) : 0;
+        const p2sp   = (state.p2enabled && p2SPYear && year >= p2SPYear) ? (D.parseCurrency(p2.sp) || 0) : 0;
+        const draws  = state.portfolioAccounts.filter(a => a.monthlyDraw > 0)
+          .reduce((s, a) => s + a.monthlyDraw * 12, 0);
+        return p1sal + p2sal + p1sp + p2sp + draws;
+      }
+
+      // Build phases
+      const phases = [];
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const from = sorted[i];
+        const to   = sorted[i + 1];
+        const midY = from + 1;
+        const guaranteed = guaranteedAt(midY);
+
+        // Phase label based on what's active
+        const hasSalary = guaranteedAt(from) > guaranteedAt(from - 1 < startYear ? startYear : from - 1);
+        const p1SPActive = p1SPYear && midY >= p1SPYear;
+        const p2SPActive = state.p2enabled && p2SPYear && midY >= p2SPYear;
+        const bothSP = p1SPActive && p2SPActive;
+        const anySP  = p1SPActive || p2SPActive;
+
+        let label;
+        if (from === startYear && (p1SalEnd > startYear || p2SalEnd > startYear)) {
+          label = 'Working';
+        } else if (!anySP) {
+          label = 'Pre-State Pension';
+        } else if (anySP && !bothSP && state.p2enabled) {
+          label = 'Partial State Pension';
+        } else {
+          label = 'Full State Pension';
+        }
+
+        phases.push({ from, to, label, guaranteed });
+      }
+
+      // Build event markers
+      const events = [];
+      const addEvent = (year, label, type, person) => {
+        if (year >= startYear && year <= endYear) events.push({ year, label, type, person });
+      };
+      if (p1SalEnd)  addEvent(p1SalEnd,  `${safeValue('sp-p1name') || 'P1'} salary ends`, 'salary', 'p1');
+      if (p2SalEnd)  addEvent(p2SalEnd,  `${safeValue('sp-p2name') || 'P2'} salary ends`, 'salary', 'p2');
+      if (p1SPYear)  addEvent(p1SPYear,  `${safeValue('sp-p1name') || 'P1'} State Pension`, 'sp', 'p1');
+      if (p2SPYear)  addEvent(p2SPYear,  `${safeValue('sp-p2name') || 'P2'} State Pension`, 'sp', 'p2');
+      if (p1PenAcc)  addEvent(p1PenAcc,  `${safeValue('sp-p1name') || 'P1'} pension access`, 'pension', 'p1');
+      if (p2PenAcc && state.p2enabled)  addEvent(p2PenAcc, `${safeValue('sp-p2name') || 'P2'} pension access`, 'pension', 'p2');
+      if (p1PenStop) addEvent(p1PenStop, `${safeValue('sp-p1name') || 'P1'} contributions end`, 'contrib', 'p1');
+      if (p2PenStop) addEvent(p2PenStop, `${safeValue('sp-p2name') || 'P2'} contributions end`, 'contrib', 'p2');
+      windfalls.forEach(wf => addEvent(wf.year, wf.name, 'windfall', null));
+
+      return { phases, events, startYear, endYear };
+    }
+
+    function renderSVG(data) {
+      const { phases, events, startYear, endYear } = data;
+      const totalYears = endYear - startYear;
+      const W = 900, H = 140;
+      const PAD_L = 10, PAD_R = 10, AXIS_Y = 90, PHASE_H = 28;
+
+      const xOf = year => PAD_L + ((year - startYear) / totalYears) * (W - PAD_L - PAD_R);
+
+      // Phase colours
+      const PHASE_COLOURS = {
+        'Working':              '#dbeafe',
+        'Pre-State Pension':    '#fef9c3',
+        'Partial State Pension':'#dcfce7',
+        'Full State Pension':   '#bbf7d0',
+      };
+      const PHASE_TEXT = {
+        'Working':              '#1e40af',
+        'Pre-State Pension':    '#854d0e',
+        'Partial State Pension':'#166534',
+        'Full State Pension':   '#14532d',
+      };
+
+      // Event marker colours
+      const EVT_COLOUR = {
+        salary:  '#ef4444',
+        sp:      '#22c55e',
+        pension: '#3b82f6',
+        contrib: '#f97316',
+        windfall:'#a855f7',
+      };
+
+      let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
+
+      // Phase bands
+      phases.forEach(ph => {
+        const x1 = xOf(ph.from), x2 = xOf(ph.to);
+        const fill = PHASE_COLOURS[ph.label] || '#e2e8f0';
+        const textCol = PHASE_TEXT[ph.label] || '#374151';
+        svg += `<rect x="${x1}" y="${AXIS_Y - PHASE_H}" width="${x2 - x1}" height="${PHASE_H}" fill="${fill}" rx="0"/>`;
+        // Phase label if wide enough
+        const pw = x2 - x1;
+        if (pw > 60) {
+          svg += `<text x="${(x1 + x2) / 2}" y="${AXIS_Y - PHASE_H / 2 + 4}" text-anchor="middle" font-size="10" font-weight="600" fill="${textCol}">${ph.label}</text>`;
+        }
+      });
+
+      // Axis line
+      svg += `<line x1="${PAD_L}" y1="${AXIS_Y}" x2="${W - PAD_R}" y2="${AXIS_Y}" stroke="#cbd5e1" stroke-width="1.5"/>`;
+
+      // Year tick marks every 5 years
+      for (let y = Math.ceil(startYear / 5) * 5; y <= endYear; y += 5) {
+        const x = xOf(y);
+        svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${AXIS_Y + 5}" stroke="#94a3b8" stroke-width="1"/>`;
+        svg += `<text x="${x}" y="${AXIS_Y + 15}" text-anchor="middle" font-size="10" fill="#94a3b8">${y}</text>`;
+      }
+
+      // Event markers — stagger above axis to avoid overlap
+      // Group by year, then offset vertically
+      const byYear = {};
+      events.forEach(ev => {
+        const key = ev.year;
+        if (!byYear[key]) byYear[key] = [];
+        byYear[key].push(ev);
+      });
+
+      Object.entries(byYear).forEach(([yr, evts]) => {
+        const x = xOf(Number(yr));
+        evts.forEach((ev, i) => {
+          const col = EVT_COLOUR[ev.type] || '#64748b';
+          const lineY1 = AXIS_Y - PHASE_H - 2 - i * 16;
+          const lineY2 = AXIS_Y;
+          svg += `<line x1="${x}" y1="${lineY2}" x2="${x}" y2="${lineY1 + 4}" stroke="${col}" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+          svg += `<circle cx="${x}" cy="${lineY1}" r="4" fill="${col}"/>`;
+        });
+      });
+
+      // Legend
+      const legendItems = [
+        { type: 'salary',  label: 'Salary ends' },
+        { type: 'sp',      label: 'State Pension' },
+        { type: 'pension', label: 'Pension access' },
+        { type: 'contrib', label: 'Contributions end' },
+        { type: 'windfall',label: 'Windfall' },
+      ];
+      const usedTypes = new Set(events.map(e => e.type));
+      const activeLegend = legendItems.filter(l => usedTypes.has(l.type));
+      let lx = PAD_L;
+      const lY = H - 6;
+      activeLegend.forEach(l => {
+        const col = EVT_COLOUR[l.type];
+        svg += `<circle cx="${lx + 5}" cy="${lY}" r="4" fill="${col}"/>`;
+        svg += `<text x="${lx + 13}" y="${lY + 4}" font-size="10" fill="#64748b">${l.label}</text>`;
+        lx += l.label.length * 6 + 22;
+      });
+
+      svg += '</svg>';
+      return svg;
+    }
+
+    function renderPhaseTable(data) {
+      const { phases } = data;
+      if (!phases.length) return '';
+
+      let html = '<table class="wiz-phase-table"><thead><tr>' +
+        '<th>Phase</th><th>Years</th><th style="text-align:right">Guaranteed income</th><th style="text-align:right">Portfolio gap</th>' +
+        '</tr></thead><tbody>';
+
+      const PHASE_COLOURS = {
+        'Working':              '#3b82f6',
+        'Pre-State Pension':    '#f59e0b',
+        'Partial State Pension':'#22c55e',
+        'Full State Pension':   '#16a34a',
+      };
+
+      phases.forEach(ph => {
+        const dot = PHASE_COLOURS[ph.label] || '#94a3b8';
+        const dur = ph.to - ph.from;
+        const spending = D.parseCurrency(safeEl('spending')?.value || '') || 0;
+        const gap = Math.max(0, spending - ph.guaranteed);
+        const gapClass = gap === 0 ? 'wiz-phase-money--covered' : 'wiz-phase-money--gap';
+        const gapText = spending > 0
+          ? (gap === 0 ? '£0 — fully covered' : '£' + Math.round(gap).toLocaleString('en-GB') + '/yr')
+          : '–';
+        const guaranteedText = ph.guaranteed > 0
+          ? '£' + Math.round(ph.guaranteed).toLocaleString('en-GB') + '/yr'
+          : '£0';
+
+        html += `<tr>
+          <td><span class="wiz-phase-name"><span class="wiz-phase-dot" style="background:${dot}"></span>${ph.label}</span></td>
+          <td><span class="wiz-phase-years">${ph.from}–${ph.to} (${dur} yr${dur !== 1 ? 's' : ''})</span></td>
+          <td class="wiz-phase-money">${guaranteedText}</td>
+          <td class="wiz-phase-money ${gapClass}">${gapText}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function render() {
+      const svgEl    = safeEl('wiz-timeline-svg');
+      const phasesEl = safeEl('wiz-timeline-phases');
+      if (!svgEl || !phasesEl) return;
+
+      const data = buildPhases();
+      if (!data) {
+        svgEl.innerHTML    = '<div class="wiz-timeline-empty">Enter your start and end years in step 1 to see your timeline.</div>';
+        phasesEl.innerHTML = '';
+        return;
+      }
+      if (!data.phases.length) {
+        svgEl.innerHTML    = '<div class="wiz-timeline-empty">Add more details to generate your timeline.</div>';
+        phasesEl.innerHTML = '';
+        return;
+      }
+
+      svgEl.innerHTML    = renderSVG(data);
+      phasesEl.innerHTML = renderPhaseTable(data);
+    }
+
+    window.RetireTimeline = { render };
+  })();
+
   // Gate tabs after everything is loaded — must run after RetireTabs.init()
   // so our disabled state wins over any defaults set by the tab system
   refreshPortfolioUI();
