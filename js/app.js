@@ -358,26 +358,18 @@
           const div = document.createElement('div');
           div.className = 'windfall-slot wf-card';
           if (idx === 0) div.dataset.slot = '1';
+          var sel = '<span class="wiz-select-chevron">&#x25BC;</span>';
           div.innerHTML =
             '<div class="wf-card__header"><span class="wf-card__title wf-label-n">Windfall</span>' +
             '<button type="button" class="wf-card__remove wf-remove-link" onclick="wizRemoveWindfall(this)">&#x2715;</button></div>' +
-            '<div class="wf-card__body">' +
-            '<div class="wf-card__row wf-card__row--span"><label class="wf-card__label">Name</label>' +
-            '<input type="text" class="wf-name wf-card__input" placeholder="e.g. Inheritance"></div>' +
-            '<div class="wf-card__row"><label class="wf-card__label">Year</label>' +
-            '<input type="number" class="wf-year wf-card__input" placeholder="e.g. 2032" min="2025" max="2060"></div>' +
-            '<div class="wf-card__row"><label class="wf-card__label">Amount (£)</label>' +
-            '<input type="text" class="wf-amount currency-input wf-card__input" placeholder="e.g. 400,000"></div>' +
-            '<div class="wf-card__row"><label class="wf-card__label">Person</label>' +
-            '<select class="wf-person wf-card__input"><option value="p1">Person 1</option><option value="p2">Person 2</option></select></div>' +
-            '<div class="wf-card__row"><label class="wf-card__label">Wrapper</label>' +
-            '<select class="wf-wrapper wf-card__input" onchange="wizWfWrapperChange(this)">' +
-            '<option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select></div>' +
-            '<div class="wf-card__row wf-equity-row"><label class="wf-card__label">GIA split</label>' +
-            '<select class="wf-equity wf-card__input"><option value="100">100% Equity</option>' +
-            '<option value="70" selected>70% / 30% Cash</option><option value="50">50% / 50% Cash</option><option value="0">100% Cash</option></select></div>' +
-            '<div class="wf-wrapper-hint-row wf-card__hint" style="display:none">Cash earns 0% growth. Use GIA with 100% Cash for capital-preserved holdings.</div>' +
-            '</div>';
+            '<div class="wf-card__body"><table class="wiz-table">' +
+            '<tr><td class="wiz-label">Name</td><td class="wiz-val"><input type="text" class="wf-name" placeholder="e.g. Inheritance"></td></tr>' +
+            '<tr><td class="wiz-label">Year</td><td class="wiz-val" style="text-align:right"><div class="stepper-input"><input type="number" class="wf-year" placeholder="e.g. 2032" min="2025" max="2060"><button class="stepper-btn" data-step-for-class="wf-year" data-step-direction="1" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for-class="wf-year" data-step-direction="-1" type="button">&#x25BC;</button></div></td></tr>' +
+            '<tr><td class="wiz-label">Amount (£)</td><td class="wiz-val" style="text-align:right"><div class="currency-stepper"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"><button class="stepper-btn" data-step-for-class="wf-amount" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for-class="wf-amount" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button></div></td></tr>' +
+            '<tr><td class="wiz-label">Person</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select>' + sel + '</div></td></tr>' +
+            '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select>' + sel + '</div></td></tr>' +
+            '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% / 30% Cash</option><option value="50">50% / 50% Cash</option><option value="0">100% Cash</option></select>' + sel + '</div></td></tr>' +
+            '</table><div class="wf-wrapper-hint-row wf-card__hint" style="display:none">Cash earns 0% growth. Use GIA with 100% Cash for capital-preserved holdings.</div></div>';
           container.appendChild(div);
           const nameEl    = div.querySelector('.wf-name');
           const yearEl    = div.querySelector('.wf-year');
@@ -1890,11 +1882,14 @@
     const btn = e.target.closest('.stepper-btn');
     if (!btn) return;
 
-    const targetId = btn.dataset.stepFor;
-    const dir      = Number(btn.dataset.stepDirection);
-    const input    = targetId
+    const targetId    = btn.dataset.stepFor;
+    const targetClass = btn.dataset.stepForClass;
+    const dir         = Number(btn.dataset.stepDirection);
+    const input = targetId
       ? document.getElementById(targetId)
-      : btn.closest('.stepper-input')?.querySelector('input');
+      : targetClass
+        ? btn.closest('tr, .stepper-input, .currency-stepper')?.querySelector('.' + targetClass)
+        : btn.closest('.stepper-input, .currency-stepper')?.querySelector('input');
     if (!input) return;
 
     const isCurrency = input.type === 'text';
