@@ -2260,7 +2260,7 @@
           const col = EVT_COLOUR[ev.type] || '#64748b';
           const x = baseX + (JITTER[i] || 0);
           const dotY = AXIS_Y - PHASE_H - 14 - (i * 18);
-          svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${dotY+7}" stroke="${col}" stroke-width="1.5"/>`;
+          svg += `<line x1="${x}" y1="${AXIS_Y - PHASE_H}" x2="${x}" y2="${dotY+6}" stroke="${col}" stroke-width="1.5"/>`;
           svg += `<circle class="wf-tl-dot" cx="${x}" cy="${dotY}" r="5" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
         });
       });
