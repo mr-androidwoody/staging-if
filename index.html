@@ -523,9 +523,11 @@
       <div class="wiz-tab-bar">
         <button class="wiz-tab wiz-tab--active" data-wiz="0" type="button"><span class="wiz-step">1</span>Who &amp; when</button>
         <button class="wiz-tab" data-wiz="1" type="button"><span class="wiz-step">2</span>Money</button>
-        <button class="wiz-tab" data-wiz="2" type="button"><span class="wiz-step">3</span>Growth</button>
-        <button class="wiz-tab" data-wiz="3" type="button"><span class="wiz-step">4</span>Events</button>
-        <button class="wiz-tab" data-wiz="4" type="button"><span class="wiz-step">5</span>Strategy</button>
+        <button class="wiz-tab" data-wiz="2" type="button"><span class="wiz-step">3</span>Events</button>
+        <button class="wiz-tab" data-wiz="3" type="button"><span class="wiz-step">4</span>Growth</button>
+        <button class="wiz-tab" data-wiz="4" type="button"><span class="wiz-step">5</span>Timeline</button>
+        <button class="wiz-tab" data-wiz="5" type="button"><span class="wiz-step">6</span>Income</button>
+        <button class="wiz-tab" data-wiz="6" type="button"><span class="wiz-step">7</span>Strategy</button>
       </div>
 
       <!-- ══ PANEL 0 — Who & When ══ -->
@@ -571,7 +573,7 @@
           <!-- Projection range column -->
           <div class="wiz-col">
             <div class="wiz-col-heading">Projection range</div>
-            <p class="wiz-col-intro">Set the years your projection will cover. Start from the first year you want to model, typically the current year.</p>
+            <p class="wiz-col-intro">Set the years your projection will cover. Start from the first year you want to model, typically the current year.<br><br>Set the end year to the point you want the plan to reach, usually the year the younger person is in their late 80s or 90s. The longer the range, the more years of compounding, inflation, and tax are modelled.</p>
             <table class="wiz-table">
               <tr>
                 <td class="wiz-label">Start year</td>
@@ -600,41 +602,6 @@
                 </td>
               </tr>
             </table>
-
-            <div class="wiz-section-divider"></div>
-
-            <div class="wiz-col-heading">
-              <span class="assump-tooltip-anchor">Income target<span class="assump-tooltip">Set your annual pre-tax income target, which the projection will meet by calculating optimal withdrawals from your accounts.</span></span>
-            </div>
-            <p class="wiz-col-intro">Set the gross annual household income you want the projection to fund.</p>
-            <table class="wiz-table">
-              <tr>
-                <td class="wiz-label"><span class="assump-tooltip-anchor">Annual income (£)<span class="assump-tooltip">The gross household income you need each year, before tax. IncomeFlow works backwards from this to determine how much to withdraw from each wrapper.</span></span></td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="currency-stepper">
-                    <input type="text" id="spending" class="currency-input" placeholder="e.g. 45,000">
-                    <button class="stepper-btn" data-step-for="spending" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="spending" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label" data-p1-stepdown>Reduced spending at 75</td>
-                <td class="wiz-val" style="text-align:right">
-                  <select id="stepDownPct">
-                    <option value="0">No step-down</option>
-                    <option value="5">5%</option>
-                    <option value="10">10%</option>
-                    <option value="15">15%</option>
-                    <option value="20">20%</option>
-                    <option value="25">25%</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label wiz-muted" colspan="2" data-p1-stepdown-hint>Reduces the gross spending target from the year Person 1 turns 75.</td>
-              </tr>
-            </table>
           </div>
 
         </div><!-- /.wiz-grid -->
@@ -659,8 +626,8 @@
 
         <div class="wiz-footer">
           <div class="wiz-progress">
-            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:20%"></div></div>
-            <span class="wiz-progress-label">Step 1 of 5</span>
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:14%"></div></div>
+            <span class="wiz-progress-label">Step 1 of 7</span>
           </div>
           <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
         </div>
@@ -782,91 +749,15 @@
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
           <div class="wiz-progress">
-            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:40%"></div></div>
-            <span class="wiz-progress-label">Step 2 of 5</span>
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:28%"></div></div>
+            <span class="wiz-progress-label">Step 2 of 7</span>
           </div>
           <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
         </div>
       </div><!-- /#wiz-panel-1 -->
 
-      <!-- ══ PANEL 2 — Growth ══ -->
+      <!-- ══ PANEL 2 — Events ══ -->
       <div class="wiz-panel" id="wiz-panel-2">
-        <div class="wiz-grid wiz-grid--2">
-
-          <!-- Rates -->
-          <div class="wiz-col">
-            <div class="wiz-col-heading">Rates</div>
-            <p class="wiz-col-intro">Set how much you expect your investments to grow each year and how much prices will rise. Enter the actual percentages you expect to see, without adjusting for inflation.<br><br>You can start with a preset on the right, or use the suggested rate based on your current portfolio. Or adjust the numbers to reflect your own expectations.</p>
-            <table class="wiz-table">
-              <tr>
-                <td class="wiz-label">Portfolio growth (%/yr)</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="stepper-input" >
-                    <input type="number" id="growth" step="0.1" placeholder="e.g. 4">
-                    <button class="stepper-btn" data-step-for="growth" data-step-direction="1" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="growth" data-step-direction="-1" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label">Inflation (%/yr)</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="stepper-input" >
-                    <input type="number" id="inflation" step="0.1" placeholder="e.g. 2.5">
-                    <button class="stepper-btn" data-step-for="inflation" data-step-direction="1" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="inflation" data-step-direction="-1" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="growth-suggestion-row">
-                <td colspan="2" id="growth-suggestion" class="growth-suggestion-cell"></td>
-              </tr>
-              <tr class="mgmt-charge-row">
-                <td colspan="2" class="mgmt-charge-cell">A fixed investment management charge of 0.22%/yr is deducted from portfolio returns.</td>
-              </tr>
-            </table>
-          </div>
-
-          <!-- Presets + explainer -->
-          <div class="wiz-col">
-            <div class="wiz-col-heading">Presets</div>
-            <p class="wiz-col-intro">Select a preset to set both growth and inflation together, or enter your own values on the left. Selecting a preset updates the growth rate only - adjust inflation separately if needed.</p>
-            <div class="wiz-cards">
-              <label class="wiz-card">
-                <input type="radio" name="growthPreset" value="3" onchange="document.getElementById('growth').value='3'">
-                <span class="wiz-card__title">Cautious</span>
-                <span class="wiz-card__hint">For portfolios weighted towards bonds and cashlike assets - 3% nominal (roughly 0.5% real return after inflation).</span>
-              </label>
-              <label class="wiz-card">
-                <input type="radio" name="growthPreset" value="4" onchange="document.getElementById('growth').value='4'">
-                <span class="wiz-card__title">Balanced</span>
-                <span class="wiz-card__hint">For portfolios split broadly between shares and safer assets - 4% nominal (roughly 1.5% real return after inflation).</span>
-              </label>
-              <label class="wiz-card">
-                <input type="radio" name="growthPreset" value="5" onchange="document.getElementById('growth').value='5'">
-                <span class="wiz-card__title">Growth</span>
-                <span class="wiz-card__hint">For portfolios invested primarily or exclusively in global equities - 5% nominal (roughly 2.5% real return after inflation).</span>
-              </label>
-            </div>
-            <div class="wiz-section-divider"></div>
-            <p class="wiz-body-text">This model assumes a fixed growth rate. Set it too high and the outcome will look stronger than it’s likely to be. A more conservative assumption gives a more dependable baseline and avoids overstating what the plan can deliver.</p>
-          </div>
-
-        </div><!-- /.wiz-grid -->
-        <div class="wiz-footer">
-          <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
-          <div class="wiz-progress">
-            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:60%"></div></div>
-            <span class="wiz-progress-label">Step 3 of 5</span>
-          </div>
-          <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
-        </div>
-      </div><!-- /#wiz-panel-2 -->
-
-
-
-      <!-- ══ PANEL 3 — Events ══ -->
-      <div class="wiz-panel" id="wiz-panel-3">
         <div class="wiz-grid wiz-grid--3">
 
           <!-- Windfall -->
@@ -1136,15 +1027,175 @@
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
           <div class="wiz-progress">
-            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:100%"></div></div>
-            <span class="wiz-progress-label">Step 4 of 5</span>
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:43%"></div></div>
+            <span class="wiz-progress-label">Step 3 of 7</span>
+          </div>
+          <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
+        </div>
+      </div><!-- /#wiz-panel-2 -->
+
+
+
+      <!-- ══ PANEL 3 — Growth ══ -->
+      <div class="wiz-panel" id="wiz-panel-3">
+        <div class="wiz-grid wiz-grid--2">
+
+          <!-- Rates -->
+          <div class="wiz-col">
+            <div class="wiz-col-heading">Rates</div>
+            <p class="wiz-col-intro">Set how much you expect your investments to grow each year and how much prices will rise. Enter the actual percentages you expect to see, without adjusting for inflation.<br><br>You can start with a preset on the right, or use the suggested rate based on your current portfolio. Or adjust the numbers to reflect your own expectations.</p>
+            <table class="wiz-table">
+              <tr>
+                <td class="wiz-label">Portfolio growth (%/yr)</td>
+                <td class="wiz-val" style="text-align:right">
+                  <div class="stepper-input" >
+                    <input type="number" id="growth" step="0.1" placeholder="e.g. 4">
+                    <button class="stepper-btn" data-step-for="growth" data-step-direction="1" type="button">&#x25B2;</button>
+                    <button class="stepper-btn" data-step-for="growth" data-step-direction="-1" type="button">&#x25BC;</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="wiz-label">Inflation (%/yr)</td>
+                <td class="wiz-val" style="text-align:right">
+                  <div class="stepper-input" >
+                    <input type="number" id="inflation" step="0.1" placeholder="e.g. 2.5">
+                    <button class="stepper-btn" data-step-for="inflation" data-step-direction="1" type="button">&#x25B2;</button>
+                    <button class="stepper-btn" data-step-for="inflation" data-step-direction="-1" type="button">&#x25BC;</button>
+                  </div>
+                </td>
+              </tr>
+              <tr class="growth-suggestion-row">
+                <td colspan="2" id="growth-suggestion" class="growth-suggestion-cell"></td>
+              </tr>
+              <tr class="mgmt-charge-row">
+                <td colspan="2" class="mgmt-charge-cell">A fixed investment management charge of 0.22%/yr is deducted from portfolio returns.</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Presets + explainer -->
+          <div class="wiz-col">
+            <div class="wiz-col-heading">Presets</div>
+            <p class="wiz-col-intro">Select a preset to set both growth and inflation together, or enter your own values on the left. Selecting a preset updates the growth rate only - adjust inflation separately if needed.</p>
+            <div class="wiz-cards">
+              <label class="wiz-card">
+                <input type="radio" name="growthPreset" value="3" onchange="document.getElementById('growth').value='3'">
+                <span class="wiz-card__title">Cautious</span>
+                <span class="wiz-card__hint">For portfolios weighted towards bonds and cashlike assets - 3% nominal (roughly 0.5% real return after inflation).</span>
+              </label>
+              <label class="wiz-card">
+                <input type="radio" name="growthPreset" value="4" onchange="document.getElementById('growth').value='4'">
+                <span class="wiz-card__title">Balanced</span>
+                <span class="wiz-card__hint">For portfolios split broadly between shares and safer assets - 4% nominal (roughly 1.5% real return after inflation).</span>
+              </label>
+              <label class="wiz-card">
+                <input type="radio" name="growthPreset" value="5" onchange="document.getElementById('growth').value='5'">
+                <span class="wiz-card__title">Growth</span>
+                <span class="wiz-card__hint">For portfolios invested primarily or exclusively in global equities - 5% nominal (roughly 2.5% real return after inflation).</span>
+              </label>
+            </div>
+            <div class="wiz-section-divider"></div>
+            <p class="wiz-body-text">This model assumes a fixed growth rate. Set it too high and the outcome will look stronger than it’s likely to be. A more conservative assumption gives a more dependable baseline and avoids overstating what the plan can deliver.</p>
+          </div>
+
+        </div><!-- /.wiz-grid -->
+        <div class="wiz-footer">
+          <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
+          <div class="wiz-progress">
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:57%"></div></div>
+            <span class="wiz-progress-label">Step 4 of 7</span>
           </div>
           <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
         </div>
       </div><!-- /#wiz-panel-3 -->
 
-      <!-- ══ PANEL 4 — Strategy ══ -->
+      
+      <!-- ══ PANEL 4 — Timeline ══ -->
       <div class="wiz-panel" id="wiz-panel-4">
+        <div class="wiz-timeline-panel">
+          <div class="wiz-col-heading">Your retirement timeline</div>
+          <p class="wiz-col-intro">Here is how your key financial events line up across your retirement. The timeline is built from the details you have entered so far. Review it before setting your income target on the next step.</p>
+
+          <!-- SVG timeline — rendered by app.js renderTimeline() -->
+          <div id="wiz-timeline-svg" class="wiz-timeline-svg-wrap"></div>
+
+          <!-- Phase summary table — rendered by app.js renderTimeline() -->
+          <div id="wiz-timeline-phases" class="wiz-timeline-phases"></div>
+
+        </div>
+        <div class="wiz-footer">
+          <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
+          <div class="wiz-progress">
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:71%"></div></div>
+            <span class="wiz-progress-label">Step 5 of 7</span>
+          </div>
+          <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
+        </div>
+      </div><!-- /#wiz-panel-4 -->
+
+      <!-- ══ PANEL 5 — Income target ══ -->
+      <div class="wiz-panel" id="wiz-panel-5">
+        <div class="wiz-grid wiz-grid--2">
+
+          <!-- Sustainability suggestion -->
+          <div class="wiz-col">
+            <div class="wiz-col-heading">What your plan can support</div>
+            <p class="wiz-col-intro">Based on your portfolio, growth assumptions, and the phases in your timeline, here is a rough sense of what annual income your plan could sustain. Use this as a starting point when setting your target below.</p>
+            <div id="wiz-sustainability-summary" class="wiz-sustainability-summary">
+              <!-- Populated by app.js renderSustainabilitySummary() when this panel is shown -->
+            </div>
+          </div>
+
+          <!-- Income target inputs -->
+          <div class="wiz-col">
+            <div class="wiz-col-heading">
+              <span class="assump-tooltip-anchor">Income target<span class="assump-tooltip">Set your annual pre-tax income target, which the projection will meet by calculating optimal withdrawals from your accounts.</span></span>
+            </div>
+            <p class="wiz-col-intro">Set the gross annual household income you want the projection to fund.</p>
+            <table class="wiz-table">
+              <tr>
+                <td class="wiz-label"><span class="assump-tooltip-anchor">Annual income (£)<span class="assump-tooltip">The gross household income you need each year, before tax. IncomeFlow works backwards from this to determine how much to withdraw from each wrapper.</span></span></td>
+                <td class="wiz-val" style="text-align:right">
+                  <div class="currency-stepper">
+                    <input type="text" id="spending" class="currency-input" placeholder="e.g. 45,000">
+                    <button class="stepper-btn" data-step-for="spending" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
+                    <button class="stepper-btn" data-step-for="spending" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="wiz-label" data-p1-stepdown>Reduced spending at 75</td>
+                <td class="wiz-val" style="text-align:right">
+                  <select id="stepDownPct">
+                    <option value="0">No step-down</option>
+                    <option value="5">5%</option>
+                    <option value="10">10%</option>
+                    <option value="15">15%</option>
+                    <option value="20">20%</option>
+                    <option value="25">25%</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="wiz-label wiz-muted" colspan="2" data-p1-stepdown-hint>Reduces the gross spending target from the year Person 1 turns 75.</td>
+              </tr>
+            </table>
+          </div>
+
+        </div><!-- /.wiz-grid -->
+        <div class="wiz-footer">
+          <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
+          <div class="wiz-progress">
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:86%"></div></div>
+            <span class="wiz-progress-label">Step 6 of 7</span>
+          </div>
+          <button class="btn btn-primary wiz-next" data-wiz-next>Next →</button>
+        </div>
+      </div><!-- /#wiz-panel-5 -->
+
+<!-- ══ PANEL 6 — Strategy ══ -->
+      <div class="wiz-panel" id="wiz-panel-6">
         <div class="wiz-grid wiz-grid--3">
 
           <!-- Withdrawal strategy -->
@@ -1302,12 +1353,12 @@
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
           <div class="wiz-progress">
-            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:80%"></div></div>
-            <span class="wiz-progress-label">Step 5 of 5</span>
+            <div class="wiz-progress-bar"><div class="wiz-progress-fill" style="width:100%"></div></div>
+            <span class="wiz-progress-label">Step 7 of 7</span>
           </div>
           <button class="btn btn-run btn-run--visible" data-action="run-projection">Run projection</button>
         </div>
-      </div><!-- /#wiz-panel-4 -->
+      </div><!-- /#wiz-panel-6 -->
 
     </div><!-- /#tab-assumptions -->
 
