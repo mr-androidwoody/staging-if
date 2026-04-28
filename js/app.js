@@ -2437,6 +2437,7 @@
     }
 
 
+    function renderPhaseTable(data) {
       const { phases } = data;
       if (!phases.length) return '';
 
