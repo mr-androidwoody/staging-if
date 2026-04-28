@@ -950,6 +950,12 @@
     setText('ai-p2isa',  D.formatMoney(p2isa));
     setText('ai-p2gia',  D.formatMoney(p2gia));
 
+    // Per-person subtotals
+    const totP1 = p1cash + p1sipp + p1isa + p1gia;
+    const totP2 = p2cash + p2sipp + p2isa + p2gia;
+    setText('ai-p1total', D.formatMoney(totP1));
+    setText('ai-p2total', D.formatMoney(totP2));
+
     // Portfolio footer totals
     const totIsa  = p1isa  + p2isa;
     const totSipp = p1sipp + p2sipp;
