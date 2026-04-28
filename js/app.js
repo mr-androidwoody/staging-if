@@ -2186,93 +2186,152 @@
       if (p2PenStop) addEvent(p2PenStop, `${safeValue('sp-p2name') || 'P2'} contributions end`, 'contrib', 'p2');
       windfalls.forEach(wf => addEvent(wf.year, wf.name, 'windfall', null));
 
-      return { phases, events, startYear, endYear };
+      // Step-down data from income tab
+      const spending     = D.parseCurrency(safeEl('spending')?.value || '') || 0;
+      const stepDownPct  = safeNumber(safeEl('stepDownPct')?.value || '0');
+      const stepDownYear = (p1dob && stepDownPct > 0) ? p1dob + 75 : 0;
+      const stepDownAmt  = stepDownYear ? Math.round(spending * (1 - stepDownPct / 100)) : 0;
+
+      // Add step-down lollipop event if configured
+      if (stepDownYear && stepDownYear >= startYear && stepDownYear <= endYear) {
+        const sdLabel = `Income step-down to £${stepDownAmt.toLocaleString('en-GB')}/yr`;
+        events.push({ year: stepDownYear, label: sdLabel, type: 'stepdown', person: null });
+      }
+
+      // Merge consecutive phases with the same label
+      const merged = [];
+      phases.forEach(ph => {
+        const last = merged[merged.length - 1];
+        if (last && last.label === ph.label) {
+          last.to = ph.to;
+          last.guaranteed = Math.min(last.guaranteed, ph.guaranteed);
+        } else {
+          merged.push({ ...ph });
+        }
+      });
+
+      return { phases: merged, events, startYear, endYear, p1dob, p2dob, stepDownYear, spending };
     }
 
     function renderSVG(data) {
-      const { phases, events, startYear, endYear } = data;
+      const { phases, events, startYear, endYear, p1dob, p2dob, stepDownYear } = data;
+      const p1name = safeValue('sp-p1name') || 'P1';
+      const p2name = safeValue('sp-p2name') || 'P2';
       const totalYears = endYear - startYear;
-      const W = 900, H = 140;
-      const PAD_L = 10, PAD_R = 10, AXIS_Y = 96, PHASE_H = 36;
-      const JITTER = [-4, 4, -9, 9, 0, -13, 13];
 
-      const xOf = year => PAD_L + ((year - startYear) / totalYears) * (W - PAD_L - PAD_R);
+      const W = 900, PL = 68, PR = 10;
+      const BAND_Y = 110, BAND_H = 22, BAND_GAP = 2;
+      const AGE_Y1 = BAND_Y + BAND_H + BAND_GAP + 14;
+      const AGE_Y2 = AGE_Y1 + 13;
+      const DOT_R = 5;
+      const JITTER = [-5, 5, -10, 10, 0, -15, 15];
 
+      const xOf = y => PL + ((y - startYear) / totalYears) * (W - PL - PR);
+
+      // Fixed blue palette by phase label
       const PHASE_FILL = {
-        'Working':              '#dbeafe',
-        'Pre-State Pension':    '#fef9c3',
-        'Partial State Pension':'#dcfce7',
-        'Full State Pension':   '#bbf7d0',
+        'Working':              '#93c5fd',
+        'Pre-State Pension':    '#7dd3fc',
+        'Partial State Pension':'#60a5fa',
+        'Full State Pension':   '#3b82f6',
       };
-      const PHASE_TEXT = {
-        'Working':              '#1e40af',
-        'Pre-State Pension':    '#854d0e',
-        'Partial State Pension':'#166534',
-        'Full State Pension':   '#14532d',
+      const PHASE_TC = {
+        'Working':              '#1e3a8a',
+        'Pre-State Pension':    '#1e3a8a',
+        'Partial State Pension':'#1e3a8a',
+        'Full State Pension':   '#fff',
       };
+      // Post step-down phases use lighter shade
+      const PHASE_FILL_POST = '#bfdbfe';
+      const PHASE_TC_POST   = '#1e40af';
+
       const EVT_COLOUR = {
-        salary:  '#E24B4A',
-        sp:      '#639922',
-        pension: '#378ADD',
-        contrib: '#EF9F27',
-        windfall:'#7F77DD',
+        salary:   '#ef4444',
+        sp:       '#16a34a',
+        pension:  '#6366f1',
+        contrib:  '#f59e0b',
+        windfall: '#06b6d4',
+        stepdown: '#f43f5e',
       };
 
-      let svg = `<svg id="wiz-tl-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
+      let svg = `<svg id="wiz-tl-svg" viewBox="0 0 ${W} 180" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
 
-      // Phase bands with white dividers and rounded outer ends
+      const n = phases.length;
       phases.forEach((ph, i) => {
         const x1 = xOf(ph.from), x2 = xOf(ph.to);
-        const fill = PHASE_FILL[ph.label] || '#e2e8f0';
-        const textCol = PHASE_TEXT[ph.label] || '#374151';
-        const isFirst = i === 0, isLast = i === phases.length - 1;
-        const r = 4;
-        if (isFirst && isLast) {
-          svg += `<rect x="${x1}" y="${AXIS_Y - PHASE_H}" width="${x2 - x1}" height="${PHASE_H}" fill="${fill}" rx="${r}"/>`;
-        } else if (isFirst) {
-          svg += `<path d="M${x1+r},${AXIS_Y-PHASE_H} Q${x1},${AXIS_Y-PHASE_H} ${x1},${AXIS_Y-PHASE_H+r} L${x1},${AXIS_Y} L${x2},${AXIS_Y} L${x2},${AXIS_Y-PHASE_H} Z" fill="${fill}"/>`;
+        const isPost = stepDownYear && ph.from >= stepDownYear;
+        const fill = isPost ? PHASE_FILL_POST : (PHASE_FILL[ph.label] || '#93c5fd');
+        const tc   = isPost ? PHASE_TC_POST   : (PHASE_TC[ph.label]   || '#1e3a8a');
+        const isFirst = i === 0, isLast = i === n - 1;
+        const r = 5;
+        if (isFirst) {
+          svg += `<path d="M${x1+r},${BAND_Y} Q${x1},${BAND_Y} ${x1},${BAND_Y+r} L${x1},${BAND_Y+BAND_H} L${x2},${BAND_Y+BAND_H} L${x2},${BAND_Y} Z" fill="${fill}"/>`;
         } else if (isLast) {
-          svg += `<path d="M${x1},${AXIS_Y-PHASE_H} L${x2-r},${AXIS_Y-PHASE_H} Q${x2},${AXIS_Y-PHASE_H} ${x2},${AXIS_Y-PHASE_H+r} L${x2},${AXIS_Y} L${x1},${AXIS_Y} Z" fill="${fill}"/>`;
+          svg += `<path d="M${x1},${BAND_Y} L${x2-r},${BAND_Y} Q${x2},${BAND_Y} ${x2},${BAND_Y+r} L${x2},${BAND_Y+BAND_H} L${x1},${BAND_Y+BAND_H} Z" fill="${fill}"/>`;
         } else {
-          svg += `<rect x="${x1}" y="${AXIS_Y - PHASE_H}" width="${x2 - x1}" height="${PHASE_H}" fill="${fill}"/>`;
+          svg += `<rect x="${x1}" y="${BAND_Y}" width="${x2-x1}" height="${BAND_H}" fill="${fill}"/>`;
         }
-        if (i > 0) svg += `<line x1="${x1}" y1="${AXIS_Y-PHASE_H}" x2="${x1}" y2="${AXIS_Y}" stroke="white" stroke-width="1.5"/>`;
-        const pw = x2 - x1;
+        if (i > 0) svg += `<line x1="${x1}" y1="${BAND_Y}" x2="${x1}" y2="${BAND_Y+BAND_H}" stroke="white" stroke-width="2"/>`;
       });
 
-      // Axis line
-      svg += `<line x1="${PAD_L}" y1="${AXIS_Y}" x2="${W-PAD_R}" y2="${AXIS_Y}" stroke="#cbd5e1" stroke-width="1"/>`;
+      // Axis line (with gap below band)
+      svg += `<line x1="${PL}" y1="${BAND_Y+BAND_H+BAND_GAP}" x2="${W-PR}" y2="${BAND_Y+BAND_H+BAND_GAP}" stroke="#cbd5e1" stroke-width="1"/>`;
 
-      // Year ticks every 5 years
-      for (let y = Math.ceil(startYear / 5) * 5; y <= endYear; y += 5) {
+      // Age ticks every 5 years, two rows (P1 and P2 ages)
+      for (let y = startYear; y <= endYear; y++) {
+        if (p1dob) {
+          const p1age = y - p1dob;
+          if (p1age % 5 !== 0) continue;
+        } else {
+          if ((y - startYear) % 5 !== 0) continue;
+        }
         const x = xOf(y);
-        svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${AXIS_Y+4}" stroke="#94a3b8" stroke-width="1"/>`;
-        svg += `<text x="${x}" y="${AXIS_Y+14}" text-anchor="middle" font-size="9" fill="#94a3b8">${y}</text>`;
+        svg += `<line x1="${x}" y1="${BAND_Y+BAND_H+BAND_GAP}" x2="${x}" y2="${BAND_Y+BAND_H+BAND_GAP+4}" stroke="#94a3b8" stroke-width="1"/>`;
+        if (p1dob) svg += `<text x="${x}" y="${AGE_Y1}" text-anchor="middle" font-size="9" fill="#94a3b8">${y - p1dob}</text>`;
+        if (p2dob) svg += `<text x="${x}" y="${AGE_Y2}" text-anchor="middle" font-size="9" fill="#94a3b8">${y - p2dob}</text>`;
       }
 
-      // Group events by year, jitter horizontally, solid stems
+      // Person name labels with gap before timeline
+      if (p1dob) svg += `<text x="${PL-12}" y="${AGE_Y1}" text-anchor="end" font-size="9" font-weight="600" fill="#6b7a99">${p1name}</text>`;
+      if (p2dob) svg += `<text x="${PL-12}" y="${AGE_Y2}" text-anchor="end" font-size="9" font-weight="600" fill="#6b7a99">${p2name}</text>`;
+
+      // Lollipops — stems from top of band upward, jittered when same year
       const byYear = {};
       events.forEach(ev => { if (!byYear[ev.year]) byYear[ev.year] = []; byYear[ev.year].push(ev); });
-
       Object.entries(byYear).forEach(([yr, evts]) => {
         const baseX = xOf(Number(yr));
         evts.forEach((ev, i) => {
           const col = EVT_COLOUR[ev.type] || '#64748b';
-          const x = baseX + (JITTER[i] || 0);
-          const dotY = AXIS_Y - PHASE_H - 14 - (i * 18);
-          svg += `<line x1="${x}" y1="${AXIS_Y - PHASE_H}" x2="${x}" y2="${dotY+6}" stroke="${col}" stroke-width="1"/>`;
-          svg += `<circle class="wf-tl-dot" cx="${x}" cy="${dotY}" r="4" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
+          const x   = baseX + (JITTER[i] || 0);
+          const headY = BAND_Y - 12 - (i * 17);
+          svg += `<line x1="${x}" y1="${BAND_Y}" x2="${x}" y2="${headY + DOT_R + 1}" stroke="${col}" stroke-width="1"/>`;
+          svg += `<circle class="wf-tl-dot" cx="${x}" cy="${headY}" r="${DOT_R}" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
         });
       });
 
-      // Phase labels drawn last so they sit above lollipop stems
+      // Phase labels drawn last (on top of stems)
       phases.forEach(ph => {
         const x1 = xOf(ph.from), x2 = xOf(ph.to);
-        const textCol = PHASE_TEXT[ph.label] || '#374151';
+        const isPost = stepDownYear && ph.from >= stepDownYear;
+        const tc = isPost ? PHASE_TC_POST : (PHASE_TC[ph.label] || '#1e3a8a');
         const pw = x2 - x1;
-        if (pw > 55) {
-          svg += `<text x="${(x1+x2)/2}" y="${AXIS_Y - PHASE_H/2 + 4}" text-anchor="middle" font-size="9" font-weight="500" fill="${textCol}">${ph.label}</text>`;
-        }
+        if (pw < 20) return;
+        // Wrap text to fit band width
+        const words = ph.label.split(' ');
+        const charW = 5.2, maxW = pw - 8;
+        const lines = [];
+        let line = '';
+        words.forEach(w => {
+          const test = line ? line + ' ' + w : w;
+          if (test.length * charW > maxW && line) { lines.push(line); line = w; }
+          else line = test;
+        });
+        if (line) lines.push(line);
+        const lineH = 9, totalH = (lines.length - 1) * lineH;
+        const startY = BAND_Y + BAND_H / 2 + 3 - totalH / 2;
+        lines.forEach((l, li) => {
+          svg += `<text x="${(x1+x2)/2}" y="${startY + li * lineH}" text-anchor="middle" font-size="7" font-weight="600" fill="${tc}">${l}</text>`;
+        });
       });
 
       svg += '</svg>';
@@ -2282,11 +2341,12 @@
     function renderLegend(data) {
       const { events } = data;
       const EVT_META = {
-        salary:  { col: '#E24B4A', label: 'Salary ends' },
-        sp:      { col: '#639922', label: 'State pension starts' },
-        pension: { col: '#378ADD', label: 'Pension access' },
-        contrib: { col: '#EF9F27', label: 'Contributions end' },
-        windfall:{ col: '#7F77DD', label: 'Windfall' },
+        salary:   { col: '#ef4444', label: 'Salary ends' },
+        sp:       { col: '#16a34a', label: 'State pension starts' },
+        pension:  { col: '#6366f1', label: 'Pension access' },
+        contrib:  { col: '#f59e0b', label: 'Contributions end' },
+        windfall: { col: '#06b6d4', label: 'Windfall' },
+        stepdown: { col: '#f43f5e', label: 'Income step-down' },
       };
       const usedTypes = new Set(events.map(e => e.type));
       return Object.entries(EVT_META)
