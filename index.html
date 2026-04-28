@@ -70,6 +70,85 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border, #dde3ed);
   }
+  /* ── Timeline panel ──────────────────────────────────── */
+  .wiz-timeline-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .wiz-timeline-svg-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .wiz-timeline-svg-wrap svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-width: 600px;
+  }
+  .wiz-timeline-phases {
+    overflow-x: auto;
+  }
+  .wiz-phase-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .wiz-phase-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted, #6b7a99);
+    padding: 6px 10px;
+    border-bottom: 2px solid var(--border, #dde3ed);
+    white-space: nowrap;
+  }
+  .wiz-phase-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border, #dde3ed);
+    vertical-align: middle;
+  }
+  .wiz-phase-table tr:last-child td { border-bottom: none; }
+  .wiz-phase-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .wiz-phase-name {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--ink, #1a2233);
+  }
+  .wiz-phase-years {
+    color: var(--muted, #6b7a99);
+    font-size: 12px;
+  }
+  .wiz-phase-money {
+    font-weight: 600;
+    color: var(--ink, #1a2233);
+    text-align: right;
+  }
+  .wiz-phase-money--gap {
+    color: #c0392b;
+  }
+  .wiz-phase-money--covered {
+    color: #27ae60;
+  }
+  .wiz-timeline-empty {
+    padding: 32px 0;
+    text-align: center;
+    color: var(--muted, #6b7a99);
+    font-size: 13px;
+    font-style: italic;
+  }
+
   /* ── Events panel layout ─────────────────────────────── */
   .wiz-events-layout {
     display: grid;
@@ -1861,6 +1940,8 @@ The account type or tax wrapper this holding sits in. ISA (Individual Savings Ac
       t.classList.toggle('wiz-tab--active', j === i);
       t.classList.toggle('wiz-tab--done', j < i);
     });
+    // Render timeline when step 4 becomes active
+    if (i === 4 && window.RetireTimeline) window.RetireTimeline.render();
   }
 
   document.querySelector('#tab-assumptions').addEventListener('click', function(e) {
