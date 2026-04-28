@@ -860,6 +860,92 @@
   }
 
   // ─────────────────────────────
+  // GUARANTEED INCOME STRIP
+  // ─────────────────────────────
+  function _renderGuaranteedStrip(startYear, p1name, p2name) {
+    const bodyEl = safeEl('wiz-guaranteed-body');
+    if (!bodyEl) return;
+
+    const data = readSetupInputs();
+    const sy   = startYear || 0;
+
+    function personItems(pKey, pName) {
+      const p       = data.people[pKey];
+      const dob     = safeNumber(p.dob);
+      const items   = [];
+
+      // Salary
+      const salary    = D.parseCurrency(p.salary) || 0;
+      const stopAge   = safeNumber(p.salaryStopAge) || 0;
+      const stopYear  = (dob && stopAge) ? dob + stopAge : 0;
+      if (salary > 0) {
+        const tag = stopYear && sy
+          ? (stopYear <= sy
+            ? { text: 'ended', cls: '' }
+            : { text: `ending ${stopYear}`, cls: 'wiz-gi-item__tag--future' })
+          : { text: 'ongoing', cls: 'wiz-gi-item__tag--active' };
+        items.push({ amount: D.formatMoney(salary) + '/yr', label: 'Salary', tag });
+      }
+
+      // State Pension
+      const spAmt  = D.parseCurrency(p.sp) || 0;
+      const spAge  = safeNumber(p.spAge) || 0;
+      const spYear = (dob && spAge) ? dob + spAge : 0;
+      if (spAmt > 0) {
+        const tag = spYear && sy
+          ? (spYear <= sy
+            ? { text: 'in payment', cls: 'wiz-gi-item__tag--active' }
+            : { text: `from ${spYear}`, cls: 'wiz-gi-item__tag--future' })
+          : { text: 'check age', cls: '' };
+        items.push({ amount: D.formatMoney(spAmt) + '/yr', label: 'State Pension', tag });
+      }
+
+      // Fixed monthly draws from cashlike/cash accounts
+      state.portfolioAccounts
+        .filter(a => a.owner === pKey && a.monthlyDraw > 0)
+        .forEach(a => {
+          items.push({
+            amount: D.formatMoney(a.monthlyDraw) + '/mo',
+            label: a.name || a.wrapper,
+            tag: { text: 'fixed draw', cls: 'wiz-gi-item__tag--active' },
+          });
+        });
+
+      return { pName, items };
+    }
+
+    const people = [personItems('p1', p1name)];
+    if (state.p2enabled) people.push(personItems('p2', p2name));
+
+    const hasAny = people.some(p => p.items.length > 0);
+
+    if (!hasAny) {
+      bodyEl.innerHTML = '<span class="wiz-gi-none">No guaranteed income identified at plan start — the portfolio will need to fund the full income target.</span>';
+      return;
+    }
+
+    bodyEl.innerHTML = people.map(({ pName, items }) => {
+      if (items.length === 0) {
+        return `<div class="wiz-gi-person">
+          <div class="wiz-gi-person__name">${pName}</div>
+          <div class="wiz-gi-item"><span class="wiz-gi-item__label">No guaranteed income</span></div>
+        </div>`;
+      }
+      const rows = items.map(({ amount, label, tag }) =>
+        `<div class="wiz-gi-item">
+          <span class="wiz-gi-item__amount">${amount}</span>
+          <span class="wiz-gi-item__label">${label}</span>
+          <span class="wiz-gi-item__tag ${tag.cls}">${tag.text}</span>
+        </div>`
+      ).join('');
+      return `<div class="wiz-gi-person">
+        <div class="wiz-gi-person__name">${pName}</div>
+        ${rows}
+      </div>`;
+    }).join('');
+  }
+
+  // ─────────────────────────────
   // HANDOFF: setup → assumptions
   // ─────────────────────────────
   function syncSetupToAssumptions() {
@@ -955,6 +1041,9 @@
     const totP2 = p2cash + p2sipp + p2isa + p2gia;
     setText('ai-p1total', D.formatMoney(totP1));
     setText('ai-p2total', D.formatMoney(totP2));
+
+    // Guaranteed income strip
+    _renderGuaranteedStrip(sy, p1name, p2name);
 
     // Portfolio footer totals
     const totIsa  = p1isa  + p2isa;
