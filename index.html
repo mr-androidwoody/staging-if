@@ -22,33 +22,46 @@
   <link href="css/home-btn.css" rel="stylesheet"/>
 
 <style>
-  .pension-sweep-toggle {
+  /* ── Pension toggle switch ───────────────────────────── */
+  .pension-toggle-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 14px;
-    padding: 7px 10px;
-    border: 1px solid var(--border, #dde3ed);
-    border-radius: 6px;
+    gap: 8px;
+    margin: 6px 0 8px;
+  }
+  .pension-toggle-track {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--border, #dde3ed);
     cursor: pointer;
-    user-select: none;
-    background: var(--surface-raised, #f8fafc);
-    transition: background 0.15s;
+    transition: background 0.2s;
+    flex-shrink: 0;
   }
-  .pension-sweep-toggle:hover {
-    background: var(--surface-hover, #eef2f8);
+  .pension-toggle-track.is-on {
+    background: var(--accent, #2e6fd4);
   }
-  .pension-sweep-toggle__label {
+  .pension-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s;
+    pointer-events: none;
+  }
+  .pension-toggle-track.is-on .pension-toggle-thumb {
+    left: 16px;
+  }
+  .pension-toggle-label {
     font-size: 12px;
-    font-weight: 600;
     color: var(--text, #1a2236);
   }
-  .pension-sweep-toggle__chevron {
-    font-size: 10px;
-    color: var(--muted, #6b7a99);
-  }
   .pension-sweep-fields {
-    margin-top: 8px;
+    margin-top: 4px;
   }
   .wiz-money-section {
     margin-top: 20px;
@@ -221,15 +234,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
-    background: var(--surface-raised, #f0f4fa);
-    border-bottom: 1px solid var(--border, #dde3ed);
+    padding: 10px 12px 4px;
   }
   .wf-card__title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--muted, #6b7a99);
   }
   .wf-card__remove {
@@ -243,10 +252,10 @@
   }
   .wf-card__remove:hover { color: var(--danger, #c0392b); }
   .wf-card__body {
-    padding: 2px 0;
+    padding: 4px 12px 10px;
   }
   .wf-card__hint {
-    padding: 4px 12px 8px;
+    padding: 0 0 6px;
     font-size: 11px;
     color: var(--muted, #6b7a99);
     font-style: italic;
@@ -963,9 +972,11 @@
 
               <!-- P1 pension -->
               <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
-              <div class="pension-sweep-toggle" id="p1-pension-toggle" onclick="wizTogglePension('p1')">
-                <span class="pension-sweep-toggle__label">Make pension contributions</span>
-                <span class="pension-sweep-toggle__chevron" id="p1-pension-chevron">▶</span>
+              <div class="pension-toggle-row" onclick="wizTogglePension('p1')" style="cursor:pointer">
+                <div class="pension-toggle-track" id="p1-pension-track">
+                  <div class="pension-toggle-thumb"></div>
+                </div>
+                <span class="pension-toggle-label">Making contributions</span>
               </div>
               <div class="pension-sweep-fields" id="p1-pension-fields" style="display:none">
                 <table class="wiz-table">
@@ -997,9 +1008,11 @@
 
               <!-- P2 pension -->
               <div class="wiz-col-heading wiz-col-heading--sub p2-field" data-p2>Person 2</div>
-              <div class="pension-sweep-toggle p2-field" id="p2-pension-toggle" onclick="wizTogglePension('p2')">
-                <span class="pension-sweep-toggle__label">Make pension contributions</span>
-                <span class="pension-sweep-toggle__chevron" id="p2-pension-chevron">▶</span>
+              <div class="pension-toggle-row p2-field" onclick="wizTogglePension('p2')" style="cursor:pointer">
+                <div class="pension-toggle-track" id="p2-pension-track">
+                  <div class="pension-toggle-thumb"></div>
+                </div>
+                <span class="pension-toggle-label">Making contributions</span>
               </div>
               <div class="pension-sweep-fields p2-field" id="p2-pension-fields" style="display:none">
                 <table class="wiz-table">
@@ -1031,31 +1044,7 @@
             <!-- Gift planning (coming soon) -->
             <div class="wiz-events-sidebar__section">
               <div class="wiz-col-heading">Gift planning <span class="wiz-badge-soon">coming soon</span></div>
-              <p class="wiz-col-intro">Model lump-sum outflows, for example a house deposit contribution for a child.</p>
-              <table class="wiz-table">
-                <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" id="gift1Year" placeholder="e.g. 2027" min="2025" max="2060" disabled></td></tr>
-                <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" id="gift1Amount" class="currency-input" placeholder="e.g. 250,000" disabled></td></tr>
-                <tr><td class="wiz-label">Funded from</td><td class="wiz-val"><select id="gift1Wrapper" disabled><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option></select></td></tr>
-              </table>
-              <div id="gift2-slot" style="display:none">
-                <div class="wiz-section-divider"></div>
-                <div class="wiz-col-heading wiz-col-heading--sub">Gift 2 <button type="button" class="wiz-remove-btn" onclick="wizRemoveSlot('gift2-slot','gift3-slot','gifts-add-btn')">&#x2715; Remove</button></div>
-                <table class="wiz-table">
-                  <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" id="gift2Year" placeholder="e.g. 2030" min="2025" max="2060" disabled></td></tr>
-                  <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" id="gift2Amount" class="currency-input" placeholder="e.g. 250,000" disabled></td></tr>
-                  <tr><td class="wiz-label">Funded from</td><td class="wiz-val"><select id="gift2Wrapper" disabled><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option></select></td></tr>
-                </table>
-              </div>
-              <div id="gift3-slot" style="display:none">
-                <div class="wiz-section-divider"></div>
-                <div class="wiz-col-heading wiz-col-heading--sub">Gift 3 <button type="button" class="wiz-remove-btn" onclick="wizRemoveSlot('gift3-slot',null,'gifts-add-btn')">&#x2715; Remove</button></div>
-                <table class="wiz-table">
-                  <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" id="gift3Year" placeholder="e.g. 2033" min="2025" max="2060" disabled></td></tr>
-                  <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" id="gift3Amount" class="currency-input" placeholder="e.g. 250,000" disabled></td></tr>
-                  <tr><td class="wiz-label">Funded from</td><td class="wiz-val"><select id="gift3Wrapper" disabled><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option></select></td></tr>
-                </table>
-              </div>
-              <button type="button" id="gifts-add-btn" class="wiz-add-btn" onclick="wizAddSlot('gifts-add-btn',['gift2-slot','gift3-slot'])">+ Add another gift</button>
+              <p class="wiz-col-intro">Model lump-sum outflows, for example a house deposit contribution for a child. This feature is in development.</p>
             </div><!-- /.wiz-events-sidebar__section (gifts) -->
 
           </div><!-- /.wiz-events-sidebar -->
@@ -1079,7 +1068,7 @@
                     <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val" style="text-align:right"><div class="currency-stepper"><input type="text" class="wf-amount currency-input" placeholder="e.g. 400,000"><button class="stepper-btn" data-step-for-class="wf-amount" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for-class="wf-amount" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button></div></td></tr>
                     <tr><td class="wiz-label">Person</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select><span class="wiz-select-chevron">&#x25BC;</span></div></td></tr>
                     <tr><td class="wiz-label">Wrapper</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select><span class="wiz-select-chevron">&#x25BC;</span></div></td></tr>
-                    <tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% / 30% Cash</option><option value="50">50% / 50% Cash</option><option value="0">100% Cash</option></select><span class="wiz-select-chevron">&#x25BC;</span></div></td></tr>
+                    <tr class="wf-equity-row"><td class="wiz-label">Equity/cash split</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% / 30% Cash</option><option value="50">50% / 50% Cash</option><option value="0">100% Cash</option></select><span class="wiz-select-chevron">&#x25BC;</span></div></td></tr>
                   </table>
                   <div class="wf-wrapper-hint-row wf-card__hint" style="display:none">Cash earns 0% growth. For capital-preserved low-volatility, use GIA with "100% Cash".</div>
                 </div>
@@ -1093,11 +1082,11 @@
 
         <script>
           function wizTogglePension(person) {
-            const fields  = document.getElementById(person + '-pension-fields');
-            const chevron = document.getElementById(person + '-pension-chevron');
-            const open    = fields.style.display !== 'none';
+            const fields = document.getElementById(person + '-pension-fields');
+            const track  = document.getElementById(person + '-pension-track');
+            const open   = fields.style.display !== 'none';
             fields.style.display = open ? 'none' : '';
-            chevron.textContent  = open ? '▶' : '▼';
+            track.classList.toggle('is-on', !open);
           }
 
           // ── Windfall card helpers ─────────────────────────────────────────────
@@ -1125,7 +1114,7 @@
               '<tr><td class="wiz-label">Amount (£)</td><td class="wiz-val" style="text-align:right"><div class="currency-stepper"><input type="text" class="wf-amount currency-input" placeholder="e.g. 200,000"><button class="stepper-btn" data-step-for-class="wf-amount" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button><button class="stepper-btn" data-step-for-class="wf-amount" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button></div></td></tr>' +
               '<tr><td class="wiz-label">Person</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-person"><option value="p1">Person 1</option><option value="p2">Person 2</option></select>' + sel + '</div></td></tr>' +
               '<tr><td class="wiz-label">Wrapper</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-wrapper" onchange="wizWfWrapperChange(this)"><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option><option value="SIPP">SIPP</option></select>' + sel + '</div></td></tr>' +
-              '<tr class="wf-equity-row"><td class="wiz-label">GIA split</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% / 30% Cash</option><option value="50">50% / 50% Cash</option><option value="0">100% Cash</option></select>' + sel + '</div></td></tr>' +
+              '<tr class="wf-equity-row"><td class="wiz-label">Equity/cash split</td><td class="wiz-val" style="text-align:right"><div class="wiz-select-wrap"><select class="wf-equity"><option value="100">100% Equity</option><option value="70" selected>70% / 30% Cash</option><option value="50">50% / 50% Cash</option><option value="0">100% Cash</option></select>' + sel + '</div></td></tr>' +
               '</table>' +
               '<div class="wf-wrapper-hint-row wf-card__hint" style="display:none">Cash earns 0% growth. For capital-preserved low-volatility, use GIA with &ldquo;100% Cash&rdquo;.</div>' +
               '</div>';
