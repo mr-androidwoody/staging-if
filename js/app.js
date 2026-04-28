@@ -2227,7 +2227,7 @@
     };
 
     function renderVis(data) {
-      const { phases, events, startYear, endYear, p1dob, p2dob, stepDownYear } = data;
+      const { events, startYear, endYear, p1dob, p2dob, stepDownYear } = data;
       const p1name = safeValue('sp-p1name') || 'P1';
       const p2name = safeValue('sp-p2name') || 'P2';
       const p2enabled = state.p2enabled;
@@ -2236,54 +2236,56 @@
       const tlEl = document.getElementById('wiz-tl-vis');
       if (!tlEl) return;
 
-      // Map phase label to CSS class
-      function phaseClass(label, isPost) {
-        if (isPost) return 'ph-sp-post';
-        if (label === 'Working') return 'ph-salary';
-        if (label === 'Pre-State Pension' || label === 'Partial State Pension') return 'ph-pre';
-        return 'ph-sp';
-      }
+      // Read the key year boundaries directly from buildPhases data
+      // (more reliable than reconstructing from events which may be absent)
+      const p1SalEnd = events.find(e => e.type === 'salary' && e.person === 'p1')?.year || 0;
+      const p2SalEnd = events.find(e => e.type === 'salary' && e.person === 'p2')?.year || 0;
+      const p1SPYear = events.find(e => e.type === 'sp'     && e.person === 'p1')?.year || 0;
+      const p2SPYear = events.find(e => e.type === 'sp'     && e.person === 'p2')?.year || 0;
 
-      // Build groups
-      const groupDefs = [{ id: 'p1', content: p1name }];
-      if (p2enabled) groupDefs.push({ id: 'p2', content: p2name });
-
-      // Build band items from phases per person
-      // buildPhases produces merged household phases; we reconstruct per-person bands
-      // by splitting on person-specific events
-      const p1SalEnd  = events.find(e => e.type === 'salary'  && e.person === 'p1')?.year || 0;
-      const p2SalEnd  = events.find(e => e.type === 'salary'  && e.person === 'p2')?.year || 0;
-      const p1SPYear  = events.find(e => e.type === 'sp'      && e.person === 'p1')?.year || 0;
-      const p2SPYear  = events.find(e => e.type === 'sp'      && e.person === 'p2')?.year || 0;
-
+      // Build per-person bands directly from the known year boundaries.
+      // Each band covers [cursor, next_boundary) with no gaps.
       function buildPersonBands(salEnd, spYear, groupId) {
         const bands = [];
         let cursor = startYear;
-        if (salEnd && salEnd > startYear && salEnd < endYear) {
+
+        // Salary phase: only if salary ends after start and before end
+        if (salEnd > startYear && salEnd <= endYear) {
           bands.push({ from: cursor, to: salEnd, label: 'Salary', cls: 'ph-salary', group: groupId });
           cursor = salEnd;
         }
-        if (spYear && spYear > cursor && spYear < endYear) {
+
+        // Pre-pension: gap between salary end and state pension start
+        if (spYear > cursor && spYear <= endYear) {
           bands.push({ from: cursor, to: spYear, label: 'Pre-pension', cls: 'ph-pre', group: groupId });
           cursor = spYear;
         }
+
+        // State Pension: split at stepDownYear if it falls after sp start
         if (cursor < endYear) {
-          if (stepDownYear && stepDownYear > cursor && stepDownYear < endYear) {
-            bands.push({ from: cursor, to: stepDownYear, label: 'State Pension', cls: 'ph-sp', group: groupId });
-            bands.push({ from: stepDownYear, to: endYear, label: 'State Pension', cls: 'ph-sp-post', group: groupId });
+          const sdY = stepDownYear && stepDownYear > cursor && stepDownYear < endYear ? stepDownYear : 0;
+          if (sdY) {
+            bands.push({ from: cursor, to: sdY,     label: 'State Pension', cls: 'ph-sp',      group: groupId });
+            bands.push({ from: sdY,    to: endYear, label: 'State Pension', cls: 'ph-sp-post', group: groupId });
           } else {
             bands.push({ from: cursor, to: endYear, label: 'State Pension', cls: 'ph-sp', group: groupId });
           }
         }
+
         return bands;
       }
 
       const allBands = buildPersonBands(p1SalEnd, p1SPYear, 'p1');
       if (p2enabled) buildPersonBands(p2SalEnd, p2SPYear, 'p2').forEach(b => allBands.push(b));
 
-      // Destroy and recreate vis instance when called
+      // Build groups
+      const groupDefs = [{ id: 'p1', content: p1name }];
+      if (p2enabled) groupDefs.push({ id: 'p2', content: p2name });
+
+      // Destroy previous instance cleanly
       if (_tlInst) { _tlInst.destroy(); _tlInst = null; }
       if (_overlaySvg) { _overlaySvg.remove(); _overlaySvg = null; }
+      tlEl.innerHTML = '';
 
       _tlGroups = new vis.DataSet(groupDefs);
       _tlItems  = new vis.DataSet(
@@ -2307,9 +2309,15 @@
         height: numRows * (ROW_H + 1) + 4,
       });
 
-      // After vis renders, draw dot overlay and age axis
+      // After vis finishes its first render, paint dots and axis
       _tlInst.on('changed', function bootstrap() {
         _tlInst.off('changed', bootstrap);
+        // Force band items to fill row height via direct DOM styling
+        // (vis-timeline ignores height:100% on .vis-item in some versions)
+        tlEl.querySelectorAll('.vis-item.vis-range').forEach(el => {
+          el.style.top    = '0';
+          el.style.height = ROW_H + 'px';
+        });
         _buildDotOverlay(tlEl, events, groupDefs, startYear, endYear, p2enabled);
         _buildAgeAxis(tlEl, startYear, endYear, p1dob, p2dob, p1name, p2name, p2enabled);
       });
@@ -2360,6 +2368,29 @@
 
       const tip = document.getElementById('wiz-tl-tip');
 
+      // Measure row positions directly from vis group DOM elements
+      // This is more reliable than computing fg offset + cumulative height
+      const fg   = tlEl.querySelector('.vis-foreground');
+      const fgRect = fg ? fg.getBoundingClientRect() : null;
+      const tlRect = tlEl.getBoundingClientRect();
+
+      // Build a map of groupId -> {top, height} relative to tlEl
+      const groupRects = {};
+      groupDefs.forEach((g, idx) => {
+        const grpEls = fg ? fg.querySelectorAll('.vis-group') : [];
+        const grpEl  = grpEls[idx];
+        if (grpEl && fgRect) {
+          const gr = grpEl.getBoundingClientRect();
+          groupRects[g.id] = {
+            top:    gr.top    - tlRect.top,
+            height: gr.height || ROW_H,
+          };
+        } else {
+          // Fallback: stack at ROW_H each
+          groupRects[g.id] = { top: idx * (ROW_H + 1), height: ROW_H };
+        }
+      });
+
       // Filter and assign group row
       const visible = events.filter(ev =>
         ev.person === null || ev.person === 'p1' || (p2enabled && ev.person === 'p2')
@@ -2375,21 +2406,20 @@
 
       const DOT_R  = 6;
       const H_STEP = 15;
-      const fgT    = _fgTop(tlEl);
 
       Object.values(clusters).forEach(evts => {
         const baseX = _xOfYear(tlEl, evts[0].year, startYear, endYear);
         const gid   = evts[0].groupId;
-        const rTop  = fgT + _rowTop(tlEl, groupDefs, gid);
+        const rect  = groupRects[gid] || { top: 0, height: ROW_H };
         const n     = evts.length;
         const pad   = DOT_R + 4;
-        const usable = ROW_H - pad * 2;
+        const usable = rect.height - pad * 2;
 
         evts.forEach((ev, i) => {
           const hSign = i === 0 ? 0 : (i % 2 === 1 ? 1 : -1);
           const hStep = Math.ceil(i / 2);
           const cx = baseX + hSign * hStep * H_STEP;
-          const cy = rTop + pad + (n === 1 ? usable / 2 : (i / (n - 1)) * usable);
+          const cy = rect.top + pad + (n === 1 ? usable / 2 : (i / (n - 1)) * usable);
 
           const col = EVT_COLOUR[ev.type] || '#64748b';
           const circle = document.createElementNS(ns, 'circle');
