@@ -50,6 +50,28 @@
   .pension-sweep-fields {
     margin-top: 8px;
   }
+  .wiz-household-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0 0;
+    padding: 12px 16px;
+    background: var(--surface-raised, #f0f4fa);
+    border: 1px solid var(--border, #dde3ed);
+    border-radius: 6px;
+  }
+  .wiz-household-total__label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted, #6b7a99);
+  }
+  .wiz-household-total__val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink, #1a2233);
+  }
 </style>
 </head>
 
@@ -647,6 +669,10 @@
               <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1isa">–</span></td></tr>
               <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
             </table>
+            <div class="wiz-total-row">
+              <span class="wiz-total-label" data-p1>Person 1 total</span>
+              <span class="wiz-total-val" id="ai-p1total">–</span>
+            </div>
             <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
           </div>
 
@@ -661,13 +687,19 @@
               <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2gia">–</span></td></tr>
             </table>
             <div class="wiz-total-row">
-              <span class="wiz-total-label">Total investments</span>
-              <span class="wiz-total-val" id="ai-total">–</span>
+              <span class="wiz-total-label" data-p2>Person 2 total</span>
+              <span class="wiz-total-val" id="ai-p2total">–</span>
             </div>
             <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
           </div>
 
         </div><!-- /.wiz-grid -->
+
+        <!-- Household total — full width, below both columns -->
+        <div class="wiz-household-total">
+          <span class="wiz-household-total__label">Total household investments</span>
+          <span class="wiz-household-total__val" id="ai-total">–</span>
+        </div>
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
           <div class="wiz-progress">
