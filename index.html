@@ -635,114 +635,36 @@
 
       <!-- ══ PANEL 1 — Money ══ -->
       <div class="wiz-panel" id="wiz-panel-1">
-        <div class="wiz-grid wiz-grid--2-1">
+        <div class="wiz-grid wiz-grid--2">
 
-          <!-- Paired balance columns with spanning intro -->
-          <div class="wiz-col-pair">
-            <div class="wiz-col-pair__header">
-              <div class="wiz-col-heading">Your balances</div>
-              <p class="wiz-col-pair__intro">These figures are pulled from Your assets and show your starting position for the projection. Check they look right before continuing. If anything needs updating, go back and edit your accounts.</p>
-            </div>
-
-            <!-- P1 balances -->
-            <div class="wiz-col">
-              <div class="wiz-col-heading" data-p1>Person 1 - balances</div>
-              <table class="wiz-table">
-                <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1cash">–</span></td></tr>
-                <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1sipp">–</span></td></tr>
-                <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1isa">–</span></td></tr>
-                <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
-              </table>
-              <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
-            </div>
-
-            <!-- P2 balances -->
-            <div class="wiz-col p2-field">
-              <div class="wiz-col-heading" data-p2>Person 2 - balances</div>
-              <table class="wiz-table">
-                <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2cash">–</span></td></tr>
-                <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2sipp">–</span></td></tr>
-                <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2isa">–</span></td></tr>
-                <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2gia">–</span></td></tr>
-              </table>
-              <div class="wiz-total-row">
-                <span class="wiz-total-label">Total investments</span>
-                <span class="wiz-total-val" id="ai-total">–</span>
-              </div>
-              <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
-            </div>
+          <!-- P1 balances -->
+          <div class="wiz-col">
+            <div class="wiz-col-heading" data-p1>Person 1</div>
+            <p class="wiz-col-intro">Pulled from Your assets. Check they look right — if anything needs updating, go back and edit your accounts.</p>
+            <table class="wiz-table">
+              <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1cash">–</span></td></tr>
+              <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1sipp">–</span></td></tr>
+              <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1isa">–</span></td></tr>
+              <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p1gia">–</span></td></tr>
+            </table>
+            <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
           </div>
 
-          <!-- Pension contributions -->
-          <div class="wiz-col">
-            <div class="wiz-col-heading">Pension contributions</div>
-            <p class="wiz-col-intro">If either of you is still making pension contributions, set the monthly amount and the age at which contributions stop.</p>
-
-            <!-- P1 pension -->
-            <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
-            <div class="pension-sweep-toggle" id="p1-pension-toggle" onclick="wizTogglePension('p1')">
-              <span class="pension-sweep-toggle__label">Make pension contributions</span>
-              <span class="pension-sweep-toggle__chevron" id="p1-pension-chevron">▶</span>
+          <!-- P2 balances -->
+          <div class="wiz-col p2-field">
+            <div class="wiz-col-heading" data-p2>Person 2</div>
+            <p class="wiz-col-intro">Pulled from Your assets. Check they look right — if anything needs updating, go back and edit your accounts.</p>
+            <table class="wiz-table">
+              <tr><td class="wiz-label">Cash</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2cash">–</span></td></tr>
+              <tr><td class="wiz-label">SIPP / WP</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2sipp">–</span></td></tr>
+              <tr><td class="wiz-label">ISA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2isa">–</span></td></tr>
+              <tr><td class="wiz-label">GIA</td><td class="wiz-val"><span class="wiz-readonly" id="ai-p2gia">–</span></td></tr>
+            </table>
+            <div class="wiz-total-row">
+              <span class="wiz-total-label">Total investments</span>
+              <span class="wiz-total-val" id="ai-total">–</span>
             </div>
-            <div class="pension-sweep-fields" id="p1-pension-fields" style="display:none">
-              <table class="wiz-table">
-                <tr>
-                  <td class="wiz-label">Monthly contribution (£/mo)</td>
-                  <td class="wiz-val" style="text-align:right">
-                    <div class="currency-stepper">
-                      <input type="text" id="p1PensionMonthly" class="currency-input" placeholder="e.g. 500">
-                      <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
-                      <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="wiz-label">Stop age</td>
-                  <td class="wiz-val" style="text-align:right">
-                    <div class="stepper-input">
-                      <input type="number" id="p1PensionStopAge" placeholder="e.g. 57" min="18" max="75">
-                      <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
-                      <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-              <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
-            </div>
-
-            <div class="wiz-section-divider p2-field"></div>
-
-            <!-- P2 pension -->
-            <div class="wiz-col-heading wiz-col-heading--sub p2-field" data-p2>Person 2</div>
-            <div class="pension-sweep-toggle p2-field" id="p2-pension-toggle" onclick="wizTogglePension('p2')">
-              <span class="pension-sweep-toggle__label">Make pension contributions</span>
-              <span class="pension-sweep-toggle__chevron" id="p2-pension-chevron">▶</span>
-            </div>
-            <div class="pension-sweep-fields p2-field" id="p2-pension-fields" style="display:none">
-              <table class="wiz-table">
-                <tr>
-                  <td class="wiz-label">Monthly contribution (£/mo)</td>
-                  <td class="wiz-val" style="text-align:right">
-                    <div class="currency-stepper">
-                      <input type="text" id="p2PensionMonthly" class="currency-input" placeholder="e.g. 500">
-                      <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
-                      <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="wiz-label">Stop age</td>
-                  <td class="wiz-val" style="text-align:right">
-                    <div class="stepper-input">
-                      <input type="number" id="p2PensionStopAge" placeholder="e.g. 57" min="18" max="75">
-                      <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
-                      <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-              <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
-            </div>
+            <p class="wiz-hint">Edit in <a class="wiz-link" data-action="switch-tab" data-tab="setup">Your assets →</a></p>
           </div>
 
         </div><!-- /.wiz-grid -->
@@ -824,31 +746,77 @@
             <button type="button" id="gifts-add-btn" class="wiz-add-btn" onclick="wizAddSlot('gifts-add-btn',['gift2-slot','gift3-slot'])">+ Add another gift</button>
           </div>
 
-          <!-- One-off purchase -->
+
+          <!-- Pension contributions -->
           <div class="wiz-col">
-            <div class="wiz-col-heading">One-off purchase <span class="wiz-badge-soon">coming soon</span></div>
-            <p class="wiz-col-intro">Model a one-off capital expenditure - for example, buying a new car or funding a home improvement.<br><br>The amount is deducted from the portfolio in the year it occurs, reducing the balance available for drawdown from that point forward.</p>
+            <div class="wiz-col-heading">Pension contributions</div>
+            <p class="wiz-col-intro">If either of you is still making pension contributions, set the monthly amount and the age at which contributions stop.</p>
 
-            <!-- Purchase 1 (permanent) -->
-            <div class="wiz-col-heading wiz-col-heading--sub">Purchase 1</div>
-            <table class="wiz-table">
-              <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" id="purchase1Year" placeholder="e.g. 2028" min="2025" max="2060" disabled></td></tr>
-              <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" id="purchase1Amount" class="currency-input" placeholder="e.g. 30,000" disabled></td></tr>
-              <tr><td class="wiz-label">Funded from</td><td class="wiz-val"><select id="purchase1Wrapper" disabled><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option></select></td></tr>
-            </table>
-
-            <!-- Purchase 2 (hidden until Add another clicked) -->
-            <div id="purchase2-slot" style="display:none">
-              <div class="wiz-section-divider"></div>
-              <div class="wiz-col-heading wiz-col-heading--sub">Purchase 2 <button type="button" class="wiz-remove-btn" onclick="wizRemoveSlot('purchase2-slot',null,'purchases-add-btn')">✕ Remove</button></div>
+            <!-- P1 pension -->
+            <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
+            <div class="pension-sweep-toggle" id="p1-pension-toggle" onclick="wizTogglePension('p1')">
+              <span class="pension-sweep-toggle__label">Make pension contributions</span>
+              <span class="pension-sweep-toggle__chevron" id="p1-pension-chevron">▶</span>
+            </div>
+            <div class="pension-sweep-fields" id="p1-pension-fields" style="display:none">
               <table class="wiz-table">
-                <tr><td class="wiz-label">Year</td><td class="wiz-val"><input type="number" id="purchase2Year" placeholder="e.g. 2035" min="2025" max="2060" disabled></td></tr>
-                <tr><td class="wiz-label">Amount (£)</td><td class="wiz-val"><input type="text" id="purchase2Amount" class="currency-input" placeholder="e.g. 30,000" disabled></td></tr>
-                <tr><td class="wiz-label">Funded from</td><td class="wiz-val"><select id="purchase2Wrapper" disabled><option value="Cash">Cash</option><option value="GIA" selected>GIA</option><option value="ISA">ISA</option></select></td></tr>
+                <tr>
+                  <td class="wiz-label">Monthly contribution (£/mo)</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="currency-stepper">
+                      <input type="text" id="p1PensionMonthly" class="currency-input" placeholder="e.g. 500">
+                      <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p1PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="wiz-label">Stop age</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="stepper-input">
+                      <input type="number" id="p1PensionStopAge" placeholder="e.g. 57" min="18" max="75">
+                      <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p1PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
               </table>
+              <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
             </div>
 
-            <button type="button" id="purchases-add-btn" class="wiz-add-btn" onclick="wizAddSlot('purchases-add-btn',['purchase2-slot'])">+ Add another purchase</button>
+            <div class="wiz-section-divider p2-field"></div>
+
+            <!-- P2 pension -->
+            <div class="wiz-col-heading wiz-col-heading--sub p2-field" data-p2>Person 2</div>
+            <div class="pension-sweep-toggle p2-field" id="p2-pension-toggle" onclick="wizTogglePension('p2')">
+              <span class="pension-sweep-toggle__label">Make pension contributions</span>
+              <span class="pension-sweep-toggle__chevron" id="p2-pension-chevron">▶</span>
+            </div>
+            <div class="pension-sweep-fields p2-field" id="p2-pension-fields" style="display:none">
+              <table class="wiz-table">
+                <tr>
+                  <td class="wiz-label">Monthly contribution (£/mo)</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="currency-stepper">
+                      <input type="text" id="p2PensionMonthly" class="currency-input" placeholder="e.g. 500">
+                      <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="1" data-step-amount="50" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p2PensionMonthly" data-step-direction="-1" data-step-amount="50" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="wiz-label">Stop age</td>
+                  <td class="wiz-val" style="text-align:right">
+                    <div class="stepper-input">
+                      <input type="number" id="p2PensionStopAge" placeholder="e.g. 57" min="18" max="75">
+                      <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="1" type="button">&#x25B2;</button>
+                      <button class="stepper-btn" data-step-for="p2PensionStopAge" data-step-direction="-1" type="button">&#x25BC;</button>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <p class="wiz-hint" style="margin-top:6px">Amount you pay each month. Basic rate tax relief (20%) is added automatically. Capped at the lower of £60,000/yr and your annual salary.</p>
+            </div>
           </div>
 
           <script>
@@ -1038,7 +1006,7 @@
 
       <!-- ══ PANEL 3 — Growth ══ -->
       <div class="wiz-panel" id="wiz-panel-3">
-        <div class="wiz-grid wiz-grid--2">
+        <div class="wiz-grid wiz-grid--3">
 
           <!-- Rates -->
           <div class="wiz-col">
@@ -1099,6 +1067,61 @@
             <p class="wiz-body-text">This model assumes a fixed growth rate. Set it too high and the outcome will look stronger than it’s likely to be. A more conservative assumption gives a more dependable baseline and avoids overstating what the plan can deliver.</p>
           </div>
 
+
+          <!-- Tax thresholds -->
+          <div class="wiz-col">
+            <div class="wiz-col-heading">
+              <span class="assump-tooltip-anchor">Tax thresholds<span class="assump-tooltip">Controls how UK tax thresholds are uprated over the projection. Frozen means fiscal drag erodes real allowances each year; uprating preserves them in line with inflation.</span></span>
+            </div>
+            <p class="wiz-col-intro">When tax allowances don't rise with inflation, more of your income is taxed at higher rates each year. Set whether you expect allowances to stay frozen or start tracking inflation at some point.</p>
+            <div class="wiz-cards" style="margin-bottom:16px">
+              <label class="wiz-card">
+                <input type="radio" name="thresholdMode" id="thresholdFrozen" value="frozen" checked>
+                <span class="wiz-card__title">Frozen</span>
+                <span class="wiz-card__hint">Allowances stay fixed in cash terms throughout the projection. As income rises with inflation, a growing share is taxed at higher rates.</span>
+              </label>
+              <label class="wiz-card">
+                <input type="radio" name="thresholdMode" id="thresholdFromYear" value="fromYear">
+                <span class="wiz-card__title">Uprated from year</span>
+                <span class="wiz-card__hint" style="display:flex;align-items:center;gap:8px">
+                  Allowances stay frozen until the year you set, then rise with inflation from that point onward.
+                  <input type="number" id="thresholdFromYearVal" class="wiz-card__inline-input" value="2028" min="2026" max="2060" onfocus="document.getElementById('thresholdFromYear').checked=true" style="margin-top:0;flex-shrink:0">
+                </span>
+              </label>
+              <label class="wiz-card">
+                <input type="radio" name="thresholdMode" id="thresholdAlways" value="always">
+                <span class="wiz-card__title">Always uprated</span>
+                <span class="wiz-card__hint">Allowances rise with inflation from the start of the projection, preserving their real value throughout.</span>
+              </label>
+            </div>
+            <div class="wiz-section-divider"></div>
+            <div class="wiz-col-heading wiz-col-heading--sub">GIA dividends</div>
+            <p class="wiz-body-text" style="margin-bottom:8px">Set how dividends from your GIA holdings are handled each year.</p>
+            <table class="wiz-table">
+              <tr>
+                <td class="wiz-label"><span class="assump-tooltip-anchor">Expected dividend yield (%/yr)<span class="assump-tooltip">Blended yield across all GIA holdings. If only part of your GIA pays dividends, weight by value. For example, £60k in a 3% dividend fund and £40k in an accumulation fund gives a blended yield of 1.8% (60% x 3%).</span></span></td>
+                <td class="wiz-val" style="text-align:right">
+                  <div class="stepper-input" style="margin-left:auto">
+                    <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1">
+                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="1" type="button">&#x25B2;</button>
+                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="-1" type="button">&#x25BC;</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="wiz-label">Treatment</td>
+                <td class="wiz-val" style="text-align:right">
+                  <div class="wiz-seg" style="margin-left:auto;display:flex;width:fit-content">
+                    <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendPayout" value="payout" checked> Pay out</label>
+                    <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendReinvest" value="reinvest"> Reinvest</label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="wiz-label wiz-muted" colspan="2">Pay out counts as taxable income each year. Reinvest compounds inside the GIA and defers the tax.</td>
+              </tr>
+            </table>
+          </div>
         </div><!-- /.wiz-grid -->
         <div class="wiz-footer">
           <button class="btn btn-secondary wiz-back" data-wiz-back>← Back</button>
@@ -1196,7 +1219,7 @@
 
 <!-- ══ PANEL 6 — Strategy ══ -->
       <div class="wiz-panel" id="wiz-panel-6">
-        <div class="wiz-grid wiz-grid--3">
+        <div class="wiz-grid wiz-grid--2">
 
           <!-- Withdrawal strategy -->
           <div class="wiz-col">
@@ -1224,63 +1247,6 @@
                 <span class="wiz-card__hint">Uses all available tax-free allowances each year, keeping modelled taxable income low. Defers additional withdrawals where possible to reduce modelled tax exposure.</span>
               </label>
             </div>
-          </div>
-
-          <!-- Tax -->
-          <div class="wiz-col">
-            <div class="wiz-col-heading">
-              <span class="assump-tooltip-anchor">Tax<span class="assump-tooltip">Controls how UK tax thresholds are uprated over the projection. Frozen means fiscal drag erodes real allowances each year; uprating preserves them in line with inflation.</span></span>
-            </div>
-            <p class="wiz-body-text">When tax allowances don't rise with inflation, more of your income is taxed at higher rates each year. Set whether you expect allowances to stay frozen or start tracking inflation at some point.</p>
-            <div class="wiz-cards" style="margin-bottom:16px">
-              <label class="wiz-card">
-                <input type="radio" name="thresholdMode" id="thresholdFrozen" value="frozen" checked>
-                <span class="wiz-card__title">Frozen</span>
-                <span class="wiz-card__hint">Allowances stay fixed in cash terms throughout the projection. As income rises with inflation, a growing share is taxed at higher rates.</span>
-              </label>
-              <label class="wiz-card">
-                <input type="radio" name="thresholdMode" id="thresholdFromYear" value="fromYear">
-                <span class="wiz-card__title">Uprated from year</span>
-                <span class="wiz-card__hint" style="display:flex;align-items:center;gap:8px">
-                  Allowances stay frozen until the year you set, then rise with inflation from that point onward.
-                  <input type="number" id="thresholdFromYearVal" class="wiz-card__inline-input" value="2028" min="2026" max="2060" onfocus="document.getElementById('thresholdFromYear').checked=true" style="margin-top:0;flex-shrink:0">
-                </span>
-              </label>
-              <label class="wiz-card">
-                <input type="radio" name="thresholdMode" id="thresholdAlways" value="always">
-                <span class="wiz-card__title">Always uprated</span>
-                <span class="wiz-card__hint">Allowances rise with inflation from the start of the projection, preserving their real value throughout.</span>
-              </label>
-            </div>
-            <div class="wiz-section-divider"></div>
-            <div class="wiz-col-heading wiz-col-heading--sub">
-              GIA dividends
-            </div>
-            <p class="wiz-body-text" style="margin-bottom:8px">Set how dividends from your GIA holdings are handled each year.</p>
-            <table class="wiz-table">
-              <tr>
-                <td class="wiz-label"><span class="assump-tooltip-anchor">Expected dividend yield (%/yr)<span class="assump-tooltip">Blended yield across all GIA holdings. If only part of your GIA pays dividends, weight by value. For example, £60k in a 3% dividend fund and £40k in an accumulation fund gives a blended yield of 1.8% (60% x 3%).</span></span></td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="stepper-input" style="margin-left:auto">
-                    <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1">
-                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="1" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="-1" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label">Treatment</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="wiz-seg" style="margin-left:auto;display:flex;width:fit-content">
-                    <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendPayout" value="payout" checked> Pay out</label>
-                    <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendReinvest" value="reinvest"> Reinvest</label>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label wiz-muted" colspan="2">Pay out counts as taxable income each year. Reinvest compounds inside the GIA and defers the tax.</td>
-              </tr>
-            </table>
           </div>
 
           <!-- Bed & ISA -->
