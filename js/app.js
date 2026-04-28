@@ -2192,13 +2192,13 @@
     function renderSVG(data) {
       const { phases, events, startYear, endYear } = data;
       const totalYears = endYear - startYear;
-      const W = 900, H = 140;
-      const PAD_L = 10, PAD_R = 10, AXIS_Y = 90, PHASE_H = 28;
+      const W = 900, H = 120;
+      const PAD_L = 10, PAD_R = 10, AXIS_Y = 78, PHASE_H = 36;
+      const JITTER = [-4, 4, -9, 9, 0, -13, 13];
 
       const xOf = year => PAD_L + ((year - startYear) / totalYears) * (W - PAD_L - PAD_R);
 
-      // Phase colours
-      const PHASE_COLOURS = {
+      const PHASE_FILL = {
         'Working':              '#dbeafe',
         'Pre-State Pension':    '#fef9c3',
         'Partial State Pension':'#dcfce7',
@@ -2210,82 +2210,101 @@
         'Partial State Pension':'#166534',
         'Full State Pension':   '#14532d',
       };
-
-      // Event marker colours
       const EVT_COLOUR = {
-        salary:  '#ef4444',
-        sp:      '#22c55e',
-        pension: '#3b82f6',
-        contrib: '#f97316',
-        windfall:'#a855f7',
+        salary:  '#E24B4A',
+        sp:      '#639922',
+        pension: '#378ADD',
+        contrib: '#EF9F27',
+        windfall:'#7F77DD',
       };
 
-      let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
+      let svg = `<svg id="wiz-tl-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
 
-      // Phase bands
-      phases.forEach(ph => {
+      // Phase bands with white dividers and rounded outer ends
+      phases.forEach((ph, i) => {
         const x1 = xOf(ph.from), x2 = xOf(ph.to);
-        const fill = PHASE_COLOURS[ph.label] || '#e2e8f0';
+        const fill = PHASE_FILL[ph.label] || '#e2e8f0';
         const textCol = PHASE_TEXT[ph.label] || '#374151';
-        svg += `<rect x="${x1}" y="${AXIS_Y - PHASE_H}" width="${x2 - x1}" height="${PHASE_H}" fill="${fill}" rx="0"/>`;
-        // Phase label if wide enough
+        const isFirst = i === 0, isLast = i === phases.length - 1;
+        const r = 4;
+        if (isFirst && isLast) {
+          svg += `<rect x="${x1}" y="${AXIS_Y - PHASE_H}" width="${x2 - x1}" height="${PHASE_H}" fill="${fill}" rx="${r}"/>`;
+        } else if (isFirst) {
+          svg += `<path d="M${x1+r},${AXIS_Y-PHASE_H} Q${x1},${AXIS_Y-PHASE_H} ${x1},${AXIS_Y-PHASE_H+r} L${x1},${AXIS_Y} L${x2},${AXIS_Y} L${x2},${AXIS_Y-PHASE_H} Z" fill="${fill}"/>`;
+        } else if (isLast) {
+          svg += `<path d="M${x1},${AXIS_Y-PHASE_H} L${x2-r},${AXIS_Y-PHASE_H} Q${x2},${AXIS_Y-PHASE_H} ${x2},${AXIS_Y-PHASE_H+r} L${x2},${AXIS_Y} L${x1},${AXIS_Y} Z" fill="${fill}"/>`;
+        } else {
+          svg += `<rect x="${x1}" y="${AXIS_Y - PHASE_H}" width="${x2 - x1}" height="${PHASE_H}" fill="${fill}"/>`;
+        }
+        if (i > 0) svg += `<line x1="${x1}" y1="${AXIS_Y-PHASE_H}" x2="${x1}" y2="${AXIS_Y}" stroke="white" stroke-width="1.5"/>`;
         const pw = x2 - x1;
-        if (pw > 60) {
-          svg += `<text x="${(x1 + x2) / 2}" y="${AXIS_Y - PHASE_H / 2 + 4}" text-anchor="middle" font-size="10" font-weight="600" fill="${textCol}">${ph.label}</text>`;
+        if (pw > 55) {
+          svg += `<text x="${(x1+x2)/2}" y="${AXIS_Y - PHASE_H/2 + 4}" text-anchor="middle" font-size="10" font-weight="500" fill="${textCol}">${ph.label}</text>`;
         }
       });
 
       // Axis line
-      svg += `<line x1="${PAD_L}" y1="${AXIS_Y}" x2="${W - PAD_R}" y2="${AXIS_Y}" stroke="#cbd5e1" stroke-width="1.5"/>`;
+      svg += `<line x1="${PAD_L}" y1="${AXIS_Y}" x2="${W-PAD_R}" y2="${AXIS_Y}" stroke="#cbd5e1" stroke-width="1"/>`;
 
-      // Year tick marks every 5 years
+      // Year ticks every 5 years
       for (let y = Math.ceil(startYear / 5) * 5; y <= endYear; y += 5) {
         const x = xOf(y);
-        svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${AXIS_Y + 5}" stroke="#94a3b8" stroke-width="1"/>`;
-        svg += `<text x="${x}" y="${AXIS_Y + 15}" text-anchor="middle" font-size="10" fill="#94a3b8">${y}</text>`;
+        svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${AXIS_Y+4}" stroke="#94a3b8" stroke-width="1"/>`;
+        svg += `<text x="${x}" y="${AXIS_Y+14}" text-anchor="middle" font-size="10" fill="#94a3b8">${y}</text>`;
       }
 
-      // Event markers — stagger above axis to avoid overlap
-      // Group by year, then offset vertically
+      // Group events by year, jitter horizontally, solid stems
       const byYear = {};
-      events.forEach(ev => {
-        const key = ev.year;
-        if (!byYear[key]) byYear[key] = [];
-        byYear[key].push(ev);
-      });
+      events.forEach(ev => { if (!byYear[ev.year]) byYear[ev.year] = []; byYear[ev.year].push(ev); });
 
       Object.entries(byYear).forEach(([yr, evts]) => {
-        const x = xOf(Number(yr));
+        const baseX = xOf(Number(yr));
         evts.forEach((ev, i) => {
           const col = EVT_COLOUR[ev.type] || '#64748b';
-          const lineY1 = AXIS_Y - PHASE_H - 2 - i * 16;
-          const lineY2 = AXIS_Y;
-          svg += `<line x1="${x}" y1="${lineY2}" x2="${x}" y2="${lineY1 + 4}" stroke="${col}" stroke-width="1.5" stroke-dasharray="3,2"/>`;
-          svg += `<circle cx="${x}" cy="${lineY1}" r="4" fill="${col}"/>`;
+          const x = baseX + (JITTER[i] || 0);
+          const dotY = AXIS_Y - PHASE_H - 14 - (i * 18);
+          svg += `<line x1="${x}" y1="${AXIS_Y}" x2="${x}" y2="${dotY+7}" stroke="${col}" stroke-width="1.5"/>`;
+          svg += `<circle class="wf-tl-dot" cx="${x}" cy="${dotY}" r="6" fill="${col}" data-label="${ev.label}" data-year="${yr}" style="cursor:pointer"/>`;
         });
-      });
-
-      // Legend
-      const legendItems = [
-        { type: 'salary',  label: 'Salary ends' },
-        { type: 'sp',      label: 'State Pension' },
-        { type: 'pension', label: 'Pension access' },
-        { type: 'contrib', label: 'Contributions end' },
-        { type: 'windfall',label: 'Windfall' },
-      ];
-      const usedTypes = new Set(events.map(e => e.type));
-      const activeLegend = legendItems.filter(l => usedTypes.has(l.type));
-      let lx = PAD_L;
-      const lY = H - 6;
-      activeLegend.forEach(l => {
-        const col = EVT_COLOUR[l.type];
-        svg += `<circle cx="${lx + 5}" cy="${lY}" r="4" fill="${col}"/>`;
-        svg += `<text x="${lx + 13}" y="${lY + 4}" font-size="10" fill="#64748b">${l.label}</text>`;
-        lx += l.label.length * 6 + 22;
       });
 
       svg += '</svg>';
       return svg;
+    }
+
+    function renderLegend(data) {
+      const { events } = data;
+      const EVT_META = {
+        salary:  { col: '#E24B4A', label: 'Salary ends' },
+        sp:      { col: '#639922', label: 'State pension starts' },
+        pension: { col: '#378ADD', label: 'Pension access' },
+        contrib: { col: '#EF9F27', label: 'Contributions end' },
+        windfall:{ col: '#7F77DD', label: 'Windfall' },
+      };
+      const usedTypes = new Set(events.map(e => e.type));
+      return Object.entries(EVT_META)
+        .filter(([type]) => usedTypes.has(type))
+        .map(([, meta]) =>
+          `<div class="wiz-timeline-legend__item"><div class="wiz-timeline-legend__dot" style="background:${meta.col}"></div>${meta.label}</div>`
+        ).join('');
+    }
+
+    function attachTooltip(svgEl) {
+      const tip = safeEl('wiz-timeline-tooltip');
+      if (!tip || !svgEl) return;
+      const wrap = svgEl.closest('[style*="position"]') || svgEl.parentElement;
+      svgEl.querySelectorAll('.wf-tl-dot').forEach(dot => {
+        dot.addEventListener('mouseenter', () => {
+          tip.textContent = `${dot.dataset.label} (${dot.dataset.year})`;
+          tip.classList.add('visible');
+        });
+        dot.addEventListener('mousemove', e => {
+          const r = wrap.getBoundingClientRect();
+          tip.style.left = (e.clientX - r.left + 12) + 'px';
+          tip.style.top  = (e.clientY - r.top  - 34) + 'px';
+        });
+        dot.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+      });
     }
 
     function renderPhaseTable(data) {
@@ -2310,7 +2329,7 @@
         const gap = Math.max(0, spending - ph.guaranteed);
         const gapClass = gap === 0 ? 'wiz-phase-money--covered' : 'wiz-phase-money--gap';
         const gapText = spending > 0
-          ? (gap === 0 ? '£0 — fully covered' : '£' + Math.round(gap).toLocaleString('en-GB') + '/yr')
+          ? (gap === 0 ? 'Fully covered' : '£' + Math.round(gap).toLocaleString('en-GB') + '/yr')
           : '–';
         const guaranteedText = ph.guaranteed > 0
           ? '£' + Math.round(ph.guaranteed).toLocaleString('en-GB') + '/yr'
@@ -2347,6 +2366,9 @@
 
       svgEl.innerHTML    = renderSVG(data);
       phasesEl.innerHTML = renderPhaseTable(data);
+      const legendEl = safeEl('wiz-timeline-legend');
+      if (legendEl) legendEl.innerHTML = renderLegend(data);
+      attachTooltip(svgEl);
     }
 
     window.RetireTimeline = { render };
