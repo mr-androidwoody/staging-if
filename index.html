@@ -155,8 +155,10 @@
   #wiz-tl-vis .vis-time-axis .vis-grid.vis-minor { border-color: #f1f5f9; }
   #wiz-tl-vis .vis-time-axis .vis-grid.vis-major { border-color: #e2e8f0; }
   #wiz-tl-vis .vis-panel.vis-bottom { display: none !important; }
-  #wiz-tl-vis .vis-item.vis-range { height: 100% !important; top: 0 !important; }
-  #wiz-tl-vis .vis-item.vis-range .vis-item-content { height: 100%; }
+  #wiz-tl-vis .vis-item.vis-range,
+  #wiz-tl-vis .vis-item.vis-range.vis-readonly { height: 100% !important; top: 0 !important; margin-top: 0 !important; }
+  #wiz-tl-vis .vis-item.vis-range .vis-item-content,
+  #wiz-tl-vis .vis-item.vis-range.vis-readonly .vis-item-content { height: 100%; }
 
   /* Band colours */
   #wiz-tl-vis .vis-item.ph-salary   { background: #93c5fd; color: #1e3a8a; }
