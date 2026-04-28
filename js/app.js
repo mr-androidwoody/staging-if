@@ -324,6 +324,8 @@
     const bniRadio = document.querySelector(`input[name="bniEnabled"][value="${a.bniEnabled ? 'true' : 'false'}"]`);
     if (bniRadio) bniRadio.checked = true;
     applyBniState(!!a.bniEnabled);
+    // Auto-open BnI accordion if enabled
+    if (a.bniEnabled && typeof window.advOpen === 'function') window.advOpen('adv-bni');
 
     // Pension sweep — restore values and open the toggle if a monthly amount was saved
     if (a.p1PensionMonthly) {
