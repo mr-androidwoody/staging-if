@@ -18,7 +18,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <link href="css/styles.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css"/>
 
   <link href="css/home-btn.css" rel="stylesheet"/>
 
@@ -118,120 +117,22 @@
   }
 
   /* ── Timeline panel ──────────────────────────────────── */
-  .wiz-timeline-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  .wiz-timeline-svg-wrap {
-    width: 100%;
-    overflow-x: auto;
-  }
-  .wiz-timeline-phases {
-    overflow-x: auto;
-  }
-
-  /* vis-timeline overrides */
-  #wiz-tl-vis { border: none; font-family: system-ui, sans-serif; overflow: visible !important; }
-  #wiz-tl-vis .vis-panel.vis-left { border-right: 1px solid var(--border, #dde3ed); min-width: 58px; }
-  #wiz-tl-vis .vis-label {
-    font-size: 11px; font-weight: 700; color: var(--muted, #64748b);
-    letter-spacing: .04em; padding: 0 12px;
-    display: flex; align-items: center; height: 100%;
-  }
-  #wiz-tl-vis .vis-foreground .vis-group { border-bottom: 1px solid #e8edf5; overflow: visible !important; }
-  #wiz-tl-vis .vis-item.vis-range {
-    border-radius: 5px; border-width: 0;
-    font-size: 11px; font-weight: 600; cursor: default;
-  }
-  #wiz-tl-vis .vis-item.vis-range .vis-item-content {
-    padding: 0 8px; white-space: nowrap; overflow: hidden;
-    display: flex; align-items: center; height: 100%; letter-spacing: .02em;
-  }
-  #wiz-tl-vis .vis-item.vis-selected { border-color: transparent !important; outline: none !important; }
-  #wiz-tl-vis .vis-item.vis-range.vis-selected { background: inherit !important; }
-  #wiz-tl-vis .vis-item.vis-point { display: none !important; }
-  #wiz-tl-vis .vis-time-axis .vis-text { display: none; }
-  #wiz-tl-vis .vis-time-axis .vis-grid.vis-minor { border-color: #f1f5f9; }
-  #wiz-tl-vis .vis-time-axis .vis-grid.vis-major { border-color: #e2e8f0; }
-  #wiz-tl-vis .vis-panel.vis-bottom { display: none !important; }
-  #wiz-tl-vis .vis-item.vis-range,
-  #wiz-tl-vis .vis-item.vis-range.vis-readonly { height: 100% !important; top: 0 !important; margin-top: 0 !important; }
-  #wiz-tl-vis .vis-item.vis-range .vis-item-content,
-  #wiz-tl-vis .vis-item.vis-range.vis-readonly .vis-item-content { height: 100%; }
-
-  /* Band colours */
-  #wiz-tl-vis .vis-item.ph-salary   { background: #93c5fd; color: #1e3a8a; }
-  #wiz-tl-vis .vis-item.ph-pre      { background: #bfdbfe; color: #1e40af; }
-  #wiz-tl-vis .vis-item.ph-sp       { background: #3b82f6; color: #fff; }
-  #wiz-tl-vis .vis-item.ph-sp-post  { background: #dbeafe; color: #1e40af; border-left: 3px solid #f43f5e !important; }
-
-  /* Age axis strip */
-  #wiz-tl-axis { display: block; width: 100%; margin-top: 3px; overflow: visible; }
+  .wiz-timeline-panel { display:flex; flex-direction:column; gap:20px; }
+  #wiz-tl-vis { width:100%; overflow-x:auto; }
+  .wiz-timeline-phases { overflow-x:auto; }
 
   /* Tooltip */
   .wiz-tl-tip {
-    position: fixed; background: #1e293b; color: #f8fafc;
-    padding: 6px 12px; border-radius: 6px;
-    font-size: 12px; pointer-events: none;
-    opacity: 0; transition: opacity .1s;
-    white-space: nowrap; z-index: 9999;
-    box-shadow: 0 3px 10px rgba(0,0,0,.25);
+    position:fixed; background:#1e293b; color:#f8fafc;
+    padding:6px 12px; border-radius:6px;
+    font-size:12px; pointer-events:none;
+    opacity:0; transition:opacity .1s;
+    white-space:nowrap; z-index:9999;
+    box-shadow:0 3px 10px rgba(0,0,0,.25);
   }
-  .wiz-tl-tip.on { opacity: 1; }
-  .wiz-phase-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  .wiz-phase-table th {
-    text-align: left;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted, #6b7a99);
-    padding: 6px 10px;
-    border-bottom: 2px solid var(--border, #dde3ed);
-    white-space: nowrap;
-  }
-  .wiz-phase-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border, #dde3ed);
-    vertical-align: middle;
-  }
-  .wiz-phase-table tr:last-child td { border-bottom: none; }
-  .wiz-phase-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 6px;
-    vertical-align: middle;
-    flex-shrink: 0;
-  }
-  .wiz-phase-name {
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-    color: var(--ink, #1a2233);
-  }
-  .wiz-phase-years {
-    color: var(--muted, #6b7a99);
-    font-size: 12px;
-  }
-  .wiz-phase-money {
-    font-weight: 600;
-    color: var(--ink, #1a2233);
-    text-align: right;
-  }
-  .wiz-phase-money--gap {
-    color: #c0392b;
-  }
-  .wiz-phase-money--covered {
-    color: #27ae60;
-  }
-  /* ── Timeline legend ─────────────────────────────────── */
+  .wiz-tl-tip.on { opacity:1; }
+
+    /* ── Timeline legend ─────────────────────────────────── */
   .wiz-timeline-legend {
     display: flex;
     flex-wrap: wrap;
@@ -1623,11 +1524,8 @@
           <div class="wiz-col-heading">Your retirement timeline</div>
           <p class="wiz-col-intro">Here is how your key financial events line up across your retirement. The timeline is built from the details you have entered so far. Review it before setting your income target on the next step.</p>
 
-          <!-- vis-timeline — rendered by app.js RetireTimeline.render() -->
-          <div style="position:relative">
-            <div id="wiz-tl-vis"></div>
-            <svg id="wiz-tl-axis"></svg>
-          </div>
+          <!-- Timeline SVG — rendered by app.js RetireTimeline.render() -->
+          <div id="wiz-tl-vis"></div>
 
           <!-- Legend — rendered by app.js -->
           <div id="wiz-timeline-legend" class="wiz-timeline-legend"></div>
@@ -1926,7 +1824,6 @@
 <script src="js/excel-loader.js"></script>
 <script src="js/tabs.js"></script>
 <script src="js/summary-render.js"></script>
-<script src="https://unpkg.com/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pdf-render.js"></script>
 <script src="js/export.js"></script>
