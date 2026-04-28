@@ -18,6 +18,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <link href="css/styles.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css"/>
 
   <link href="css/home-btn.css" rel="stylesheet"/>
 
@@ -126,15 +127,56 @@
     width: 100%;
     overflow-x: auto;
   }
-  .wiz-timeline-svg-wrap svg {
-    display: block;
-    width: 100%;
-    height: auto;
-    min-width: 600px;
-  }
   .wiz-timeline-phases {
     overflow-x: auto;
   }
+
+  /* vis-timeline overrides */
+  #wiz-tl-vis { border: none; font-family: system-ui, sans-serif; overflow: visible !important; }
+  #wiz-tl-vis .vis-panel.vis-left { border-right: 1px solid var(--border, #dde3ed); min-width: 58px; }
+  #wiz-tl-vis .vis-label {
+    font-size: 11px; font-weight: 700; color: var(--muted, #64748b);
+    letter-spacing: .04em; padding: 0 12px;
+    display: flex; align-items: center; height: 100%;
+  }
+  #wiz-tl-vis .vis-foreground .vis-group { border-bottom: 1px solid #e8edf5; overflow: visible !important; }
+  #wiz-tl-vis .vis-item.vis-range {
+    border-radius: 5px; border-width: 0;
+    font-size: 11px; font-weight: 600; cursor: default;
+  }
+  #wiz-tl-vis .vis-item.vis-range .vis-item-content {
+    padding: 0 8px; white-space: nowrap; overflow: hidden;
+    display: flex; align-items: center; height: 100%; letter-spacing: .02em;
+  }
+  #wiz-tl-vis .vis-item.vis-selected { border-color: transparent !important; outline: none !important; }
+  #wiz-tl-vis .vis-item.vis-range.vis-selected { background: inherit !important; }
+  #wiz-tl-vis .vis-item.vis-point { display: none !important; }
+  #wiz-tl-vis .vis-time-axis .vis-text { display: none; }
+  #wiz-tl-vis .vis-time-axis .vis-grid.vis-minor { border-color: #f1f5f9; }
+  #wiz-tl-vis .vis-time-axis .vis-grid.vis-major { border-color: #e2e8f0; }
+  #wiz-tl-vis .vis-panel.vis-bottom { display: none !important; }
+  #wiz-tl-vis .vis-item.vis-range { height: 100% !important; top: 0 !important; }
+  #wiz-tl-vis .vis-item.vis-range .vis-item-content { height: 100%; }
+
+  /* Band colours */
+  #wiz-tl-vis .vis-item.ph-salary   { background: #93c5fd; color: #1e3a8a; }
+  #wiz-tl-vis .vis-item.ph-pre      { background: #bfdbfe; color: #1e40af; }
+  #wiz-tl-vis .vis-item.ph-sp       { background: #3b82f6; color: #fff; }
+  #wiz-tl-vis .vis-item.ph-sp-post  { background: #dbeafe; color: #1e40af; border-left: 3px solid #f43f5e !important; }
+
+  /* Age axis strip */
+  #wiz-tl-axis { display: block; width: 100%; margin-top: 3px; overflow: visible; }
+
+  /* Tooltip */
+  .wiz-tl-tip {
+    position: fixed; background: #1e293b; color: #f8fafc;
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 12px; pointer-events: none;
+    opacity: 0; transition: opacity .1s;
+    white-space: nowrap; z-index: 9999;
+    box-shadow: 0 3px 10px rgba(0,0,0,.25);
+  }
+  .wiz-tl-tip.on { opacity: 1; }
   .wiz-phase-table {
     width: 100%;
     border-collapse: collapse;
@@ -187,27 +229,14 @@
   .wiz-phase-money--covered {
     color: #27ae60;
   }
-  .wiz-timeline-tooltip {
-    position: absolute;
-    background: var(--surface, #fff);
-    border: 1px solid var(--border, #dde3ed);
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 12px;
-    color: var(--text, #1a2236);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.12s;
-    white-space: nowrap;
-    z-index: 10;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  .wiz-timeline-tooltip.visible { opacity: 1; }
+  /* ── Timeline legend ─────────────────────────────────── */
   .wiz-timeline-legend {
     display: flex;
     flex-wrap: wrap;
     gap: 8px 18px;
-    margin-top: 8px;
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border, #dde3ed);
   }
   .wiz-timeline-legend__item {
     display: flex;
@@ -217,9 +246,15 @@
     color: var(--muted, #6b7a99);
   }
   .wiz-timeline-legend__dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .wiz-timeline-legend__sq {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
     flex-shrink: 0;
   }
   .wiz-timeline-empty {
@@ -1586,10 +1621,10 @@
           <div class="wiz-col-heading">Your retirement timeline</div>
           <p class="wiz-col-intro">Here is how your key financial events line up across your retirement. The timeline is built from the details you have entered so far. Review it before setting your income target on the next step.</p>
 
-          <!-- SVG timeline — rendered by app.js renderTimeline() -->
+          <!-- vis-timeline — rendered by app.js RetireTimeline.render() -->
           <div style="position:relative">
-            <div id="wiz-timeline-svg" class="wiz-timeline-svg-wrap"></div>
-            <div id="wiz-timeline-tooltip" class="wiz-timeline-tooltip"></div>
+            <div id="wiz-tl-vis"></div>
+            <svg id="wiz-tl-axis"></svg>
           </div>
 
           <!-- Legend — rendered by app.js -->
@@ -1889,6 +1924,7 @@
 <script src="js/excel-loader.js"></script>
 <script src="js/tabs.js"></script>
 <script src="js/summary-render.js"></script>
+<script src="https://unpkg.com/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pdf-render.js"></script>
 <script src="js/export.js"></script>
@@ -2082,5 +2118,6 @@ document.addEventListener('keydown', function (e) {
   }
 });
 </script>
+<div class="wiz-tl-tip" id="wiz-tl-tip"></div>
 </body>
 </html>
