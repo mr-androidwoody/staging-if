@@ -70,6 +70,39 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border, #dde3ed);
   }
+  /* ── Advanced settings accordion ────────────────────── */
+  .adv-section {
+    border: 1px solid var(--border, #dde3ed);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .adv-section__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--surface-raised, #f8fafc);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .adv-section__toggle:hover { background: var(--surface-hover, #eef2f8); }
+  .adv-section__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text, #1a2236);
+  }
+  .adv-section__chevron {
+    font-size: 10px;
+    color: var(--muted, #6b7a99);
+  }
+  .adv-section__body {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border, #dde3ed);
+    background: var(--surface, #fff);
+  }
+
   /* ── BnI suggestion card ─────────────────────────────── */
   .bni-suggestion {
     margin-bottom: 14px;
@@ -1328,33 +1361,6 @@
                 <span class="wiz-card__hint">Allowances rise with inflation from the start of the projection, preserving their real value throughout.</span>
               </label>
             </div>
-            <div class="wiz-section-divider"></div>
-            <div class="wiz-col-heading wiz-col-heading--sub">GIA dividends</div>
-            <p class="wiz-body-text" style="margin-bottom:8px">Set how dividends from your GIA holdings are handled each year.</p>
-            <table class="wiz-table">
-              <tr>
-                <td class="wiz-label"><span class="assump-tooltip-anchor">Expected dividend yield (%/yr)<span class="assump-tooltip">Blended yield across all GIA holdings. If only part of your GIA pays dividends, weight by value. For example, £60k in a 3% dividend fund and £40k in an accumulation fund gives a blended yield of 1.8% (60% x 3%).</span></span></td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="stepper-input" style="margin-left:auto">
-                    <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1">
-                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="1" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="-1" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label">Treatment</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="wiz-seg" style="margin-left:auto;display:flex;width:fit-content">
-                    <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendPayout" value="payout" checked> Pay out</label>
-                    <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendReinvest" value="reinvest"> Reinvest</label>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label wiz-muted" colspan="2">Pay out counts as taxable income each year. Reinvest compounds inside the GIA and defers the tax.</td>
-              </tr>
-            </table>
           </div>
         </div><!-- /.wiz-grid -->
         <div class="wiz-footer">
@@ -1460,74 +1466,138 @@
             </div>
           </div>
 
-          <!-- Bed & ISA -->
+          <!-- Advanced settings -->
           <div class="wiz-col">
-            <div class="wiz-col-heading">Bed &amp; ISA</div>
-            <p class="wiz-body-text">Bed & ISA is a technique where you sell assets held in a General Investment Account (GIA) and immediately repurchase them inside an ISA. Once inside the ISA, all future growth, dividends, and gains are completely tax-free.<br><br>It's particularly valuable if you hold a large GIA. Each year you can shelter up to £20,000 per person from future CGT and dividend tax. The sale crystallises any gain in the year of transfer, so IncomeFlow models the CGT cost of each transfer against the long-term tax saving.</p>
+            <div class="wiz-col-heading">Advanced settings</div>
+            <p class="wiz-col-intro">Optional features for fine-tuning the projection. Both are off by default — expand to configure.</p>
 
-            <!-- BnI suggestion — populated by _renderBniSuggestion() -->
-            <div id="bni-suggestion" class="bni-suggestion" style="display:none"></div>
+            <!-- ── Bed & ISA accordion ── -->
+            <div class="adv-section" id="adv-bni">
+              <div class="adv-section__toggle" onclick="advToggle('adv-bni')">
+                <span class="adv-section__label">Bed &amp; ISA</span>
+                <span class="adv-section__chevron" id="adv-bni-chevron">▶</span>
+              </div>
+              <div class="adv-section__body" id="adv-bni-body" style="display:none">
+                <p class="wiz-hint" style="margin:8px 0 10px">Sell GIA assets and repurchase inside an ISA, sheltering future growth from CGT and dividend tax. Up to £20,000 per person per year.</p>
 
-            <table class="wiz-table" style="margin-bottom:10px">
-              <tr>
-                <td class="wiz-label">Use Bed & ISA</td>
-                <td class="wiz-val">
-                  <div class="wiz-seg">
-                    <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniEnabled" value="true"> Enabled</label>
-                    <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniDisabled" value="false" checked> Disabled</label>
-                  </div>
-                </td>
-              </tr>
-            </table>
-            <div class="wiz-section-divider"></div>
-            <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
-            <table class="wiz-table">
-              <tr>
-                <td class="wiz-label">Annual amount (£)</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="currency-stepper bni-field">
-                    <input type="text" id="bniP1GIA" class="currency-input" placeholder="e.g. 20,000">
-                    <button class="stepper-btn" data-step-for="bniP1GIA" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="bniP1GIA" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label bni-field">Number of years</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="stepper-input bni-field">
-                    <input type="number" id="bniP1Years" value="10" min="1" max="30" step="1">
-                    <button class="stepper-btn" data-step-for="bniP1Years" data-step-direction="1" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="bniP1Years" data-step-direction="-1" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-            </table>
-            <div id="bniP1YearsNote" class="bni-years-note bni-field"></div>
-            <div class="wiz-col-heading wiz-col-heading--sub p2-field" data-p2>Person 2</div>
-            <table class="wiz-table p2-field" id="bniP2Table">
-              <tr>
-                <td class="wiz-label">Annual amount (£)</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="currency-stepper bni-field">
-                    <input type="text" id="bniP2GIA" class="currency-input" placeholder="e.g. 5,000">
-                    <button class="stepper-btn" data-step-for="bniP2GIA" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="bniP2GIA" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="wiz-label bni-field">Number of years</td>
-                <td class="wiz-val" style="text-align:right">
-                  <div class="stepper-input bni-field">
-                    <input type="number" id="bniP2Years" value="10" min="1" max="30" step="1">
-                    <button class="stepper-btn" data-step-for="bniP2Years" data-step-direction="1" type="button">&#x25B2;</button>
-                    <button class="stepper-btn" data-step-for="bniP2Years" data-step-direction="-1" type="button">&#x25BC;</button>
-                  </div>
-                </td>
-              </tr>
-            </table>
-            <div id="bniP2YearsNote" class="bni-years-note bni-field"></div>
+                <!-- BnI suggestion — populated by RetireBniSuggestion.render() -->
+                <div id="bni-suggestion" class="bni-suggestion" style="display:none"></div>
+
+                <table class="wiz-table" style="margin-bottom:10px">
+                  <tr>
+                    <td class="wiz-label">Use Bed &amp; ISA</td>
+                    <td class="wiz-val">
+                      <div class="wiz-seg">
+                        <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniEnabled" value="true"> Enabled</label>
+                        <label class="wiz-seg__btn"><input type="radio" name="bniEnabled" id="bniDisabled" value="false" checked> Disabled</label>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <div class="wiz-section-divider"></div>
+                <div class="wiz-col-heading wiz-col-heading--sub" data-p1>Person 1</div>
+                <table class="wiz-table">
+                  <tr>
+                    <td class="wiz-label">Annual amount (£)</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="currency-stepper bni-field">
+                        <input type="text" id="bniP1GIA" class="currency-input" placeholder="e.g. 20,000">
+                        <button class="stepper-btn" data-step-for="bniP1GIA" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="bniP1GIA" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="wiz-label bni-field">Number of years</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="stepper-input bni-field">
+                        <input type="number" id="bniP1Years" value="10" min="1" max="30" step="1">
+                        <button class="stepper-btn" data-step-for="bniP1Years" data-step-direction="1" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="bniP1Years" data-step-direction="-1" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <div id="bniP1YearsNote" class="bni-years-note bni-field"></div>
+                <div class="wiz-col-heading wiz-col-heading--sub p2-field" data-p2>Person 2</div>
+                <table class="wiz-table p2-field" id="bniP2Table">
+                  <tr>
+                    <td class="wiz-label">Annual amount (£)</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="currency-stepper bni-field">
+                        <input type="text" id="bniP2GIA" class="currency-input" placeholder="e.g. 5,000">
+                        <button class="stepper-btn" data-step-for="bniP2GIA" data-step-direction="1" data-step-amount="1000" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="bniP2GIA" data-step-direction="-1" data-step-amount="1000" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="wiz-label bni-field">Number of years</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="stepper-input bni-field">
+                        <input type="number" id="bniP2Years" value="10" min="1" max="30" step="1">
+                        <button class="stepper-btn" data-step-for="bniP2Years" data-step-direction="1" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="bniP2Years" data-step-direction="-1" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <div id="bniP2YearsNote" class="bni-years-note bni-field"></div>
+              </div>
+            </div><!-- /.adv-section (BnI) -->
+
+            <!-- ── GIA dividends accordion ── -->
+            <div class="adv-section" id="adv-div">
+              <div class="adv-section__toggle" onclick="advToggle('adv-div')">
+                <span class="adv-section__label">GIA dividends</span>
+                <span class="adv-section__chevron" id="adv-div-chevron">▶</span>
+              </div>
+              <div class="adv-section__body" id="adv-div-body" style="display:none">
+                <p class="wiz-hint" style="margin:8px 0 10px">Defaults: 1.5% yield, paid out as income. Adjust if your GIA holdings have a significantly different dividend profile.</p>
+                <table class="wiz-table">
+                  <tr>
+                    <td class="wiz-label"><span class="assump-tooltip-anchor">Dividend yield (%/yr)<span class="assump-tooltip">Blended yield across all GIA holdings. If only part of your GIA pays dividends, weight by value.</span></span></td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="stepper-input" style="margin-left:auto">
+                        <input type="number" id="dividendYield" value="1.5" min="0" max="10" step="0.1">
+                        <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="1" type="button">&#x25B2;</button>
+                        <button class="stepper-btn" data-step-for="dividendYield" data-step-direction="-1" type="button">&#x25BC;</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="wiz-label">Treatment</td>
+                    <td class="wiz-val" style="text-align:right">
+                      <div class="wiz-seg" style="margin-left:auto;display:flex;width:fit-content">
+                        <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendPayout" value="payout" checked> Pay out</label>
+                        <label class="wiz-seg__btn"><input type="radio" name="dividendMode" id="dividendReinvest" value="reinvest"> Reinvest</label>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="wiz-label wiz-muted" colspan="2">Pay out counts as taxable income each year. Reinvest compounds inside the GIA and defers the tax.</td>
+                  </tr>
+                </table>
+              </div>
+            </div><!-- /.adv-section (dividends) -->
+
+            <script>
+              function advToggle(id) {
+                var body    = document.getElementById(id + '-body');
+                var chevron = document.getElementById(id + '-chevron');
+                var open    = body.style.display !== 'none';
+                body.style.display   = open ? 'none' : '';
+                chevron.textContent  = open ? '▶' : '▼';
+              }
+              // Expose so app.js can open a section programmatically
+              window.advOpen = function(id) {
+                var body    = document.getElementById(id + '-body');
+                var chevron = document.getElementById(id + '-chevron');
+                if (body)    body.style.display  = '';
+                if (chevron) chevron.textContent = '▼';
+              };
+            </script>
+
           </div>
 
         </div><!-- /.wiz-grid -->
