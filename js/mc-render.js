@@ -30,7 +30,7 @@
   function fmtB(n)      { return '<strong>' + fmt(n) + '</strong>'; }
   function fmtPctB(r)   { return '<strong>' + fmtPct(r) + '</strong>'; }
 
-  // Plan-strength display percentage — applies the 99%+ cap rule.
+  // Plan-strength display percentage: applies the 99%+ cap rule.
   // Never show 100% for a user-facing likelihood of holding up figure.
   // Use this for the hero bignum and any copy that quotes plan strength directly.
   // Do NOT use for model-internal figures (decade bars, delay perturbation rates, etc.).
@@ -91,7 +91,7 @@
 
   // ── Deflation ─────────────────────────────────────────────────────────────
   // _deflate uses _meanInflation (set from the baseline run) by default.
-  // For stress scenarios, the worker returns stressInflationMean — the
+  // For stress scenarios, the worker returns stressInflationMean: the
   // horizon-weighted mean inflation actually used in that scenario. Stress
   // results must be deflated with this rate, not the baseline rate, otherwise
   // inflation stress paths are under-discounted and appear to outperform baseline
@@ -126,7 +126,7 @@
     // Clear the shared results object so the deterministic badge hides during the run
     window.RetireMCResults = null;
 
-    // Building squares grid — 3x3, animate in sequentially, last square green
+    // Building squares grid: 3x3, animate in sequentially, last square green
     const squareColours = [
       '#b8c8e8', '#8aaad4', '#5c87bf',
       '#8aaad4', '#3460e8', '#5c87bf',
@@ -161,7 +161,7 @@
         <p class="mc-loader-msg"></p>
       </div>`;
 
-    // Message cycling — cross-fade every (LOADER_DURATION_MS / messages.length) ms
+    // Message cycling: cross-fade every (LOADER_DURATION_MS / messages.length) ms
     const msgEl      = el.querySelector('.mc-loader-msg');
     const msgDelay   = LOADER_DURATION_MS / LOADER_MESSAGES.length;
     let   msgIdx     = 0;
@@ -182,7 +182,7 @@
       showMessage(msgIdx);
     }, msgDelay);
 
-    // No progress bar — squares animation handles visual progress.
+    // No progress bar: squares animation handles visual progress.
 
     // 4s reveal timer
     _loaderTimer = setTimeout(() => {
@@ -233,7 +233,7 @@
     _spendingContext = spendingContext || null;
     _resultReady     = true;
 
-    // When a new baseline arrives, clear all stress results — inputs may have
+    // When a new baseline arrives, clear all stress results: inputs may have
     // changed so old stress runs are no longer valid. Buttons revert to idle.
     STATE_IDS.forEach(id => {
       if (id !== 'baseline') {
@@ -247,7 +247,7 @@
 
     _syncStressControls();
 
-    // Write the nominal median end value immediately — before the loader delay —
+    // Write the nominal median end value immediately: before the loader delay —
     // so calc-render.js renderMetrics() can read it as soon as app.js triggers a refresh.
     if (result && result.p50Portfolio && result.p50Portfolio.length) {
       window.RetireMCResults = {
@@ -271,24 +271,24 @@
    * Store a completed stress-test result and switch the active view to it.
    * Called by app.js once a runStress() promise resolves.
    *
-   * @param {string} stressId — 'sorr' | 'inflation' | 'lostDecade'
-   * @param {object} result   — same shape as baseline result
+   * @param {string} stressId: 'sorr' | 'inflation' | 'lostDecade'
+   * @param {object} result  : same shape as baseline result
    */
   /**
    * Silently cache a stress result without switching the active view or
    * triggering any render. Used by the background pre-run in app.js so
    * results are ready for PDF export before the user manually opens them.
    * When the user later clicks the card, _bindStressBtns sees _results[id]
-   * populated and calls switchState() directly — no re-run needed.
+   * populated and calls switchState() directly: no re-run needed.
    *
-   * @param {string} stressId — 'sorr' | 'inflation' | 'lostDecade'
-   * @param {object} result   — same shape as baseline result
+   * @param {string} stressId: 'sorr' | 'inflation' | 'lostDecade'
+   * @param {object} result  : same shape as baseline result
    */
   function storeStressResult(stressId, result) {
     if (!STATE_IDS.includes(stressId) || stressId === 'baseline') return;
     _results[stressId]     = result;
     _staleStates[stressId] = false;
-    // No state switch, no render, no loader — purely a cache write.
+    // No state switch, no render, no loader: purely a cache write.
   }
 
   function setStressResult(stressId, result) {
@@ -317,11 +317,11 @@
    * Switch the active view to a different computed state.
    * Called when the user clicks a toggle button for an already-computed state.
    *
-   * @param {string} stateId — 'baseline' | 'sorr' | 'inflation' | 'lostDecade'
+   * @param {string} stateId: 'baseline' | 'sorr' | 'inflation' | 'lostDecade'
    */
   function switchState(stateId) {
     if (!STATE_IDS.includes(stateId)) return;
-    if (!_results[stateId]) return; // not yet computed — caller should fire a run instead
+    if (!_results[stateId]) return; // not yet computed: caller should fire a run instead
     _activeState = stateId;
     _syncStressControls();
     _renderNarrative();
@@ -355,7 +355,7 @@
   // SCENARIO CARDS
   // Four cards (Baseline + 3 stress scenarios) replace the old button strip.
   // Baseline is always pre-active. Stress cards show idle/done/active states.
-  // Click handlers bound by _bindStressBtns() — data-stress-state preserved.
+  // Click handlers bound by _bindStressBtns(): data-stress-state preserved.
   // ─────────────────────────────────────────────────────────────────────────
 
   const CARD_META = {
@@ -404,7 +404,7 @@
       }
 
       const staleDot = isStale
-        ? '<span class="mc-sc-stale-dot" title="Projection has changed — re-run to update"></span>'
+        ? '<span class="mc-sc-stale-dot" title="Projection has changed. Re-run to update"></span>'
         : '';
 
       return `
@@ -436,7 +436,7 @@
   }
 
   function _syncStressControls() {
-    // External container is kept in HTML but hidden — buttons now live inside the hero band.
+    // External container is kept in HTML but hidden: buttons now live inside the hero band.
     const container = document.getElementById('mc-stress-controls');
     if (container) container.style.display = 'none';
   }
@@ -508,7 +508,7 @@
         actionLabel: '#791F1F', actionText: '#501313', actionImpact: '#A32D2D'
       };
 
-    // p10DepletesAtYi not yet computed here — derive it early for the verdict sentence
+    // p10DepletesAtYi not yet computed here: derive it early for the verdict sentence
     let _p10DepletesAtYiEarly = null;
     for (let i = 0; i < r.p10Portfolio.length; i++) {
       if (r.p10Portfolio[i] <= 0) { _p10DepletesAtYiEarly = i; break; }
@@ -523,7 +523,7 @@
       _p10DepAge < 80    ? 'your 70s'             :
       _p10DepAge < 90    ? 'your 80s'             : 'your 90s';
 
-    // ── Early delta computation — used by verdictSentence and later blocks ──
+    // ── Early delta computation: used by verdictSentence and later blocks ──
     // Baseline rate for comparison; null when viewing baseline itself.
     const _baselineRateForSentence = (!isStressView || !_results.baseline)
       ? null : _results.baseline.successRate;
@@ -571,7 +571,7 @@
           : `${_blLabel}. This scenario does not change that. A difficult start to retirement would not be enough to knock the projection off course.`;
       } else if (rate >= 0.90) {
         verdictSentence = _stressMarginal
-          ? `${_blLabel}. This scenario adds a little pressure, but the projection still holds. There is slightly less headroom — a small effect in this projection.`
+          ? `${_blLabel}. This scenario adds a little pressure, but the projection still holds. There is slightly less headroom, a small effect in this projection.`
           : _stressSignificant
           ? `${_blLabel}, but this scenario tightens the headroom considerably. The projection still holds, but with noticeably less room to absorb a bad run of returns.`
           : `${_blLabel}, but this scenario is more demanding. The projection still holds, though the headroom is reduced.`;
@@ -582,50 +582,52 @@
           ? `${_blLabel}, but this scenario puts it significantly under pressure. The projection is close to the lower limit here.`
           : `${_blLabel}, but this scenario reveals a real weakness. The projection moves close to the lower limit under these conditions.`;
       } else {
+        // <80%: falls short. Copy is direct but FCA-compliant: quantifies failure rate,
+        // frames as illustrative modelling, does not catastrophise or predict outcomes.
         verdictSentence = _stressMarginal
-          ? `${_blShort}, and this scenario adds further pressure. Under these conditions, the projection falls short.`
+          ? `${_blShort}, and this scenario adds further pressure. Under these conditions, the projection falls short of the lower limit, with more than 1 in 5 simulated paths resulting in depletion before the end of retirement.`
           : _stressSignificant
-          ? `${_blLabel}, but this scenario puts it under serious pressure. A start like this would leave the projection with very little headroom to recover.`
-          : `${_blLabel}, but this scenario puts it under significant pressure. Under these conditions, the projection does not have enough in reserve to absorb a difficult start.`;
+          ? `${_blLabel}, but this scenario puts it significantly under pressure. Under these conditions, the projection falls short of the lower limit. More than 1 in 5 simulated paths result in the portfolio being depleted before the end of retirement. These projections are illustrative and based on modelled assumptions.`
+          : `${_blLabel}, but this scenario puts it under significant pressure. Under these conditions, the projection falls short of the lower limit. The plan, as currently structured, may not have sufficient resilience to absorb a difficult period. These projections are illustrative and based on modelled assumptions.`;
       }
     } else {
-      // Baseline verdict sentence — unchanged logic, "baseline plan" label added
+      // Baseline verdict sentence: unchanged logic, "baseline plan" label added
       verdictSentence =
-        // A1 — On track, no depletion seen
+        // A1: On track, no depletion seen
         rate >= 0.95 && _p10DepletesAtYiEarly === null
           ? 'The projection is on track under these assumptions. At the current spending level, most simulated paths avoid depletion even if markets are weaker than expected.' :
-        // A2 — On track, but late-life pressure only
+        // A2: On track, but late-life pressure only
         rate >= 0.95 && _lateRisk
           ? `The projection is on track under these assumptions. Most of the modelled risk sits much later in retirement, not in the early years.` :
-        // A1 fallback — on track, minor edge pressure
+        // A1 fallback: on track, minor edge pressure
         rate >= 0.95
           ? 'The projection is on track and has meaningful headroom above the lower limit.' :
-        // B1 — On track but tight, no depletion, early sensitivity
+        // B1: On track but tight, no depletion, early sensitivity
         rate >= 0.90 && _p10DepletesAtYiEarly === null && _earlyMarginTight
           ? 'The projection is on track, but the headroom is thin. A bad run of returns early in retirement could put it under pressure.' :
         // B1 moderate margin
         rate >= 0.90 && _p10DepletesAtYiEarly === null && _earlyMarginModerate
           ? 'The projection is on track, but not by a wide margin. Most simulated paths hold up, though the headroom is modest.' :
-        // B1 — on track, no depletion seen, no particular margin flag
+        // B1: on track, no depletion seen, no particular margin flag
         rate >= 0.90 && _p10DepletesAtYiEarly === null
           ? 'The projection is on track. Most simulated paths avoid depletion, though the headroom is not large.' :
-        // B2 — on track but tight, late risk, tight margin
+        // B2: on track but tight, late risk, tight margin
         rate >= 0.90 && _lateRisk && _earlyMarginTight
           ? `The projection is on track, but not by a wide margin. Some modelled risk is pushed into later retirement, where there is less room to recover.` :
-        // B2 — on track but tight, late risk
+        // B2: on track but tight, late risk
         rate >= 0.90 && _lateRisk
           ? `The projection is on track, but some of the modelled risk sits later in retirement, where there is less room to recover.` :
         // B1 fallback
         rate >= 0.90
           ? 'The projection is on track under these assumptions, though the headroom is not large.' :
-        // C2 — Borderline, later-life failure risk
+        // C2: Borderline, later-life failure risk
         rate >= 0.80 && _lateRisk
           ? `The projection is close to the lower limit. It holds in most paths, but too much of the modelled risk is pushed into later retirement, where there is less room to recover.` :
-        // C1 — Borderline, meaningful downside risk, earlier trouble
+        // C1: Borderline, meaningful downside risk, earlier trouble
         rate >= 0.80
           ? 'The projection is close to the lower limit. It holds in most paths, but in weaker market scenarios it starts to come under pressure in ' + _depStage + '.' :
-        // D2 / D1 — At risk
-          'The projection falls short under these assumptions. As modelled, there is too high a chance of the portfolio being depleted before the end of retirement.';
+        // D: Falls short
+          'The projection falls short under these assumptions. As modelled, more than 1 in 5 simulated paths result in the portfolio being depleted before the end of retirement. This is an indication that the plan, as currently structured, may need to be revised, for example by reducing the spending assumption or adjusting the retirement date. These projections are illustrative and based on modelled assumptions and are not a guarantee of future outcomes.';
     }
 
     // ── Headroom / gap ────────────────────────────────────────────────
@@ -643,16 +645,16 @@
 
         // ── Margin of safety classification ──────────────────────────────
     // marginRatio: headroom as a fraction of current spending.
-    // tight       < 8%  — plan passes but buffer is very thin (~£3,200 on £40k spend)
-    // moderate    < 20% — plan passes with some room but not genuinely comfortable
-    // comfortable ≥ 20% — meaningfully above threshold
+    // tight       < 8% : plan passes but buffer is very thin (~£3,200 on £40k spend)
+    // moderate    < 20%: plan passes with some room but not genuinely comfortable
+    // comfortable ≥ 20%: meaningfully above threshold
     const marginRatio       = (headroom !== null && currentSpending > 0)
       ? headroom / currentSpending : null;
     const marginTight       = marginRatio !== null && marginRatio >= 0 && marginRatio < 0.08;
     const marginModerate    = marginRatio !== null && marginRatio >= 0.08 && marginRatio < 0.20;
     const marginComfortable = marginRatio !== null && marginRatio >= 0.20;
 
-    // Warning icon SVG — white stroke on transparent fill, reads on coloured hero background.
+    // Warning icon SVG: white stroke on transparent fill, reads on coloured hero background.
     const warnIcon = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:4px;margin-bottom:2px" aria-label="Narrow margin warning"><path d="M8 2L14.5 13.5H1.5L8 2Z" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" stroke-linejoin="round"/><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.75" fill="rgba(255,255,255,0.85)"/></svg>`;
 
     // ── Headroom stat HTML ────────────────────────────────────────────
@@ -682,9 +684,9 @@
             <div class="mc-vstat-value">${fmt(gap)} / yr</div>
           </div>`;
         }
-        // gap < 500 rounds to zero — suppress stat entirely
+        // gap < 500 rounds to zero: suppress stat entirely
       }
-    // shortfallHTML is empty string if no spending context — right column shows only success rate
+    // shortfallHTML is empty string if no spending context: right column shows only success rate
     }
 
     // ── Section 1: VERDICT HEADER ─────────────────────────────────────
@@ -753,11 +755,11 @@
           survRate >= 0.80 ? '#BA7517' :
           survRate >= 0.70 ? '#C4513A' : '#A32D2D';
         const survWord   =
-          survRate >= 0.99 ? 'Resilient' :
-          survRate >= 0.95 ? 'Solid'     :
-          survRate >= 0.90 ? 'Adequate'  :
-          survRate >= 0.80 ? 'Thin'      :
-          survRate >= 0.70 ? 'Fragile'   : 'Vulnerable';
+          survRate >= 0.99 ? 'Resilient'          :
+          survRate >= 0.95 ? 'Solid'               :
+          survRate >= 0.90 ? 'Adequate'            :
+          survRate >= 0.80 ? 'Close to lower limit' :
+          survRate >= 0.70 ? 'Under pressure'      : 'At risk';
         const isRising  = !risingMarked && survRate < 0.95;
         if (isRising) risingMarked = true;
         const rowClass  = isRising ? 'mc-decade-row mc-decade-row--rising' : 'mc-decade-row';
@@ -787,7 +789,7 @@
 
     // ── Section 3: LEVERS ─────────────────────────────────────────────
 
-    // Lever 1 — Spending
+    // Lever 1: Spending
     let l1Pill, l1PillClass, l1Outcome;
     if (sustainableSpending === null) {
       l1Pill = 'No data'; l1PillClass = 'mc-lever-pill--neutral';
@@ -814,7 +816,7 @@
       l1Outcome = 'Current spending is close to the lower limit, with very little headroom above.';
     }
 
-    // Lever 2 — Delay withdrawals
+    // Lever 2: Delay withdrawals
     let l2Pill, l2PillClass, l2Outcome;
     if (!delayPerturbations.length) {
       l2Pill = 'Not available'; l2PillClass = 'mc-lever-pill--neutral';
@@ -836,7 +838,7 @@
       }
     }
 
-    // Lever 3 — Flexible spending
+    // Lever 3: Flexible spending
     const iqrWide = p50[lastIdx] > 0
       ? (p75[lastIdx] - p25[lastIdx]) / p50[lastIdx] > 1.5
       : false;
@@ -857,13 +859,13 @@
       const baselineRate = _results.baseline ? _results.baseline.successRate : null;
       const delta        = baselineRate !== null ? Math.round((rate - baselineRate) * 100) : null;
 
-      // Natural-language delta — used in b3 block
+      // Natural-language delta: used in b3 block
       const absDelta = delta !== null ? Math.abs(delta) : null;
 
-      // Block 1 — outcome
+      // Block 1: outcome
       const b1Pill =
-        rate >= 0.95 ? 'Still holds'        :
-        rate >= 0.90 ? 'Reduced headroom'   :
+        rate >= 0.95 ? 'Still holds'          :
+        rate >= 0.90 ? 'Reduced headroom'     :
         rate >= 0.80 ? 'Close to lower limit' : 'Falls short';
       const b1PillClass =
         rate >= 0.95 ? 'mc-lever-pill--safe'    :
@@ -871,18 +873,18 @@
         rate >= 0.80 ? 'mc-lever-pill--warn'    : 'mc-lever-pill--risk';
       const b1Outcome =
         rate >= 0.95
-          ? `This scenario makes little difference to the modelled outcome. The projection still holds well.`
+          ? `This scenario makes little difference to the modelled outcome. The projection continues to hold well under these conditions.`
           : rate >= 0.90
-          ? `The projection still holds under this scenario, but the headroom is thinner. It remains above the lower limit, but with less room.`
+          ? `The projection still holds under this scenario, but the headroom is thinner. It remains above the lower limit, though with less room to absorb further adverse conditions.`
           : rate >= 0.80
-          ? `In this scenario the projection moves close to the lower limit. This exposes a sensitivity that the baseline view may not fully show.`
-          : `Under these conditions, the projection comes under real pressure. The modelled chance of depletion before the end of retirement increases significantly.`;
+          ? `Under these conditions, the projection moves close to the lower limit. This exposes a sensitivity that the baseline view does not fully capture. The spending or retirement date assumptions may be worth reviewing.`
+          : `Under these conditions, the projection falls short of the lower limit. As modelled, more than 1 in 5 simulated paths result in the portfolio being depleted before the end of retirement. This is an indication that the plan, as currently structured, may need to be revised, for example by adjusting the spending assumption or retirement date. Past performance is not a reliable indicator of future results and these projections are illustrative only.`;
 
-      // Block 2 — key assumption to review
+      // Block 2: key assumption to review
       const b2Pill =
-        rate >= 0.95 ? 'Projection on track'      :
-        rate >= 0.90 ? 'Watch baseline headroom'  :
-        rate >= 0.80 ? 'Review baseline assumptions' : 'Refer to the baseline scenario';
+        rate >= 0.95 ? 'Projection on track'        :
+        rate >= 0.90 ? 'Watch baseline headroom'    :
+        rate >= 0.80 ? 'Review baseline assumptions' : 'Plan revision may be needed';
       const b2PillClass =
         rate >= 0.95 ? 'mc-lever-pill--safe'    :
         rate >= 0.90 ? 'mc-lever-pill--neutral' :
@@ -891,12 +893,12 @@
         rate >= 0.95
           ? `The projection is on track under these assumptions. Refer to the baseline scenario for the main spending and portfolio analysis.`
           : rate >= 0.90
-          ? `The projection holds, but check that the baseline headroom is large enough to absorb a start like this.`
+          ? `The projection holds, but it is worth checking that the baseline headroom is large enough to absorb a start like this.`
           : rate >= 0.80
-          ? `The baseline assumptions are worth reviewing in light of this scenario. It shows the projection does not have much headroom to spare.`
-          : `Refer to the baseline scenario. This scenario shows how much the modelled headroom actually needs to do.`;
+          ? `The baseline assumptions are worth reviewing in light of this scenario. It indicates the projection does not have much headroom to spare and may be sensitive to adverse conditions.`
+          : `The baseline spending and retirement date assumptions should be reviewed. This scenario indicates the plan, as currently structured, does not have sufficient resilience to absorb a difficult period. These projections are illustrative and based on modelled assumptions and are not a guarantee of future outcomes.`;
 
-      // Block 3 — vs baseline (delta context)
+      // Block 3: vs baseline (delta context)
       const b3Pill =
         absDelta === null || absDelta === 0 ? 'No change'         :
         absDelta <= 5                       ? 'Marginal difference' :
@@ -909,10 +911,10 @@
         absDelta === null || absDelta === 0
           ? `This scenario produces results very close to the baseline projection.`
           : absDelta <= 5
-          ? `The modelled success rate is ${absDelta} percentage point${absDelta === 1 ? '' : 's'} lower than the baseline — a small difference that does not materially change the picture.`
+          ? `The modelled success rate is ${absDelta} percentage point${absDelta === 1 ? '' : 's'} lower than the baseline, a small difference that does not materially change the picture.`
           : absDelta <= 20
           ? `The modelled success rate is ${absDelta} percentage points lower than the baseline. This is a meaningful reduction worth factoring in.`
-          : `The modelled success rate is ${absDelta} percentage points lower than the baseline — a large drop that highlights a real sensitivity in the projection.`;
+          : `The modelled success rate is ${absDelta} percentage points lower than the baseline, a large drop that highlights a real sensitivity in the projection.`;
 
       // Inline lever-block helper (mirrors baseline leverBlock, scoped to stress branch)
       function stressLeverBlock(name, pill, pillClass, outcome, isPrimary) {
@@ -970,7 +972,7 @@
     if (planIsStrong) {
       const items = [];
 
-      // Item 1: Spending — always present, anchors on threshold relationship
+      // Item 1: Spending: always present, anchors on threshold relationship
       if (sustainableSpending !== null) {
         if (sustainableIsFloor) {
           items.push({ name: 'Spending', pill: 'Within range', pillClass: 'mc-lever-pill--safe',
@@ -990,7 +992,7 @@
           outcome: 'Current spending holds up across the full projection.' });
       }
 
-      // Item 2: Consider spending more / Maintain discipline — owns the ceiling £
+      // Item 2: Consider spending more / Maintain discipline: owns the ceiling £
       const hr = roundToNearest(headroom, 500);
       if (hr > 0) {
         if (marginTight) {
@@ -1013,7 +1015,7 @@
           outcome: 'Current spending is at or near the upper end of the modelled range.' });
       }
 
-      // Item 3: Flexible spending — owns the flex-rule angle
+      // Item 3: Flexible spending: owns the flex-rule angle
       items.push({ name: 'Flexible spending', pill: iqrWide ? 'Material gain' : 'Small gain',
         pillClass: iqrWide ? 'mc-lever-pill--safe' : 'mc-lever-pill--neutral',
         outcome: iqrWide
@@ -1066,31 +1068,31 @@
         ? `${absDeltaS4} percentage point${absDeltaS4 === 1 ? '' : 's'} lower`
         : null;
 
-      // Consequence-led headline — names the outcome, not the scenario
+      // Consequence-led headline: names the outcome, not the scenario
       let stressTakeaway;
       if (rate >= 0.95) {
         stressTakeaway = `This scenario makes little difference to the modelled outcome.`;
       } else if (rate >= 0.90) {
         stressTakeaway = `The projection still holds, but the headroom matters more under these conditions.`;
       } else if (rate >= 0.80) {
-        stressTakeaway = `A difficult start to retirement moves the projection close to the lower limit.`;
+        stressTakeaway = `Under these conditions, the projection moves close to the lower limit.`;
       } else {
-        stressTakeaway = `A difficult start to retirement puts significant pressure on the projection.`;
+        stressTakeaway = `Under these conditions, the projection falls short. The plan may need to be revised.`;
       }
 
-      // Detail — consequence-led, delta in natural language
+      // Detail: consequence-led, delta in natural language, FCA-compliant for <80% band.
       let stressDetail;
       if (rate >= 0.95) {
         stressDetail = `Even under these conditions, the projection holds up well${deltaPhS4 ? `, with the modelled success rate only ${deltaPhS4} compared with the baseline` : ''}. The baseline assumptions remain the relevant reference point.`;
       } else if (rate >= 0.90) {
         stressDetail = `The projection stays above the lower limit, but the headroom is thinner${deltaPhS4 ? `, with the modelled success rate ${deltaPhS4} compared with the baseline` : ''}. It is worth checking that the baseline headroom is large enough to absorb a start like this.`;
       } else if (rate >= 0.80) {
-        stressDetail = `This reveals a sensitivity the baseline does not fully capture${deltaPhS4 ? `. Compared with the baseline, the modelled success rate is ${deltaPhS4}, which suggests the current headroom may not hold up through a difficult start to retirement` : ''}. The baseline spending and delay assumptions become more important to review.`;
+        stressDetail = `This reveals a sensitivity the baseline does not fully capture${deltaPhS4 ? `. Compared with the baseline, the modelled success rate is ${deltaPhS4}, which suggests the current headroom may not hold up through a difficult period` : ''}. The baseline spending and delay assumptions become more important to review.`;
       } else {
-        stressDetail = `The modelled headroom may not be large enough to withstand a start like this.${deltaPhS4 ? ` Compared with the baseline, the projection is significantly weaker here, with its modelled success rate ${deltaPhS4}.` : ''} Reviewing the baseline spending and delay assumptions becomes more pressing.`;
+        stressDetail = `Under these conditions, more than 1 in 5 simulated paths result in the portfolio being depleted before the end of retirement${deltaPhS4 ? `. The modelled success rate is ${deltaPhS4} compared with the baseline` : ''}. This indicates the plan, as currently structured, may not have sufficient resilience. Reviewing the spending assumption and retirement date is recommended. These projections are illustrative and based on modelled assumptions and are not a guarantee of future outcomes.`;
       }
 
-      // Stress bullets — consequence-led, collapse duplicate £0 figures
+      // Stress bullets: consequence-led, collapse duplicate £0 figures
       const p50End    = _deflate(r.p50Portfolio[lastIdx], lastIdx, _activeInflationRate());
       const p10End    = _deflate(r.p10Portfolio[lastIdx], lastIdx, _activeInflationRate());
       const roundKend = v => roundToNearest(v, 10000);
@@ -1108,7 +1110,7 @@
 
       const stressBullets = [];
 
-      // Bullet 1 — weaker outcomes
+      // Bullet 1: weaker outcomes
       if (p10DepletesAge !== null) {
         stressBullets.push(`In weaker outcomes, funds run low around age ${p10DepletesAge}.`);
       } else if (p10NearZero) {
@@ -1117,15 +1119,15 @@
         stressBullets.push(`In weaker outcomes, the portfolio tends to finish with about ${fmtKendB(p10End)} remaining.`);
       }
 
-      // Bullet 2 — typical outcome (only show if meaningfully distinct from bullet 1)
+      // Bullet 2: typical outcome (only show if meaningfully distinct from bullet 1)
       if (p50NearZero && p10NearZero) {
         stressBullets.push(`Even a typical outcome leaves little or no cushion.`);
       } else if (!p50NearZero) {
         stressBullets.push(`In a typical outcome, the portfolio finishes with around ${fmtKendB(p50End)}.`);
       }
-      // If p50 is non-zero but p10 was near-zero, the contrast is already clear — both show.
+      // If p50 is non-zero but p10 was near-zero, the contrast is already clear: both show.
 
-      // Bullet 3 — cash buffer note only when impact is significant enough to warrant it
+      // Bullet 3: cash buffer note only when impact is significant enough to warrant it
       if (_stressSignificant) {
         stressBullets.push(`This scenario shows why accessible cash covering 6–12 months of spending can reduce sensitivity to a difficult start - it avoids forced sales at the worst moment.`);
       } else {
@@ -1295,7 +1297,7 @@
     // Stash snapshot on every render regardless of active state, so PDF export
     // always reflects the currently-visible view (baseline or stress scenario).
     // Baseline-only fields (actionLine, actionImpact, bulletItems) are null/[]
-    // when rendering a stress view — but we always write the baseline values.
+    // when rendering a stress view: but we always write the baseline values.
     _narrativeSnapshot = {
       verdictWord,
       verdictSentence,
@@ -1356,7 +1358,7 @@
     if (ctaBtn) ctaBtn.classList.toggle('btn-test-plan--stale', !!stale);
 
     _syncStressControls();
-    // Only re-render if the narrative is already visible — avoids double-render
+    // Only re-render if the narrative is already visible: avoids double-render
     // during the initial reveal sequence when setStale is called before the
     // 4s loader has finished.
     if (_getResult() && _narrativeRevealed) render();
