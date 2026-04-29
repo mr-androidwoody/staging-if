@@ -411,13 +411,19 @@ function runPath(inputs, equityVol, inflationVol, clReturn, stressMode, stressPa
     //   Previously: growth - 2 * equityVol (~66% drawdown, overstated).
     //
     // inflation (High/Persistent Inflation):
-    //   Years 1-10: inflation ~ N(7.5%, 2.0%).
-    //   Models a 1970s-style sustained inflation regime.
+    //   Years 1-10: inflation ~ N(5.5%, 1.5%).
+    //   Mean calibrated to the 2022-23 UK peak average rather than 1970s worst —
+    //   painful and sustained but plausible in a modern context.
+    //   Vol aligned with baseline inflationVol assumption (1.5%).
+    //   Previously: N(7.5%, 2.0%) — overstated for a diversified modern portfolio.
     //
     // lostDecade (Lost Decade):
     //   A fixed 10-year window (stressParams.lostDecadeStart, computed once per run
     //   by mc-engine.js so all paths share the same shocked window):
-    //   growth ~ N(0%, equityVol) during the window.
+    //   growth ~ N(0.5%, equityVol) during the window.
+    //   Marginally positive nominal return reflects the actual MSCI World 2000-2010
+    //   experience for a globally diversified portfolio — near-zero rather than
+    //   outright negative. Previously: -0.5% (implied persistent nominal losses).
     //   Models Japan-1990s or US-2000s stagnant-growth decade at an unpredictable time.
 
     let growthMean    = growth;
@@ -429,11 +435,11 @@ function runPath(inputs, equityVol, inflationVol, clReturn, stressMode, stressPa
       if (yi < 5) growthMean = growth - 1 * blendedVol;
       // inflationVol unchanged
     } else if (stressMode === 'inflation') {
-      if (yi < 10) { inflationMean = 0.075; inflVol = 0.02; }
+      if (yi < 10) { inflationMean = 0.055; inflVol = 0.015; }
       // growth unchanged
     } else if (stressMode === 'lostDecade' && stressParams) {
       const winStart = stressParams.lostDecadeStart;
-      if (yi >= winStart && yi < winStart + 10) growthMean = -0.005;
+      if (yi >= winStart && yi < winStart + 10) growthMean = 0.005;
       // inflationVol unchanged
     }
 
