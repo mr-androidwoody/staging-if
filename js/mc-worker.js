@@ -344,7 +344,7 @@ function sampleRate(mean, vol, floor = -0.5, ceiling = 2.0) {
 //   survived        — true if portfolio never hit zero across all years
 // ─────────────────────────────────────────────────────────────────────────────
 
-function runPath(inputs, equityVol, inflationVol, clReturn, stressMode, stressParams) {
+function runPath(inputs, equityVol, inflationVol, clReturn, stressMode, stressParams, blendedVol) {
   const {
     startYear, endYear,
     p1DOB, p2DOB,
@@ -401,11 +401,17 @@ function runPath(inputs, equityVol, inflationVol, clReturn, stressMode, stressPa
     // outside the window, baseline sampling resumes.
     //
     // sorr (Sequence of Returns Risk):
-    //   First 5 years: growth mean shifted down by 2 sigma.
-    //   Models an adverse early-retirement return sequence (cf. 1973-77, 2000-02).
+    //   First 5 years: blended portfolio growth mean shifted down by 1 sigma of
+    //   blended vol (equityWt * equityVol + bondWt * bondVol, pre-computed by
+    //   self.onmessage and passed in as blendedVol).
+    //   Using blended vol (rather than raw equityVol) keeps the shock proportional
+    //   to the actual portfolio mix. 1 sigma produces a ~30% cumulative drawdown
+    //   over 5 years at baseline assumptions — calibrated to a realistic bad-but-
+    //   survivable early-retirement sequence (cf. 2000-02 dot-com period).
+    //   Previously: growth - 2 * equityVol (~66% drawdown, overstated).
     //
     // inflation (High/Persistent Inflation):
-    //   Years 1-10: inflation ~ N(5%, 2.0%).
+    //   Years 1-10: inflation ~ N(7.5%, 2.0%).
     //   Models a 1970s-style sustained inflation regime.
     //
     // lostDecade (Lost Decade):
@@ -420,7 +426,7 @@ function runPath(inputs, equityVol, inflationVol, clReturn, stressMode, stressPa
     let inflVol       = inflationVol;
 
     if (stressMode === 'sorr') {
-      if (yi < 5) growthMean = growth - 2 * equityVol;
+      if (yi < 5) growthMean = growth - 1 * blendedVol;
       // inflationVol unchanged
     } else if (stressMode === 'inflation') {
       if (yi < 10) { inflationMean = 0.075; inflVol = 0.02; }
@@ -646,8 +652,16 @@ function percentile(sortedArr, p) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 self.onmessage = function (e) {
-  const { inputs, simCount, equityVol, inflationVol, mcGrowth, clReturn, stressMode, stressParams } = e.data;
+  const { inputs, simCount, equityVol, inflationVol, mcGrowth, clReturn, stressMode, stressParams, bondVol, equityWt } = e.data;
   const effectiveClReturn = clReturn ?? 0.0228; // fallback: CL_RETURN (2.5%) - ANNUAL_FEE (0.22%)
+
+  // Blended portfolio vol — used by the SORR stress to size the shock proportionally
+  // to the actual asset mix rather than anchoring to pure equity vol.
+  // equityWt and bondVol are optional; if absent we fall back to equityVol alone
+  // (conservative, consistent with the old behaviour for callers that don't supply them).
+  const effectiveBondVol = bondVol ?? 0.07;
+  const effectiveEquityWt = equityWt ?? 1.0;
+  const blendedVol = effectiveEquityWt * equityVol + (1 - effectiveEquityWt) * effectiveBondVol;
 
   // If mcGrowth is provided, override inputs.growth with the historically-grounded
   // figure from mc-assumptions.js. This allows the MC engine to use realistic
@@ -684,7 +698,7 @@ self.onmessage = function (e) {
   const PROGRESS_INTERVAL = 500;
 
   for (let sim = 0; sim < simCount; sim++) {
-    const { portfolioByYear, taxByYear, survived } = runPath(effectiveInputs, equityVol, inflationVol, effectiveClReturn, stressMode, stressParams);
+    const { portfolioByYear, taxByYear, survived } = runPath(effectiveInputs, equityVol, inflationVol, effectiveClReturn, stressMode, stressParams, blendedVol);
 
     for (let yi = 0; yi < numYears; yi++) {
       portfolioMatrix[yi][sim] = portfolioByYear[yi];
