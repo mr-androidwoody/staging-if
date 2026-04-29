@@ -90,10 +90,26 @@
   let _narrativeRevealed = false; // true once narrative has been rendered at least once after a run
 
   // ── Deflation ─────────────────────────────────────────────────────────────
-  function _deflate(v, i) {
-    return _useReal ? v / Math.pow(1 + _meanInflation, i) : v;
+  // _deflate uses _meanInflation (set from the baseline run) by default.
+  // For stress scenarios, the worker returns stressInflationMean — the
+  // horizon-weighted mean inflation actually used in that scenario. Stress
+  // results must be deflated with this rate, not the baseline rate, otherwise
+  // inflation stress paths are under-discounted and appear to outperform baseline
+  // in real terms (the £1.1M vs £750k issue observed in April 2026).
+  function _deflate(v, i, inflationRate) {
+    const rate = inflationRate ?? _meanInflation;
+    return _useReal ? v / Math.pow(1 + rate, i) : v;
   }
-  function _deflateArr(arr) { return arr.map((v, i) => _deflate(v, i)); }
+  function _deflateArr(arr, inflationRate) {
+    return arr.map((v, i) => _deflate(v, i, inflationRate));
+  }
+  // Convenience: derive the correct deflation rate for the currently active result.
+  function _activeInflationRate() {
+    const r = _getResult();
+    return (r && typeof r.stressInflationMean === 'number')
+      ? r.stressInflationMean
+      : _meanInflation;
+  }
 
   // ── Loader ────────────────────────────────────────────────────────────────
   function showLoader() {
@@ -437,9 +453,10 @@
     const firstYear = r.years[0];
     const lastYear  = r.years[lastIdx];
 
-    const p25 = _deflateArr(r.p25Portfolio);
-    const p50 = _deflateArr(r.p50Portfolio);
-    const p75 = _deflateArr(r.p75Portfolio);
+    const _inflRate = _activeInflationRate();
+    const p25 = _deflateArr(r.p25Portfolio, _inflRate);
+    const p50 = _deflateArr(r.p50Portfolio, _inflRate);
+    const p75 = _deflateArr(r.p75Portfolio, _inflRate);
 
     const simCountEl = document.getElementById('mc-sim-count');
     if (simCountEl) simCountEl.textContent = r.simCount.toLocaleString('en-GB');
@@ -1074,8 +1091,8 @@
       }
 
       // Stress bullets — consequence-led, collapse duplicate £0 figures
-      const p50End    = _deflate(r.p50Portfolio[lastIdx], lastIdx);
-      const p10End    = _deflate(r.p10Portfolio[lastIdx], lastIdx);
+      const p50End    = _deflate(r.p50Portfolio[lastIdx], lastIdx, _activeInflationRate());
+      const p10End    = _deflate(r.p10Portfolio[lastIdx], lastIdx, _activeInflationRate());
       const roundKend = v => roundToNearest(v, 10000);
       const fmtKendB  = v => fmtB(roundKend(Math.max(0, v)));
 
@@ -1179,9 +1196,9 @@
         }
       }
 
-      const p50End = _deflate(r.p50Portfolio[lastIdx], lastIdx);
-      const p90End = _deflate(r.p90Portfolio[lastIdx], lastIdx);
-      const p10End = _deflate(r.p10Portfolio[lastIdx], lastIdx);
+      const p50End = _deflate(r.p50Portfolio[lastIdx], lastIdx, _activeInflationRate());
+      const p90End = _deflate(r.p90Portfolio[lastIdx], lastIdx, _activeInflationRate());
+      const p10End = _deflate(r.p10Portfolio[lastIdx], lastIdx, _activeInflationRate());
 
       window.RetireMCResults = { medianEndPortfolioNominal: r.p50Portfolio[lastIdx] };
 

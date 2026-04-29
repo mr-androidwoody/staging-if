@@ -769,10 +769,30 @@ self.onmessage = function (e) {
     }
   }
 
+  // ── Effective mean inflation for deflation in mc-render.js ──────────────────
+  // The inflation stress uses a different mean (5.5%) for years 0-9, then reverts
+  // to the baseline mean. mc-render.js uses _meanInflation (baseline only) for
+  // real-terms deflation, causing stress nominal balances to be under-discounted.
+  // We compute and return the horizon-weighted mean so the renderer can use the
+  // correct deflation rate for each stress scenario.
+  const _baseMeanInflation = effectiveInputs.inflation ?? 0.025;
+  let stressInflationMean;
+  if (stressMode === 'inflation') {
+    // Years 0-9: mean 5.5%, remaining years: baseline mean.
+    const stressedYears   = Math.min(10, numYears);
+    const unstressedYears = Math.max(0, numYears - 10);
+    stressInflationMean   =
+      (stressedYears * 0.055 + unstressedYears * _baseMeanInflation) / numYears;
+  } else {
+    // SORR and lostDecade don't alter inflation — use baseline mean.
+    stressInflationMean = _baseMeanInflation;
+  }
+
   const result = {
     mode:             'montecarlo',
     stressMode:       stressMode || null,
     stressParams:     stressParams || null,
+    stressInflationMean,    // weighted mean inflation across the horizon — for real-terms deflation
     simCount,
     years,
     p10Portfolio:     Array.from(p10),
