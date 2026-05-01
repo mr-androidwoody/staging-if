@@ -1876,6 +1876,19 @@
   });
 
   // ─────────────────────────────
+  // SHORTCUT — Ctrl+O
+  // Opens the Excel file picker (same as clicking Load Excel button).
+  // ─────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'o' && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      const loadExcelBtn = safeEl('loadExcelBtn');
+      if (loadExcelBtn) triggerLoadFeedback(loadExcelBtn, 'Load Excel', 8000);
+      window.RetireExcelLoader?.openFilePicker();
+    }
+  });
+
+  // ─────────────────────────────
   // STEPPER BUTTONS
   // ─────────────────────────────
   document.addEventListener('click', function (e) {
