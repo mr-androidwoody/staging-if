@@ -477,7 +477,7 @@
   // PORTFOLIO VALIDATION UI
   // ─────────────────────────────
   function _isPortfolioValid() {
-    const accounts = state.portfolioAccounts;
+    const accounts = activeAccounts();
     if (accounts.length === 0) return false;
     return accounts.every(acc => {
       const total = D.ALLOC_CLASSES.reduce((s, c) => s + (acc.alloc[c] || 0), 0);
@@ -490,8 +490,7 @@
     const addBtn      = safeEl('addAccountBtn');
     const continueBtn = safeEl('continueToAssumptionsBtn');
 
-    const accounts = state.portfolioAccounts;
-    const hasNone  = accounts.length === 0;
+    const accounts = activeAccounts();
 
     const unbalancedCount = accounts.filter(acc => {
       const total = D.ALLOC_CLASSES.reduce((s, c) => s + (acc.alloc[c] || 0), 0);
@@ -525,7 +524,7 @@
     // ── Growth rate suggestion ────────────────────────────────────────────
     const suggEl = document.getElementById('growth-suggestion');
     if (suggEl && window.RetireGrowthAssumptions && isValid) {
-      const alloc = C.summarisePortfolio(state.portfolioAccounts).overallAllocation;
+      const alloc = C.summarisePortfolio(activeAccounts()).overallAllocation;
       const sugg  = window.RetireGrowthAssumptions.getSuggestedGrowth(
         alloc.equities  || 0,
         alloc.bonds     || 0,
@@ -576,8 +575,13 @@
   // ─────────────────────────────
   // SUMMARY
   // ─────────────────────────────
+  function activeAccounts() {
+    if (state.p2enabled) return state.portfolioAccounts;
+    return state.portfolioAccounts.filter(a => a.owner !== 'p2');
+  }
+
   function refreshSetupSummary() {
-    const summary = C.summarisePortfolio(state.portfolioAccounts);
+    const summary = C.summarisePortfolio(activeAccounts());
     R.renderSetupSummary(summary);
   }
 
@@ -927,22 +931,22 @@
     setText('ai-p1sipp', D.formatMoney(p1sipp));
     setText('ai-p1isa',  D.formatMoney(p1isa));
     setText('ai-p1gia',  D.formatMoney(p1gia));
-    setText('ai-p2cash', D.formatMoney(p2cash));
-    setText('ai-p2sipp', D.formatMoney(p2sipp));
-    setText('ai-p2isa',  D.formatMoney(p2isa));
-    setText('ai-p2gia',  D.formatMoney(p2gia));
+    setText('ai-p2cash', state.p2enabled ? D.formatMoney(p2cash) : '£0');
+    setText('ai-p2sipp', state.p2enabled ? D.formatMoney(p2sipp) : '£0');
+    setText('ai-p2isa',  state.p2enabled ? D.formatMoney(p2isa)  : '£0');
+    setText('ai-p2gia',  state.p2enabled ? D.formatMoney(p2gia)  : '£0');
 
     // Per-person subtotals
     const totP1 = p1cash + p1sipp + p1isa + p1gia;
-    const totP2 = p2cash + p2sipp + p2isa + p2gia;
+    const totP2 = state.p2enabled ? (p2cash + p2sipp + p2isa + p2gia) : 0;
     setText('ai-p1total', D.formatMoney(totP1));
     setText('ai-p2total', D.formatMoney(totP2));
 
     // Portfolio footer totals
-    const totIsa  = p1isa  + p2isa;
-    const totSipp = p1sipp + p2sipp;
-    const totGia  = p1gia  + p2gia;
-    const totCash = p1cash + p2cash;
+    const totIsa  = p1isa  + (state.p2enabled ? p2isa  : 0);
+    const totSipp = p1sipp + (state.p2enabled ? p2sipp : 0);
+    const totGia  = p1gia  + (state.p2enabled ? p2gia  : 0);
+    const totCash = p1cash + (state.p2enabled ? p2cash : 0);
     const totAll  = totIsa + totSipp + totGia + totCash;
     setText('ai-total',      D.formatMoney(totAll));
     setText('ai-total-isa',  D.formatMoney(totIsa));
@@ -951,13 +955,13 @@
     setText('ai-total-cash', D.formatMoney(totCash));
 
     setHidden('p1Cash', p1cash);
-    setHidden('p2Cash', p2cash);
+    setHidden('p2Cash', state.p2enabled ? p2cash : 0);
     setHidden('p1SIPP', p1sipp);
-    setHidden('p2SIPP', p2sipp);
+    setHidden('p2SIPP', state.p2enabled ? p2sipp : 0);
     setHidden('p1ISA',  p1isa);
-    setHidden('p2ISA',  p2isa);
+    setHidden('p2ISA',  state.p2enabled ? p2isa  : 0);
     setHidden('p1GIA',  p1gia);
-    setHidden('p2GIA',  p2gia);
+    setHidden('p2GIA',  state.p2enabled ? p2gia  : 0);
 
     // ── GIA equity/cashlike split for MC worker ────────────────────────────
     // Each GIA account carries a cashlike % in its alloc. We weight by value
@@ -978,9 +982,9 @@
     const p1giaSplit = giaSplit('p1');
     const p2giaSplit = giaSplit('p2');
     setHidden('p1GIAeq',   p1giaSplit.eq);
-    setHidden('p2GIAeq',   p2giaSplit.eq);
+    setHidden('p2GIAeq',   state.p2enabled ? p2giaSplit.eq   : 0);
     setHidden('p1GIAcash', p1giaSplit.cash);
-    setHidden('p2GIAcash', p2giaSplit.cash);
+    setHidden('p2GIAcash', state.p2enabled ? p2giaSplit.cash : 0);
 
     const total  = state.portfolioAccounts.reduce((s, a) => s + (a.value || 0), 0);
     const nAccts = state.portfolioAccounts.length;
@@ -1077,7 +1081,7 @@
       })(),
       // Interest-bearing accounts (e.g. Invest Engine, QMMF with monthly draw).
       // Passed to MC worker so it can model guaranteed income and balance depletion.
-      intAccts: (state.portfolioAccounts || [])
+      intAccts: (activeAccounts())
         .filter(a => a.rate != null || a.monthlyDraw != null)
         .map(a => ({
           owner:       a.owner,
@@ -1175,7 +1179,7 @@
   // handler, and _runBackgroundStress so there is one source of truth and no risk
   // of the three call sites drifting apart (Bug 18).
   function _getMCAssume() {
-    const alloc = window.RetireCalc.summarisePortfolio(state.portfolioAccounts).overallAllocation;
+    const alloc = window.RetireCalc.summarisePortfolio(activeAccounts()).overallAllocation;
     return window.RetireMCAssumptions
       ? window.RetireMCAssumptions.getMCAssumptions(
           alloc.equities  || 0,
@@ -1623,6 +1627,9 @@
     if (e.target.id === 'p2enabled') {
       state.p2enabled = e.target.checked;
       applyP2State();
+      refreshSetupSummary();
+      syncSetupToAssumptions();
+      refreshPortfolioUI();
       return;
     }
   });
