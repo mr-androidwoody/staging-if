@@ -491,6 +491,7 @@
     const continueBtn = safeEl('continueToAssumptionsBtn');
 
     const accounts = activeAccounts();
+    const hasNone  = accounts.length === 0;
 
     const unbalancedCount = accounts.filter(acc => {
       const total = D.ALLOC_CLASSES.reduce((s, c) => s + (acc.alloc[c] || 0), 0);
